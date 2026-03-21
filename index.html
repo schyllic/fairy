@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="fairy" data-variant="a">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fairy Calendar — Year 12026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="toolbar">
+  <div class="toolbar-group">
+    <button class="btn nav-btn" id="prev-year" title="Previous year">&#8249;</button>
+    <input type="number" id="year-input" value="12026" title="Holocene year">
+    <button class="btn nav-btn" id="next-year" title="Next year">&#8250;</button>
+    <button class="btn" id="today-btn" title="Go to current year">Today</button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">View:</span>
+    <button class="btn view-btn" data-view="fairy">Fairy</button>
+    <button class="btn view-btn" data-view="greg">Greg</button>
+    <button class="btn view-btn" data-view="week">Week</button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Theme:</span>
+    <button class="btn theme-btn" data-theme="fairy">Fairy</button>
+    <button class="btn theme-btn" data-theme="wizard">Wizard</button>
+    <button class="btn theme-btn" data-theme="celtic">Celtic</button>
+    <button class="btn theme-btn" data-theme="animal">Animal</button>
+    <button class="btn theme-btn" data-theme="flower">Flower</button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group" id="variant-group">
+    <span class="toolbar-label">Color:</span>
+  </div>
+</header>
+
+<main id="calendar-root">
+  <div class="loading">Loading calendar…</div>
+</main>
+
+<script src="birthdays.js"></script>
+<script src="comets.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

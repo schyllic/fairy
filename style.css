@@ -1,0 +1,583 @@
+/* ═══════════════════════════════════════════════════════
+   Fairy Calendar — style.css
+   CSS custom properties drive all theming.
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── 1. Reset & Base ─────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Default values (overridden by themes.js at runtime) */
+  --color-bg: #fff0f8;
+  --color-bg-alt: #fce4f0;
+  --color-surface: #fff8fc;
+  --color-border: #f0a0c8;
+  --color-text-primary: #3a0828;
+  --color-text-secondary: #a03060;
+  --color-accent: #d63384;
+  --color-accent-2: #9c5ab8;
+  --color-today-highlight: #ffd0e8;
+  --color-darkmoon: #2d0a3a;
+  --color-bluemoon: #0a1a3a;
+  --color-moon-icon: #d63384;
+  --color-solar-icon: #f59e0b;
+  --color-weekend: rgba(180, 100, 150, 0.08);
+  --font-family-header: "Palatino Linotype", Palatino, Georgia, serif;
+  --font-family-body: "Palatino Linotype", Palatino, Georgia, serif;
+  --border-radius-cell: 8px;
+  --pattern-bg: none;
+
+  /* Darkmoon part colors */
+  --dp-robin:  #d4edda;
+  --dp-rabbit: #d0e8ff;
+  --dp-turkey: #fef9c3;
+  --dp-bear:   #ffe0cc;
+  --dp-fox:    #ffd6d6;
+}
+
+html { font-size: 15px; }
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-body);
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ─── 2. Toolbar ──────────────────────────────────────── */
+#toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-image: var(--pattern-bg);
+  background-size: 60px 60px;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 1.5rem;
+  background: var(--color-border);
+  opacity: 0.5;
+}
+
+/* Year navigation */
+#year-input {
+  width: 6.5rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-family: var(--font-family-header);
+  font-weight: bold;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+}
+#year-input:focus { outline: 2px solid var(--color-accent); }
+
+/* Buttons base */
+.btn {
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  font-family: var(--font-family-body);
+  font-size: 0.85rem;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  line-height: 1.4;
+}
+.btn:hover { background: var(--color-bg-alt); }
+.btn.active {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.nav-btn { font-size: 1.2rem; padding: 0.2rem 0.5rem; }
+
+/* Theme buttons */
+.theme-btn { font-size: 0.8rem; }
+
+/* Color variant swatches */
+.variant-btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  padding: 0;
+}
+.variant-btn:hover { border-color: rgba(0,0,0,0.5); transform: scale(1.15); }
+.variant-btn.active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent), 0 1px 3px rgba(0,0,0,0.3);
+  transform: scale(1.2);
+}
+
+/* Theme label */
+.toolbar-label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-body);
+}
+
+/* Fairy year title (shown in all view modes) */
+.fairy-year-title {
+  text-align: center;
+  font-family: var(--font-family-header);
+  font-size: 1.4rem;
+  font-weight: bold;
+  padding: 1rem 1rem 0.5rem;
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.year-hero-svg {
+  width: 96px;
+  height: 60px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+  flex-shrink: 0;
+}
+.year-animal { color: var(--color-accent-2); }
+.year-number { margin-left: 0.3rem; }
+.bluemoon-badge {
+  display: inline-block;
+  margin-left: 0.8rem;
+  font-size: 0.8rem;
+  background: var(--color-bluemoon);
+  color: #aad4ff;
+  border-radius: 1rem;
+  padding: 0.15rem 0.6rem;
+  vertical-align: middle;
+}
+
+/* Loading / error */
+.loading, .error {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+}
+.error { color: #c0392b; }
+
+/* ─── 3. Shared cell styles ───────────────────────────── */
+.icon { font-size: 0.85em; }
+.icon-group { display: inline-flex; gap: 2px; flex-wrap: wrap; }
+.is-today {
+  background: var(--color-today-highlight) !important;
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  border-radius: var(--border-radius-cell);
+  font-weight: bold;
+}
+.is-selected {
+  background: var(--color-today-highlight) !important;
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
+  border-radius: var(--border-radius-cell);
+  cursor: pointer;
+}
+[data-date] { cursor: pointer; }
+.empty-cell { background: transparent !important; }
+.weekend-col { background: var(--color-weekend); }
+
+/* Darkmoon part day coloring */
+.dp-robin  { background-color: var(--dp-robin) !important; }
+.dp-rabbit { background-color: var(--dp-rabbit) !important; }
+.dp-turkey { background-color: var(--dp-turkey) !important; }
+.dp-bear   { background-color: var(--dp-bear) !important; }
+.dp-fox    { background-color: var(--dp-fox) !important; }
+
+/* ─── 4. Greg Mode ────────────────────────────────────── */
+.view-greg {
+  padding: 1rem;
+}
+
+.greg-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 900px) { .greg-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .greg-grid { grid-template-columns: 1fr; } }
+
+.greg-month {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.greg-month-header {
+  text-align: center;
+  font-family: var(--font-family-header);
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0.4rem;
+  background: var(--color-accent);
+  color: #fff;
+  background-image: var(--pattern-bg);
+  background-size: 60px 60px;
+}
+
+.greg-weekrow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  background: var(--color-bg-alt);
+}
+.greg-wday {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: var(--color-text-secondary);
+  padding: 0.25rem 0;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+.greg-wday:last-child { border-right: none; }
+
+.greg-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.greg-cell {
+  min-height: 4.2rem;
+  padding: 2px 3px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--color-surface);
+  transition: background 0.1s;
+  border-radius: 0;
+  overflow: hidden;
+}
+.greg-cell:nth-child(7n) { border-right: none; }
+.greg-cell:hover { background: var(--color-bg-alt) !important; }
+
+.greg-daynum {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+.fairy-label {
+  font-size: 0.65rem;
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.darkmoon-label {
+  color: var(--dp-color, var(--color-text-secondary));
+  font-weight: bold;
+}
+
+/* ─── 5. Fairy Mode ───────────────────────────────────── */
+.view-fairy {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.fairy-moon {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fairy-moon-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.8rem;
+  background: var(--color-accent);
+  color: #fff;
+  background-image: var(--pattern-bg);
+  background-size: 60px 60px;
+  font-family: var(--font-family-header);
+}
+.moon-darkmoon .fairy-moon-header { background: var(--color-darkmoon); }
+.moon-bluemoon .fairy-moon-header { background: var(--color-bluemoon); }
+
+.moon-name {
+  font-size: 1.15rem;
+  font-weight: bold;
+}
+.moon-year-tag {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.moon-greg-range {
+  font-size: 0.8rem;
+  margin-left: auto;
+  opacity: 0.8;
+}
+
+/* Darkmoon legend */
+.darkmoon-legend {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: var(--color-bg-alt);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+.dp-badge {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+.dp-badge.dp-active { opacity: 1; font-weight: bold; outline: 2px solid var(--color-accent); }
+.dp-badge.dp-robin  { background: var(--dp-robin); }
+.dp-badge.dp-rabbit { background: var(--dp-rabbit); }
+.dp-badge.dp-turkey { background: var(--dp-turkey); }
+.dp-badge.dp-bear   { background: var(--dp-bear); }
+.dp-badge.dp-fox    { background: var(--dp-fox); }
+
+.fairy-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.fairy-table th {
+  background: var(--color-bg-alt);
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 0.3rem 0.2rem;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+.fairy-table th:last-child { border-right: none; }
+
+.fairy-cell {
+  min-height: 4rem;
+  height: 4rem;
+  padding: 3px 4px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+  font-size: 0.75rem;
+  background: var(--color-surface);
+  transition: background 0.1s;
+  border-radius: 0;
+}
+.fairy-cell:last-child { border-right: none; }
+.fairy-cell:hover { background: var(--color-bg-alt) !important; }
+
+.fairy-daynum {
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: block;
+  line-height: 1;
+}
+.fairy-greg-date {
+  font-size: 0.65rem;
+  color: var(--color-text-secondary);
+  display: block;
+}
+
+/* ─── 6. Week Mode ────────────────────────────────────── */
+.view-week {
+  padding: 1rem;
+}
+
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.week-table th {
+  background: var(--color-accent);
+  color: #fff;
+  text-align: center;
+  font-family: var(--font-family-header);
+  font-size: 0.85rem;
+  padding: 0.4rem 0.2rem;
+  border-right: 1px solid var(--color-border);
+  position: sticky;
+  top: 52px;
+  z-index: 10;
+}
+.week-table th:last-child { border-right: none; }
+.week-table th.weekend-col { background: var(--color-accent-2); }
+
+.week-moon-col {
+  width: 7rem;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--color-text-secondary);
+  text-align: right;
+  padding-right: 0.5rem;
+  border-right: 2px solid var(--color-border);
+  background: var(--color-bg-alt);
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.week-cell {
+  height: 3.8rem;
+  padding: 3px 4px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+  background: var(--color-surface);
+  transition: background 0.1s;
+}
+.week-cell:last-child { border-right: none; }
+.week-cell:hover { background: var(--color-bg-alt) !important; }
+
+.week-fairy-date {
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.week-greg-date {
+  font-size: 0.65rem;
+  color: var(--color-text-secondary);
+}
+
+/* ─── 7. Dark theme overrides (wizard variants a/b/c are dark) ─── */
+/* Darkmoon part colors: override with translucent variants on dark bg */
+[data-theme="wizard"][data-variant="a"],
+[data-theme="wizard"][data-variant="b"],
+[data-theme="wizard"][data-variant="c"] {
+  --dp-robin:  rgba(100, 220, 120, 0.2);
+  --dp-rabbit: rgba(80,  180, 255, 0.2);
+  --dp-turkey: rgba(255, 220, 60,  0.18);
+  --dp-bear:   rgba(255, 160, 60,  0.2);
+  --dp-fox:    rgba(255, 90,  90,  0.2);
+}
+
+/* ─── 8. Scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--color-bg-alt); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+
+/* ─── 9. Birthday label ──────────────────────────────── */
+.birthday-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-accent);
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+/* ─── 10. Perigee / Apogee / Eclipse icons ───────────── */
+.perigee-icon { color: var(--color-moon-icon); font-style: normal; font-weight: bold; }
+.apogee-icon  { color: var(--color-text-secondary); font-style: normal; }
+.eclipse-icon { color: #c0392b; font-style: normal; }
+
+/* ─── 11. Info button ────────────────────────────────── */
+.info-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.9rem; opacity: 0.6; padding: 0 0.3rem;
+  color: inherit; line-height: 1; vertical-align: middle;
+}
+.info-btn:hover { opacity: 1; }
+
+/* ─── 12. Modal ──────────────────────────────────────── */
+#cal-modal {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+#cal-modal[hidden] { display: none; }
+#modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+#modal-box {
+  position: relative; z-index: 1; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 10px;
+  padding: 1rem; max-width: min(480px, 99vw); max-height: 99vh;
+  overflow-y: auto; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+#modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 0.5rem; margin-bottom: 0.5rem;
+}
+#modal-header-btns { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+#modal-today-btn {
+  background: none; border: 1px solid var(--color-border); border-radius: 4px;
+  font-size: 0.75rem; cursor: pointer; padding: 0.15rem 0.5rem;
+  color: var(--color-text-secondary); line-height: 1.4;
+}
+#modal-today-btn:hover { color: var(--color-accent); border-color: var(--color-accent); }
+#modal-close {
+  background: none; border: none; font-size: 1.2rem; cursor: pointer;
+  color: var(--color-text-secondary); line-height: 1; padding: 0;
+}
+#modal-close:hover { color: var(--color-text-primary); }
+#modal-title {
+  font-family: var(--font-family-header); color: var(--color-accent);
+  font-size: 1rem; margin: 0;
+}
+.modal-event {
+  display: flex; gap: 0.5rem; align-items: baseline;
+  padding: 0.18rem 0; border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+}
+.modal-event:last-child { border-bottom: none; }
+.modal-event-icon { font-size: 0.9rem; flex-shrink: 0; width: 1.4rem; text-align: center; }
+.modal-event-date { color: var(--color-text-secondary); font-size: 0.78rem; flex-shrink: 0; width: 4.4rem; }
+.modal-event-desc { color: var(--color-text-primary); }
+.modal-event:has(+ .modal-today-marker) { border-bottom: none; }
+.modal-today-marker {
+  text-align: center; font-size: 0.75rem; font-weight: bold;
+  color: var(--color-accent); padding: 0.2rem 0;
+  border-top: 1px solid var(--color-accent);
+  border-bottom: 1px solid var(--color-accent);
+  margin: 0.2rem 0; opacity: 0.75;
+}
+.modal-section-head {
+  font-weight: bold; color: var(--color-accent-2);
+  margin: 0.5rem 0 0.2rem; font-size: 0.82rem;
+}
+.constellation-list { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.5; }
+
+/* ─── Planet / meteor / comet icons ─────────────────── */
+.planet-icon { font-style: normal; }
+.meteor-icon { font-style: normal; }
+.comet-icon  { font-style: normal; }
