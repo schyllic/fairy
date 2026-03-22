@@ -426,6 +426,8 @@ function getMeteorShowerEvents(gregYear) {
 
 const JS_TO_FAIRY_WEEKDAY = [6, 0, 1, 2, 3, 4, 5]; // Sun→6, Mon→0, Tue→1, Wed→2, Thu→3, Fri→4, Sat→5
 const FAIRY_WEEKDAYS = ['Heimday','Tyrsday','Wodensday','Thorsday','Freyasday','Moonday','Sunday'];
+const STD_WEEKDAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+function getWeekdays() { return state.weekNames === 'std' ? STD_WEEKDAYS : FAIRY_WEEKDAYS; }
 const MOON_NAMES = ['Snowmoon','Wakingmoon','Seedmoon','Bloommoon','Flowermoon',
                     'Berrymoon','Summermoon','Harvestmoon','Gathermoon','Leafmoon','Frostmoon','Darkmoon'];
 
@@ -770,9 +772,9 @@ function renderFairy(fy) {
     const tbl = el('table','fairy-table');
     const thead = document.createElement('thead');
     const thr = document.createElement('tr');
-    for (const wd of FAIRY_WEEKDAYS) {
-      const th = el('th', (wd==='Moonday'||wd==='Sunday')?'weekend-col':null, wd);
-      th.dataset.short = wd.replace(/day$/i, '');
+    for (const [wi, wd] of getWeekdays().entries()) {
+      const th = el('th', wi>=5?'weekend-col':null, wd);
+      th.dataset.short = wd.slice(0,3);
       thr.appendChild(th);
     }
     thead.appendChild(thr); tbl.appendChild(thead);
@@ -817,9 +819,9 @@ function renderWeek(fy) {
   const tbl = el('table','week-table');
   const thead = document.createElement('thead');
   const thr = document.createElement('tr');
-  for (const wd of FAIRY_WEEKDAYS) {
-    const th = el('th',(wd==='Moonday'||wd==='Sunday')?'weekend-col':null, wd);
-    th.dataset.short = wd.replace(/day$/i, '');
+  for (const [wi, wd] of getWeekdays().entries()) {
+    const th = el('th', wi>=5?'weekend-col':null, wd);
+    th.dataset.short = wd.slice(0,3);
     thr.appendChild(th);
   }
   thead.appendChild(thr); tbl.appendChild(thead);
@@ -1271,9 +1273,9 @@ const THEMES = {
     variants:{
       a:{'--color-bg':'#1e1030','--color-bg-alt':'#2a1845','--color-surface':'#26163a','--color-border':'#7b4fa0','--color-text-primary':'#e8d8ff','--color-text-secondary':'#b09ad0','--color-today-highlight':'#4a2a6a','--color-weekend':'rgba(123,79,160,0.2)'},
       b:{'--color-bg':'#0d1a2e','--color-bg-alt':'#162440','--color-surface':'#111e38','--color-border':'#2980b9','--color-text-primary':'#d8eeff','--color-text-secondary':'#7ab8d8','--color-today-highlight':'#1a3a5a','--color-weekend':'rgba(41,128,185,0.15)'},
-      c:{'--color-bg':'#1a1a0e','--color-bg-alt':'#252518','--color-surface':'#202014','--color-border':'#c8a000','--color-text-primary':'#fff8d0','--color-text-secondary':'#c8b060','--color-today-highlight':'#3a3000','--color-weekend':'rgba(200,160,0,0.12)'},
-      d:{'--color-bg':'#f0eefc','--color-bg-alt':'#e4e0f4','--color-surface':'#f8f6ff','--color-border':'#6040a0','--color-text-primary':'#1a0840','--color-text-secondary':'#6040a0','--color-today-highlight':'#d8c8ff','--color-weekend':'rgba(96,64,160,0.08)'},
-      e:{'--color-bg':'#2a1e10','--color-bg-alt':'#362818','--color-surface':'#2e2214','--color-border':'#c85000','--color-text-primary':'#ffe8c8','--color-text-secondary':'#d09050','--color-today-highlight':'#4a2800','--color-weekend':'rgba(200,80,0,0.12)'},
+      c:{'--color-bg':'#091a0d','--color-bg-alt':'#102616','--color-surface':'#0d2010','--color-border':'#1e8a3a','--color-text-primary':'#c8ffcf','--color-text-secondary':'#6abf78','--color-today-highlight':'#1a4a22','--color-weekend':'rgba(30,138,58,0.18)'},
+      d:{'--color-bg':'#1a0808','--color-bg-alt':'#280d0d','--color-surface':'#200b0b','--color-border':'#c0392b','--color-text-primary':'#ffe0e0','--color-text-secondary':'#d08080','--color-today-highlight':'#4a1010','--color-weekend':'rgba(192,57,43,0.18)'},
+      e:{'--color-bg':'#041318','--color-bg-alt':'#081e26','--color-surface':'#061820','--color-border':'#00919e','--color-text-primary':'#c0f0f8','--color-text-secondary':'#5abcc8','--color-today-highlight':'#083040','--color-weekend':'rgba(0,145,158,0.18)'},
     },
   },
   fairy: {
@@ -1325,7 +1327,7 @@ const THEMES = {
 
 const VARIANT_SWATCH_COLORS = {
   fairy:  ['#fff0f8','#f0e8ff','#f0fff4','#fffff0','#fff8f0'],
-  wizard: ['#1e1030','#0d1a2e','#1a1a0e','#f0eefc','#2a1e10'],
+  wizard: ['#1e1030','#0d1a2e','#091a0d','#1a0808','#041318'],
   celtic: ['#f0ede4','#e8f4ee','#f5f0e8','#ece8f0','#f0e8e8'],
   animal: ['#f5efe0','#e8f0e0','#f0e8e0','#e0e8f0','#ece0f0'],
   flower: ['#fff4f8','#f4fff0','#fffff0','#f0f8ff','#fff8f0'],
@@ -1352,14 +1354,16 @@ let state = {
   viewMode: 'fairy',
   theme: 'fairy',
   variant: 'a',
+  weekNames: 'myth',
 };
 
 try {
   const saved = JSON.parse(localStorage.getItem('fairy-cal-state') || '{}');
-  if (saved.holYear)  state.holYear  = Number(saved.holYear);
-  if (saved.viewMode) state.viewMode = saved.viewMode;
-  if (saved.theme)    state.theme    = saved.theme;
-  if (saved.variant)  state.variant  = saved.variant;
+  if (saved.holYear)    state.holYear    = Number(saved.holYear);
+  if (saved.viewMode)   state.viewMode   = saved.viewMode;
+  if (saved.theme)      state.theme      = saved.theme;
+  if (saved.variant)    state.variant    = saved.variant;
+  if (saved.weekNames)  state.weekNames  = saved.weekNames;
 } catch(_) {}
 
 function buildSwatches() {
@@ -1424,6 +1428,11 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
   });
   try { localStorage.setItem('fairy-cal-state', JSON.stringify(state)); } catch(_) {}
 }));
+document.querySelectorAll('.week-name-btn').forEach(b => b.addEventListener('click', () => {
+  state.weekNames = b.dataset.weeks;
+  document.querySelectorAll('.week-name-btn').forEach(b2 => b2.classList.toggle('active', b2.dataset.weeks === state.weekNames));
+  refresh();
+}));
 document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT') return;
   if (e.key==='ArrowLeft')  { state.holYear--; refresh(); }
@@ -1444,5 +1453,6 @@ document.body.addEventListener('click', e => {
   }
 });
 
+document.querySelectorAll('.week-name-btn').forEach(b => b.classList.toggle('active', b.dataset.weeks === state.weekNames));
 initModal();
 refresh();
