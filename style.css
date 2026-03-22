@@ -439,6 +439,14 @@ body {
 .week-table th:last-child { border-right: none; }
 .week-table th.weekend-col { background: var(--color-accent-2); }
 
+.week-cell-info {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  padding: 0;
+  font-size: 0.7rem;
+}
+
 .week-moon-col {
   width: 7rem;
   font-size: 0.75rem;
@@ -457,6 +465,7 @@ body {
 .week-cell {
   height: 3.8rem;
   padding: 3px 4px;
+  position: relative;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
   vertical-align: top;

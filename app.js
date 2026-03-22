@@ -807,7 +807,6 @@ function renderWeek(fy) {
   const tbl = el('table','week-table');
   const thead = document.createElement('thead');
   const thr = document.createElement('tr');
-  thr.appendChild(el('th','week-moon-col','Moon'));
   for (const wd of FAIRY_WEEKDAYS) {
     const th = el('th',(wd==='Moonday'||wd==='Sunday')?'weekend-col':null, wd);
     th.dataset.short = wd.replace(/day$/i, '');
@@ -820,11 +819,9 @@ function renderWeek(fy) {
   let i = 0;
   while (i < allDays.length) {
     const row = document.createElement('tr');
-    const wMoonTd = el('td','week-moon-col');
     const wMoonName = allDays[i]?.fairyMonth||'';
     const wFromStr  = allDays[i]?.gregDate ? utcDateStr(allDays[i].gregDate) : '';
-    wMoonTd.innerHTML = `<span>${wMoonName}</span><button class="info-btn" data-from="${wFromStr}" data-label="${wMoonName}">ⓘ</button>`;
-    row.appendChild(wMoonTd);
+    let rowFirstNonEmpty = true;
     for (let c=0; c<7; c++) {
       const td = el('td','week-cell');
       if (c>=5) td.classList.add('weekend-col');
@@ -832,6 +829,13 @@ function renderWeek(fy) {
         td.classList.add('empty-cell');
       } else {
         const fd = allDays[i];
+        if (rowFirstNonEmpty) {
+          const infoBtn = el('button','info-btn week-cell-info');
+          infoBtn.dataset.from = wFromStr; infoBtn.dataset.label = wMoonName;
+          infoBtn.textContent = 'ⓘ';
+          td.appendChild(infoBtn);
+          rowFirstNonEmpty = false;
+        }
         const fdDateStr = utcDateStr(fd.gregDate);
         if (fd.isToday) td.classList.add('is-today');
         if (fdDateStr === selectedDate) td.classList.add('is-selected');
