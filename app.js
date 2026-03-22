@@ -904,6 +904,12 @@ function render(holYear, viewMode) {
     try {
       const fy = buildFairyYear(holYear);
       currentFY = fy;
+      if (state.theme === 'animal') {
+        const wp = ANIMAL_PATTERNS[fy.yearAnimal] || PATTERNS.animal;
+        document.documentElement.style.setProperty('--pattern-bg-header', wp);
+        document.documentElement.style.setProperty('--pattern-bg', animalPatternDark(wp));
+        document.documentElement.style.setProperty('--pattern-bg-size', '120px 120px');
+      }
       if      (viewMode==='greg')  renderGreg(fy);
       else if (viewMode==='fairy') renderFairy(fy);
       else if (viewMode==='week')  renderWeek(fy);
@@ -1455,12 +1461,31 @@ function _decoWizard(p) {
 }
 
 function _decoCeltic(p) {
-  return `<path d="M5 5 Q18 2 22 12 Q26 22 14 22 Q2 22 4 12Z" stroke="${p.accent}" stroke-width="1.5" fill="none" opacity="0.5"/>` +
-    `<path d="M155 5 Q142 2 138 12 Q134 22 146 22 Q158 22 156 12Z" stroke="${p.accent}" stroke-width="1.5" fill="none" opacity="0.5"/>` +
-    `<path d="M5 85 Q18 88 22 78 Q26 68 14 68 Q2 68 4 78Z" stroke="${p.accent}" stroke-width="1.5" fill="none" opacity="0.5"/>` +
-    `<path d="M155 85 Q142 88 138 78 Q134 68 146 68 Q158 68 156 78Z" stroke="${p.accent}" stroke-width="1.5" fill="none" opacity="0.5"/>` +
-    `<line x1="30" y1="3" x2="130" y2="3" stroke="${p.accent}" stroke-width="0.8" opacity="0.3"/>` +
-    `<line x1="30" y1="87" x2="130" y2="87" stroke="${p.accent}" stroke-width="0.8" opacity="0.3"/>`;
+  function boss(cx, cy) {
+    return `<circle cx="${cx}" cy="${cy}" r="9" stroke="${p.accent}" stroke-width="1.3" fill="none" opacity="0.55"/>` +
+      `<path d="M${cx} ${cy-7} C${cx-4} ${cy-5} ${cx-4} ${cy+5} ${cx} ${cy+7} C${cx+4} ${cy+5} ${cx+4} ${cy-5} ${cx} ${cy-7}Z" stroke="${p.accent}" stroke-width="1.1" fill="none" opacity="0.4"/>` +
+      `<path d="M${cx-7} ${cy} C${cx-5} ${cy-4} ${cx+5} ${cy-4} ${cx+7} ${cy} C${cx+5} ${cy+4} ${cx-5} ${cy+4} ${cx-7} ${cy}Z" stroke="${p.stroke}" stroke-width="1.1" fill="none" opacity="0.4"/>` +
+      `<circle cx="${cx}" cy="${cy}" r="2" fill="${p.accent}" opacity="0.55"/>`;
+  }
+  function tri(cx, cy, d) {
+    return `<path d="M${cx} ${cy} C${cx-3*d} ${cy-2} ${cx-3*d} ${cy-6} ${cx} ${cy-8}" stroke="${p.accent}" stroke-width="1.3" fill="none" opacity="0.6"/>` +
+      `<path d="M${cx} ${cy} C${cx+3*d} ${cy} ${cx+7*d} ${cy+1} ${cx+7*d} ${cy+4}" stroke="${p.accent}" stroke-width="1.3" fill="none" opacity="0.6"/>` +
+      `<path d="M${cx} ${cy} C${cx-2*d} ${cy+3} ${cx-5*d} ${cy+5} ${cx-7*d} ${cy+4}" stroke="${p.accent}" stroke-width="1.3" fill="none" opacity="0.6"/>` +
+      `<circle cx="${cx}" cy="${cy-8}" r="1.5" stroke="${p.accent}" stroke-width="0.9" fill="none" opacity="0.5"/>` +
+      `<circle cx="${cx+7*d}" cy="${cy+4}" r="1.5" stroke="${p.accent}" stroke-width="0.9" fill="none" opacity="0.5"/>` +
+      `<circle cx="${cx-7*d}" cy="${cy+4}" r="1.5" stroke="${p.accent}" stroke-width="0.9" fill="none" opacity="0.5"/>` +
+      `<circle cx="${cx}" cy="${cy}" r="2.5" fill="${p.stroke}" opacity="0.4"/>`;
+  }
+  return boss(13, 14) + tri(13, 50, 1) + boss(13, 77) +
+    boss(147, 14) + tri(147, 50, -1) + boss(147, 77) +
+    `<line x1="28" y1="3" x2="132" y2="3" stroke="${p.accent}" stroke-width="0.9" opacity="0.35"/>` +
+    `<circle cx="60" cy="3" r="1.5" fill="${p.accent}" opacity="0.45"/>` +
+    `<circle cx="80" cy="3" r="1.5" fill="${p.accent}" opacity="0.45"/>` +
+    `<circle cx="100" cy="3" r="1.5" fill="${p.accent}" opacity="0.45"/>` +
+    `<line x1="28" y1="87" x2="132" y2="87" stroke="${p.accent}" stroke-width="0.9" opacity="0.35"/>` +
+    `<circle cx="60" cy="87" r="1.5" fill="${p.accent}" opacity="0.45"/>` +
+    `<circle cx="80" cy="87" r="1.5" fill="${p.accent}" opacity="0.45"/>` +
+    `<circle cx="100" cy="87" r="1.5" fill="${p.accent}" opacity="0.45"/>`;
 }
 
 function _decoAnimal(p) {
@@ -1496,11 +1521,25 @@ function getHeaderSVG(animal, theme) {
 // ─── themes.js ──────────────────────────────────────────────────────
 
 const PATTERNS = {
-  celtic: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='none'/%3E%3Cpath d='M10 10 Q20 0 30 10 Q40 20 50 10 M10 50 Q20 40 30 50 Q40 60 50 50 M10 10 Q0 20 10 30 Q20 40 10 50 M50 10 Q60 20 50 30 Q40 40 50 50 M30 10 L30 50 M10 30 L50 30' stroke='%23c8a96e' stroke-width='1.5' fill='none' opacity='0.25'/%3E%3C/svg%3E")`,
+  celtic: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='none'/%3E%3Cpath d='M0 0 C20 0 20 20 30 30 C40 40 60 40 60 60' stroke='%23c8a96e' stroke-width='2.5' fill='none' opacity='0.25'/%3E%3Cpath d='M60 0 C40 0 40 20 30 30' stroke='%23c8a96e' stroke-width='2.5' fill='none' opacity='0.2'/%3E%3Cpath d='M30 30 C20 40 0 40 0 60' stroke='%23c8a96e' stroke-width='2.5' fill='none' opacity='0.2'/%3E%3Cpath d='M30 0 C50 0 50 20 60 30' stroke='%23c8a96e' stroke-width='1.5' fill='none' opacity='0.15'/%3E%3Cpath d='M0 30 C10 50 30 50 30 60' stroke='%23c8a96e' stroke-width='1.5' fill='none' opacity='0.15'/%3E%3Ccircle cx='30' cy='30' r='2.5' fill='%23c8a96e' opacity='0.3'/%3E%3Ccircle cx='0' cy='0' r='2' fill='%23c8a96e' opacity='0.2'/%3E%3Ccircle cx='60' cy='60' r='2' fill='%23c8a96e' opacity='0.2'/%3E%3Ccircle cx='60' cy='0' r='2' fill='%23c8a96e' opacity='0.2'/%3E%3Ccircle cx='0' cy='60' r='2' fill='%23c8a96e' opacity='0.2'/%3E%3C/svg%3E")`,
   wizard: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='none'/%3E%3Ccircle cx='15' cy='15' r='2' fill='%23c8b8e8' opacity='0.4'/%3E%3Ccircle cx='45' cy='8' r='1.5' fill='%23e8d8ff' opacity='0.35'/%3E%3Ccircle cx='65' cy='25' r='1' fill='%23c8b8e8' opacity='0.3'/%3E%3Ccircle cx='30' cy='45' r='2.5' fill='%23e8d8ff' opacity='0.4'/%3E%3Ccircle cx='70' cy='60' r='1.5' fill='%23c8b8e8' opacity='0.35'/%3E%3Ccircle cx='10' cy='65' r='1' fill='%23e8d8ff' opacity='0.3'/%3E%3Ccircle cx='55' cy='50' r='2' fill='%23c8b8e8' opacity='0.35'/%3E%3Cpath d='M40 20 L42 26 L48 26 L43 30 L45 36 L40 32 L35 36 L37 30 L32 26 L38 26 Z' fill='%23ffd700' opacity='0.2'/%3E%3Cpath d='M20 55 Q25 48 30 55' stroke='%23c8b8e8' stroke-width='1' fill='none' opacity='0.25'/%3E%3C/svg%3E")`,
   fairy:  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='none'/%3E%3Ccircle cx='15' cy='15' r='3' fill='%23ffb7d5' opacity='0.3'/%3E%3Ccircle cx='15' cy='10' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='20' cy='15' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='10' cy='15' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='15' cy='20' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='45' cy='45' r='3' fill='%23ffb7d5' opacity='0.3'/%3E%3Ccircle cx='45' cy='40' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='50' cy='45' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='40' cy='45' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='45' cy='50' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3C/svg%3E")`,
   animal: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cellipse cx='24' cy='30' rx='9' ry='7' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='13' cy='20' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='21' cy='15' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='30' cy='15' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='38' cy='20' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='64' cy='68' rx='9' ry='7' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='53' cy='58' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='61' cy='53' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='70' cy='53' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='78' cy='58' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3C/svg%3E")`,
   flower: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='none'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(0 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(60 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(120 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(180 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(240 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(300 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23fde68a' opacity='0.4'/%3E%3C/svg%3E")`,
+};
+
+// Derives a dark-brown toolbar version from a white ANIMAL_PATTERNS entry
+function animalPatternDark(p) {
+  return (p || '').replace(/%23ffffff/g, '%238a6040').replace(/opacity='0\.5'/g, "opacity='0.35'");
+}
+
+// Per-year-animal footprint trail patterns (120×120 tiles, white — for dark month/moon headers)
+const ANIMAL_PATTERNS = {
+  Robin:  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='none'/%3E%3Cpath d='M5,28 L11,28 M5,28 L9,25 M5,28 L9,31 M5,28 L1,28 M20,34 L26,34 M20,34 L24,31 M20,34 L24,37 M20,34 L16,34 M35,38 L41,38 M35,38 L39,35 M35,38 L39,41 M35,38 L31,38 M50,36 L56,36 M50,36 L54,33 M50,36 L54,39 M50,36 L46,36 M65,30 L71,30 M65,30 L69,27 M65,30 L69,33 M65,30 L61,30 M80,24 L86,24 M80,24 L84,21 M80,24 L84,27 M80,24 L76,24 M95,21 L101,21 M95,21 L99,18 M95,21 L99,24 M95,21 L91,21 M110,25 L116,25 M110,25 L114,22 M110,25 L114,28 M110,25 L106,25' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' fill='none' opacity='0.5'/%3E%3Ccircle cx='5' cy='28' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='20' cy='34' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='35' cy='38' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='50' cy='36' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='65' cy='30' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='80' cy='24' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='95' cy='21' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='110' cy='25' r='1.5' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E")`,
+  Turkey: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='none'/%3E%3Cpath d='M8,28 L18,28 M8,28 L15,22 M8,28 L15,34 M30,36 L40,36 M30,36 L37,30 M30,36 L37,42 M52,38 L62,38 M52,38 L59,32 M52,38 L59,44 M74,30 L84,30 M74,30 L81,24 M74,30 L81,36 M96,24 L106,24 M96,24 L103,18 M96,24 L103,30' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.5'/%3E%3Ccircle cx='8' cy='28' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='30' cy='36' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='52' cy='38' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='74' cy='30' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='96' cy='24' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E")`,
+  Bear:   `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='none'/%3E%3Cellipse cx='12' cy='38' rx='8' ry='6' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='20' cy='30' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='24' cy='33' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='25' cy='38' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='24' cy='43' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='20' cy='46' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='50' cy='50' rx='8' ry='6' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='58' cy='42' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='62' cy='45' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='63' cy='50' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='62' cy='55' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='58' cy='58' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='90' cy='40' rx='8' ry='6' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='98' cy='32' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='102' cy='35' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='103' cy='40' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='102' cy='45' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='98' cy='48' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E")`,
+  Fox:    `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='none'/%3E%3Cellipse cx='10' cy='50' rx='3.5' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='15' cy='46' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='17' cy='49' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='17' cy='52' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='15' cy='55' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='32' cy='48' rx='3.5' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='37' cy='44' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='39' cy='47' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='39' cy='50' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='37' cy='53' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='54' cy='51' rx='3.5' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='59' cy='47' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='61' cy='50' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='61' cy='53' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='59' cy='56' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='76' cy='48' rx='3.5' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='81' cy='44' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='83' cy='47' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='83' cy='50' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='81' cy='53' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='98' cy='50' rx='3.5' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='103' cy='46' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='105' cy='49' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='105' cy='52' r='2' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='103' cy='55' r='2' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E")`,
+  Rabbit: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='none'/%3E%3Cellipse cx='36' cy='43' rx='7' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='36' cy='53' rx='7' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='22' cy='44' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='22' cy='52' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='92' cy='50' rx='7' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Cellipse cx='92' cy='60' rx='7' ry='3' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='78' cy='51' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3Ccircle cx='78' cy='59' r='2.5' fill='%23ffffff' opacity='0.5'/%3E%3C/svg%3E")`,
 };
 
 const THEMES = {
@@ -1606,6 +1645,15 @@ function applyTheme(themeName, variantName) {
   for (const [k,v] of Object.entries(variant)) e.style.setProperty(k,v);
   e.dataset.theme = themeName;
   e.dataset.variant = variantName;
+  if (themeName === 'animal' && currentFY) {
+    const wp = ANIMAL_PATTERNS[currentFY.yearAnimal] || PATTERNS.animal;
+    e.style.setProperty('--pattern-bg-header', wp);
+    e.style.setProperty('--pattern-bg', animalPatternDark(wp));
+    e.style.setProperty('--pattern-bg-size', '120px 120px');
+  } else if (themeName !== 'animal') {
+    e.style.removeProperty('--pattern-bg-header');
+    e.style.setProperty('--pattern-bg-size', '60px 60px');
+  }
 }
 
 // ─── App wiring ─────────────────────────────────────────────────────
