@@ -136,6 +136,11 @@ body {
 
 /* Theme buttons */
 .theme-btn { font-size: 0.8rem; }
+.theme-btn.active[data-theme="fairy"]::before  { content: "🧚 "; }
+.theme-btn.active[data-theme="wizard"]::before { content: "🔮 "; }
+.theme-btn.active[data-theme="celtic"]::before { content: "☘️ "; }
+.theme-btn.active[data-theme="animal"]::before { content: "🐾 "; }
+.theme-btn.active[data-theme="flower"]::before { content: "🌸 "; }
 
 /* Other-date hide toggle */
 .hide-other-date .fairy-label,
@@ -205,6 +210,16 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.14);
   flex-shrink: 0;
+}
+.moon-plant-svg {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+.moon-darkmoon .moon-plant-svg,
+.moon-bluemoon .moon-plant-svg {
+  filter: brightness(1.5);
 }
 .year-animal { color: var(--color-accent-2); }
 .year-number { margin-left: 0.3rem; }
@@ -334,9 +349,7 @@ body {
 .greg-cell:nth-child(7n) { border-right: none; }
 .greg-cell:hover { background: var(--color-bg-alt) !important; }
 .view-greg .icon-group { display: block; width: 100%; }
-.new-moon-cell { background: var(--color-text-primary); color: var(--color-bg); }
-.new-moon-cell .greg-daynum,
-.new-moon-cell .fairy-label { color: var(--color-bg); }
+.new-moon-cell { box-shadow: inset 0 0 0 2px var(--color-text-primary); }
 
 .greg-daynum {
   font-size: 0.85rem;
@@ -666,6 +679,8 @@ body {
   margin: 0.5rem 0 0.2rem; font-size: 0.82rem;
 }
 .constellation-list { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.5; }
+.sky-chart-wrap { margin: 0.5rem 0 0.25rem; text-align: center; }
+.sky-chart-svg { max-width: 220px; width: 100%; border-radius: 50%; }
 
 /* ─── Help Modal ─────────────────────────────────────── */
 #help-modal {
@@ -739,7 +754,10 @@ body {
 .comet-icon  { font-style: normal; }
 
 /* ─── Responsive: short day names on narrow screens ─── */
-@media (max-width: 768px) { .day-info-btn { display: none; } }
+@media (max-width: 768px) {
+  .day-info-btn { display: none; }
+  .is-selected .day-info-btn { display: inline; }
+}
 
 @media (max-width: 480px) {
   .fairy-table th, .week-table th {
