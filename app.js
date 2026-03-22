@@ -971,7 +971,7 @@ function showModal(fromDateStr, label, fy) {
   if (consts.length > 0 || visPlans.length > 0 || activeMeteors.length > 0) {
     const _skyFd = starNight ? fy.dayMap.get(starNight.dateStr) : null;
     const _skyGd = _skyFd?.gregDate || skyDate;
-    const _skyDateFmt = (state.viewMode === 'fairy' && _skyFd)
+    const _skyDateFmt = ((state.viewMode === 'fairy' || state.viewMode === 'week') && _skyFd)
       ? `${_skyFd.fairyMonth.slice(0,4)} ${_skyFd.fairyDay}`
       : `${GREG_MONTH_NAMES[_skyGd.getUTCMonth()].slice(0,3)} ${_skyGd.getUTCDate()}`;
     const skyLabel = starNight
@@ -1002,7 +1002,7 @@ function showModal(fromDateStr, label, fy) {
       const {icon, text} = _formatEvent(ev);
       const fd = fy.dayMap.get(ev.dateStr);
       const _gd = fd?.gregDate || new Date(ev.dateStr);
-      const dateLabel = (state.viewMode === 'fairy' && fd)
+      const dateLabel = ((state.viewMode === 'fairy' || state.viewMode === 'week') && fd)
         ? `${fd.fairyMonth.slice(0,4)} ${fd.fairyDay}`
         : `${GREG_MONTH_NAMES[_gd.getUTCMonth()].slice(0,3)} ${_gd.getUTCDate()}`;
       body += `<div class="modal-event">` +

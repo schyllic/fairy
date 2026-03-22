@@ -441,7 +441,7 @@ body {
 
 .week-cell-info {
   position: absolute;
-  top: 2px;
+  bottom: 2px;
   right: 2px;
   padding: 0;
   font-size: 0.7rem;
