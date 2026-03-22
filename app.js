@@ -924,21 +924,22 @@ function _easternOffsetHours(date) {
   return (date >= dstStart && date < dstEnd) ? -4 : -5;
 }
 
-function astroTwilightEnd(date) {
-  // Evening astronomical twilight (sun at -18°) for OBSERVER location.
+function _sunEventTime(date, altitude, isRise) {
+  // Returns local time string for sun crossing given altitude on date.
   const lat = OBSERVER.lat, lon = OBSERVER.lon;
-  const jd = Math.floor(dateToJDE(date)) + 0.5; // JD at noon UT
+  const jd = Math.floor(dateToJDE(date)) + 0.5;
   const n  = jd - 2451545.0;
   const L  = norm360(280.460 + 0.9856474 * n);
   const g  = rad(norm360(357.528 + 0.9856003 * n));
   const lam = rad(L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g));
   const sinDec = 0.39782 * Math.sin(lam);
   const cosDec = Math.cos(Math.asin(sinDec));
-  const cosH = (Math.sin(rad(-18)) - Math.sin(rad(lat)) * sinDec)
+  const cosH = (Math.sin(rad(altitude)) - Math.sin(rad(lat)) * sinDec)
              / (Math.cos(rad(lat)) * cosDec);
-  if (Math.abs(cosH) > 1) return null; // no astronomical darkness tonight
-  const H = Math.acos(cosH) * 180 / Math.PI / 15; // hours
-  const utH = (12 - lon / 15 + H) % 24; // evening twilight in UT
+  if (Math.abs(cosH) > 1) return null;
+  const H = Math.acos(cosH) * 180 / Math.PI / 15;
+  const utH = isRise ? (12 - lon / 15 - H + 24) % 24
+                     : (12 - lon / 15 + H) % 24;
   const offset = _easternOffsetHours(date);
   let local = (utH + offset + 24) % 24;
   const h = Math.floor(local);
@@ -948,6 +949,10 @@ function astroTwilightEnd(date) {
   const ampm = hh < 12 ? 'am' : 'pm';
   return `${hh % 12 || 12}:${String(mm).padStart(2, '0')}${ampm}`;
 }
+
+function astroTwilightEnd(date)  { return _sunEventTime(date, -18,    false); }
+function sunsetTime(date)        { return _sunEventTime(date, -0.833, false); }
+function sunriseTime(date)       { return _sunEventTime(date, -0.833, true);  }
 
 // ─── Info Modal ──────────────────────────────────────────────────────
 
@@ -1029,9 +1034,16 @@ function showModal(fromDateStr, label, fy) {
     const _skyDateFmt = ((state.viewMode === 'fairy' || state.viewMode === 'week') && _skyFd)
       ? `${_skyFd.fairyMonth.replace(/moon$/i,'')} ${_skyFd.fairyDay}`
       : `${GREG_MONTH_NAMES[_skyGd.getUTCMonth()].slice(0,3)} ${_skyGd.getUTCDate()}`;
+    const sunset   = sunsetTime(skyDate);
     const twilight = astroTwilightEnd(skyDate);
-    const timeStr = twilight ? `after ${twilight}` : 'after dark';
-    eveningSkyHTML += `<div class="modal-section-head">Evening Sky (${_skyDateFmt}, 🌙 ${moonIllum}%, ${timeStr})</div>`;
+    const tomorrow = new Date(skyDate.getTime() + 86400000);
+    const sunrise  = sunriseTime(tomorrow);
+    const parts = [_skyDateFmt, `🌙 ${moonIllum}%`];
+    if (sunset)   parts.push(`↓${sunset}`);
+    if (twilight) parts.push(`✦ ${twilight}`);
+    if (sunrise)  parts.push(`↑${sunrise}`);
+    const skyLabel = fromDateStr === todayStr ? 'Tonight' : 'Night Sky';
+    eveningSkyHTML += `<div class="modal-section-head">${skyLabel} (${parts.join(', ')})</div>`;
     if (visPlans.length > 0)
       eveningSkyHTML += `<div class="constellation-list"><b>Planets:</b> ${visPlans.map(p=>`${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ')}</div>`;
     if (activeMeteors.length > 0)
