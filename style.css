@@ -269,7 +269,19 @@ body {
   cursor: pointer;
 }
 [data-date] { cursor: pointer; }
-.empty-cell { background: transparent !important; }
+.empty-cell {
+  background-color: transparent !important;
+  background-image: var(--pattern-bg) !important;
+  background-size: var(--pattern-bg-size, 60px 60px) !important;
+}
+.fairy-moon-icon {
+  display: block;
+  width: 36px;
+  height: 36px;
+  margin: auto;
+  margin-top: 6px;
+  opacity: 0.75;
+}
 .weekend-col { background: var(--color-weekend); }
 
 /* Darkmoon part day coloring */
@@ -308,8 +320,6 @@ body {
   padding: 0.4rem;
   background: var(--color-header, var(--color-accent));
   color: #fff;
-  background-image: var(--pattern-bg-header, var(--pattern-bg));
-  background-size: var(--pattern-bg-size, 60px 60px);
 }
 
 .greg-weekrow {
@@ -396,8 +406,6 @@ body {
   padding: 0.5rem 0.8rem;
   background: var(--color-header, var(--color-accent));
   color: #fff;
-  background-image: var(--pattern-bg-header, var(--pattern-bg));
-  background-size: var(--pattern-bg-size, 60px 60px);
   font-family: var(--font-family-header);
 }
 .moon-darkmoon .fairy-moon-header { background: var(--color-darkmoon); }
@@ -680,7 +688,23 @@ body {
 }
 .constellation-list { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.5; }
 .sky-chart-wrap { margin: 0.5rem 0 0.25rem; text-align: center; }
-.sky-chart-svg { max-width: 220px; width: 100%; border-radius: 50%; }
+.sky-chart-svg { max-width: 280px; width: 100%; border-radius: 50%; }
+.sky-const-label { cursor: pointer; }
+.sky-const-label:hover { fill: #ffff88 !important; }
+.const-detail-wrap { text-align: center; margin: 0.75rem 0 0.25rem; }
+.const-detail-svg { max-width: 200px; width: 100%; border-radius: 6px; }
+.const-back-btn {
+  background: none; border: 1px solid var(--color-border);
+  color: var(--color-text-secondary); border-radius: 4px;
+  padding: 0.25rem 0.6rem; cursor: pointer; font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+}
+.const-back-btn:hover { background: var(--color-bg-alt); }
+.const-lore {
+  font-size: 0.85rem; line-height: 1.55;
+  color: var(--color-text-secondary);
+  margin: 0.5rem 0 0; padding: 0 0.1rem;
+}
 
 /* ─── Help Modal ─────────────────────────────────────── */
 #help-modal {
@@ -753,10 +777,11 @@ body {
 .meteor-icon { font-style: normal; }
 .comet-icon  { font-style: normal; }
 
+.day-info-btn { display: none; }
+.is-selected .day-info-btn { display: inline; }
+
 /* ─── Responsive: short day names on narrow screens ─── */
 @media (max-width: 768px) {
-  .day-info-btn { display: none; }
-  .is-selected .day-info-btn { display: inline; }
 }
 
 @media (max-width: 480px) {

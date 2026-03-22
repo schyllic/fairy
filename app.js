@@ -73,6 +73,10 @@ function initModal() {
   document.body.appendChild(modal);
   document.getElementById('modal-backdrop').addEventListener('click', closeModal);
   document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-body').addEventListener('click', e => {
+    const lbl = e.target.closest('.sky-const-label');
+    if (lbl) showConstellationDetail(lbl.dataset.cname);
+  });
   document.getElementById('modal-today-btn').addEventListener('click', () => {
     if (!currentFY) return;
     const todayStr = utcDateStr(new Date());
@@ -332,33 +336,84 @@ function _formatEvent(ev) {
   return {icon:'•', text:ev.kind};
 }
 
-function renderSkyChart(positions) {
+function renderSkyChart(positions, planets = []) {
   const cx = 110, cy = 110, R = 100;
   let svg = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0a0a1a"/>`;
-  // Altitude rings (60° and 30°)
   svg += `<circle cx="${cx}" cy="${cy}" r="${(R*30/90).toFixed(1)}" fill="none" stroke="#334" stroke-width="0.8"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="${(R*60/90).toFixed(1)}" fill="none" stroke="#334" stroke-width="0.8"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#446" stroke-width="1"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="2" fill="#fff" opacity="0.5"/>`;
-  // Cardinal labels (sky orientation: N=top, E=left, S=bottom, W=right)
   const lStyle = `font-size="8" fill="#88aacc" font-family="sans-serif" text-anchor="middle"`;
   svg += `<text ${lStyle} x="${cx}" y="7">N</text>`;
   svg += `<text ${lStyle} x="${cx}" y="218">S</text>`;
   svg += `<text ${lStyle} x="6" y="${cy+3}">E</text>`;
   svg += `<text ${lStyle} x="214" y="${cy+3}">W</text>`;
-  // Constellation dots + labels
   for (const c of positions) {
     const azR = c.az * Math.PI / 180;
     const r   = R * (90 - c.alt) / 90;
-    // Sky view: N=up, E=left → x uses +sin(az) but we flip E/W: x = cx - r*sin(az)
     const x = cx - r * Math.sin(azR);
     const y = cy - r * Math.cos(azR);
-    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="#ffe080" opacity="0.9"/>`;
+    const fig = CONSTELLATION_FIGURES[c.name];
+    if (fig) {
+      for (const [i,j] of fig.l) {
+        const sx = x + fig.s[i][0]*12, sy = y - fig.s[i][1]*12;
+        const ex = x + fig.s[j][0]*12, ey = y - fig.s[j][1]*12;
+        svg += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="#6688aa" stroke-width="0.7" opacity="0.7"/>`;
+      }
+      for (const [nx,ny] of fig.s) {
+        svg += `<circle cx="${(x+nx*12).toFixed(1)}" cy="${(y-ny*12).toFixed(1)}" r="1.2" fill="#ffe8a0" opacity="0.9"/>`;
+      }
+    } else {
+      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="#ffe080" opacity="0.9"/>`;
+    }
     const anchor = x >= cx ? 'start' : 'end';
-    const dx = x >= cx ? 4 : -4;
-    svg += `<text x="${(x+dx).toFixed(1)}" y="${(y+2.5).toFixed(1)}" font-size="7" fill="#ccd8ee" font-family="sans-serif" text-anchor="${anchor}" opacity="0.9">${c.name}</text>`;
+    const dx = x >= cx ? 15 : -15;
+    svg += `<text class="sky-const-label" data-cname="${c.name}" x="${(x+dx).toFixed(1)}" y="${(y+2.5).toFixed(1)}" font-size="7" fill="#ccd8ee" font-family="sans-serif" text-anchor="${anchor}" cursor="pointer" opacity="0.9">${c.name}</text>`;
   }
-  return `<div class="sky-chart-wrap"><svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" class="sky-chart-svg" aria-label="Sky chart">${svg}</svg></div>`;
+  // Render planets
+  for (const p of planets) {
+    const azR = p.az * Math.PI / 180;
+    const r   = R * (90 - p.alt) / 90;
+    const x = cx - r * Math.sin(azR);
+    const y = cy - r * Math.cos(azR);
+    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="none" stroke="#ffaa22" stroke-width="1.2" opacity="0.9"/>`;
+    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.8" fill="#ffcc44" opacity="0.95"/>`;
+    const anchor = x >= cx ? 'start' : 'end';
+    const dx = x >= cx ? 7 : -7;
+    svg += `<text x="${(x+dx).toFixed(1)}" y="${(y-5).toFixed(1)}" font-size="8" fill="#ffcc44" font-family="sans-serif" text-anchor="${anchor}" opacity="0.95">${p.symbol} ${p.name}</text>`;
+  }
+  return `<div class="sky-chart-wrap"><svg viewBox="-60 -22 340 264" xmlns="http://www.w3.org/2000/svg" class="sky-chart-svg" aria-label="Sky chart">${svg}</svg></div>`;
+}
+
+let _savedModal = null;
+
+function showConstellationDetail(name) {
+  const fig = CONSTELLATION_FIGURES[name];
+  if (!fig) return;
+  _savedModal = {
+    title: document.getElementById('modal-title').textContent,
+    body:  document.getElementById('modal-body').innerHTML,
+  };
+  const cx = 100, cy = 100, sc = 80;
+  let svg = `<rect width="200" height="200" fill="#0a0a1a" rx="6"/>`;
+  for (const [i,j] of fig.l) {
+    const x1 = cx + fig.s[i][0]*sc, y1 = cy - fig.s[i][1]*sc;
+    const x2 = cx + fig.s[j][0]*sc, y2 = cy - fig.s[j][1]*sc;
+    svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#88aacc" stroke-width="1.5"/>`;
+  }
+  for (const [nx,ny] of fig.s) {
+    svg += `<circle cx="${(cx+nx*sc).toFixed(1)}" cy="${(cy-ny*sc).toFixed(1)}" r="3" fill="#ffe8a0"/>`;
+  }
+  const svgEl = `<div class="const-detail-wrap"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="const-detail-svg">${svg}</svg></div>`;
+  const lore = CONSTELLATION_LORE[name] || '';
+  const loreEl = lore ? `<p class="const-lore">${lore}</p>` : '';
+  document.getElementById('modal-title').textContent = name;
+  document.getElementById('modal-body').innerHTML = `<button class="const-back-btn">← Back to sky chart</button>` + svgEl + loreEl;
+  document.querySelector('.const-back-btn').addEventListener('click', () => {
+    document.getElementById('modal-title').textContent = _savedModal.title;
+    document.getElementById('modal-body').innerHTML = _savedModal.body;
+    _savedModal = null;
+  });
 }
 
 function showModal(fromDateStr, label, fy) {
@@ -402,7 +457,8 @@ function showModal(fromDateStr, label, fy) {
     if (consts.length > 0) {
       eveningSkyHTML += `<div class="constellation-list">${consts.map(c=>c.name).join(' · ')}</div>`;
       const positions = getConstellationPositions(skyDate);
-      if (positions.length > 0) eveningSkyHTML += renderSkyChart(positions);
+      const planetPositions = getPlanetAltAz(skyDate);
+      if (positions.length > 0 || planetPositions.length > 0) eveningSkyHTML += renderSkyChart(positions, planetPositions);
     }
   }
 
@@ -526,6 +582,21 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
       if (existing) existing.remove();
     }
   });
+  document.querySelectorAll('.fairy-moon').forEach(sec => {
+    const existingIcon = sec.querySelector('.fairy-moon-icon');
+    if (state.theme === 'fairy') {
+      if (!existingIcon) {
+        const moonName = sec.querySelector('.moon-name')?.textContent;
+        const emptyCells = [...sec.querySelectorAll('td.empty-cell')];
+        const firstTbodyCell = sec.querySelector('tbody tr:first-child td:first-child');
+        const startsWithEmpty = firstTbodyCell && firstTbodyCell.classList.contains('empty-cell');
+        const target = startsWithEmpty ? emptyCells[0] : emptyCells[emptyCells.length-1];
+        if (target) target.innerHTML = getFairyMoonSVG(moonName);
+      }
+    } else {
+      if (existingIcon) existingIcon.remove();
+    }
+  });
   _saveState();
 }));
 { const btn = document.getElementById('toggle-mythic-week');
@@ -600,13 +671,8 @@ document.body.addEventListener('click', e => {
   if (cell) {
     const ds = cell.dataset.date;
     if (selectedDate === ds) {
-      if (window.innerWidth <= 768 && currentFY) {
-        const ib = cell.querySelector('.info-btn');
-        if (ib) showModal(ib.dataset.from, ib.dataset.label, currentFY);
-      } else {
-        selectedDate = null;
-        document.querySelectorAll('[data-date].is-selected').forEach(c => c.classList.remove('is-selected'));
-      }
+      selectedDate = null;
+      document.querySelectorAll('[data-date].is-selected').forEach(c => c.classList.remove('is-selected'));
     } else {
       selectedDate = ds;
       document.querySelectorAll('[data-date].is-selected').forEach(c => c.classList.remove('is-selected'));

@@ -248,6 +248,123 @@ function getConstellationPositions(gregDate) {
   }).filter(Boolean);
 }
 
+// ─── Constellation stick figure data (normalized ±1 coords) ─────────
+const CONSTELLATION_FIGURES = {
+  // W shape: Caph, Schedar, γ, Ruchbah, Segin
+  'Cassiopeia':  { s:[[-0.85,0.15],[-0.42,-0.6],[0,0.35],[0.42,-0.6],[0.85,0.15]],
+                   l:[[0,1],[1,2],[2,3],[3,4]] },
+  // Chain Alpheratz→Mirach→Almach, branches from Mirach
+  'Andromeda':   { s:[[0.85,-0.15],[0.4,0.05],[-0.1,0.25],[-0.7,0.45],[0.55,-0.6],[0.15,-0.75],[-0.45,0.0],[-0.8,-0.2]],
+                   l:[[0,4],[4,1],[1,5],[1,2],[2,3],[1,6],[6,7]] },
+  // Two fish loops connected at Alrescha
+  'Pisces':      { s:[[0.0,-0.1],[-.25,0.3],[-.6,0.55],[-.8,0.3],[-.6,0.0],[-.3,-0.15],[0.3,-0.35],[0.6,-0.6],[0.75,-0.85],[0.55,-0.9],[0.25,-0.75]],
+                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[6,7],[7,8],[8,9],[9,10],[10,6]] },
+  // Hamal, Sheratan, Mesarthim, Botein — gentle arc
+  'Aries':       { s:[[-0.75,0.25],[-0.2,0.6],[0.35,0.55],[0.8,-0.1]],
+                   l:[[0,1],[1,2],[2,3]] },
+  // Hero: Algol head, Mirfak center, raised arm+club, extended arm, waist, legs
+  'Perseus':     { s:[[-0.1,0.9],[0.1,0.35],[0.5,0.6],[0.8,0.85],[-0.35,0.5],[-0.7,0.65],[0.1,-0.1],[0.45,-0.5],[0.6,-0.85],[-0.3,-0.55],[-0.45,-0.85]],
+                   l:[[0,1],[1,2],[2,3],[1,4],[4,5],[1,6],[6,7],[7,8],[6,9],[9,10]] },
+  // Aldebaran eye, Hyades V, two horns, Pleiades cluster
+  'Taurus':      { s:[[0.05,0.0],[-0.3,0.3],[0.38,0.28],[-0.15,0.6],[-0.2,0.9],[0.68,0.78],[0.0,-0.45],[-.75,0.5],[-.9,0.3],[-.78,0.15]],
+                   l:[[0,1],[0,2],[1,3],[3,4],[2,5],[0,6],[7,8],[8,9],[9,7]] },
+  // Belt, shoulders+crossbar, feet, raised club, bow arc
+  'Orion':       { s:[[0,0.82],[-0.42,0.52],[0.42,0.56],[-0.18,0.04],[0,0.04],[0.18,0.04],[-0.48,-0.72],[0.58,-0.76],[-0.75,0.88],[0.82,0.82],[0.95,0.18],[0.82,-0.46]],
+                   l:[[0,1],[0,2],[1,2],[1,3],[2,5],[3,4],[4,5],[3,6],[5,7],[1,8],[2,9],[9,10],[10,11]] },
+  // Sirius chest, head, body, hind, tail, foreleg
+  'Canis Major': { s:[[0,0.5],[-0.4,0.75],[-0.15,0.9],[0.35,0.25],[0.45,-0.1],[0.35,-0.55],[0.6,-0.8],[-0.25,-0.6],[-0.35,-0.85]],
+                   l:[[2,1],[1,0],[0,3],[3,4],[4,5],[5,6],[4,7],[7,8],[0,5]] },
+  // Pentagon + two Kids (ζ,η) near Capella
+  'Auriga':      { s:[[0,0.9],[0.68,0.3],[0.5,-0.65],[-0.5,-0.65],[-0.68,0.3],[-0.28,0.58],[-0.05,0.48]],
+                   l:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[5,6]] },
+  // Castor and Pollux heads, twin bodies, feet meeting
+  'Gemini':      { s:[[-0.55,0.85],[0.28,0.85],[-0.52,0.38],[0.28,0.42],[-0.48,-0.08],[0.3,-0.05],[-0.42,-0.55],[0.32,-0.52],[-0.38,-0.88],[0.35,-0.88]],
+                   l:[[0,2],[2,4],[4,6],[6,8],[1,3],[3,5],[5,7],[7,9],[8,9]] },
+  // X-shape: four limbs from center, Beehive implied
+  'Cancer':      { s:[[0.0,0.0],[-0.7,0.55],[0.62,0.62],[0.7,-0.55],[-0.62,-0.55],[-0.28,0.25],[0.28,0.3]],
+                   l:[[0,1],[0,2],[0,3],[0,4],[5,6]] },
+  // Sickle (reversed ?) from Regulus, then body to Denebola tail
+  'Leo':         { s:[[0.55,-0.7],[0.35,-0.28],[0.05,0.1],[-0.2,0.45],[-0.45,0.62],[-0.42,0.25],[-0.1,-0.15],[0.1,-0.45],[-0.85,-0.3]],
+                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,2],[0,7],[7,6],[6,2],[6,8]] },
+  // Big Dipper bowl+handle, bear body/leg hints
+  // Big Dipper: bowl (Dubhe, Merak, Phecda, Megrez) + handle (Alioth, Mizar, Alkaid)
+  'Ursa Major':  { s:[[0.75,0.55],[0.75,-0.2],[0.2,-0.2],[0.2,0.55],[-0.28,0.62],[-0.68,0.45],[-0.95,0.1]],
+                   l:[[0,1],[1,2],[2,3],[3,0],[3,4],[4,5],[5,6]] },
+  // Spica in outstretched hand, arms, body, legs
+  'Virgo':       { s:[[0,0.88],[0.52,0.5],[0.88,0.1],[0.0,0.1],[-0.5,0.52],[-0.72,0.05],[-0.82,-0.48],[0.0,-0.2],[-0.28,-0.65],[0.28,-0.68]],
+                   l:[[0,1],[1,2],[0,4],[4,5],[5,6],[0,3],[3,7],[7,8],[7,9]] },
+  // Kite: Arcturus at bottom, Nekkar top, sides, arms
+  'Boötes':      { s:[[0,-0.88],[0.48,-0.22],[0.42,0.38],[0.18,0.78],[-0.38,0.65],[-0.48,0.12],[-0.38,-0.32],[0.58,0.62]],
+                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,7]] },
+  // Balance beam with two pans hanging down
+  'Libra':       { s:[[0,0.52],[-0.75,-0.05],[0.72,-0.05],[-0.52,-0.88],[0.48,-0.88],[-0.2,-0.3]],
+                   l:[[1,0],[0,2],[1,5],[5,3],[2,4],[0,5]] },
+  // Semicircle of 7 stars, opens south, Alphecca brightest
+  'Corona Bor.': { s:[[-0.88,-0.05],[-0.62,0.55],[-0.18,0.85],[0.22,0.88],[0.58,0.68],[0.82,0.28],[0.88,-0.15]],
+                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]] },
+  // Head/claws, Antares heart, curved S-tail with stinger
+  'Scorpius':    { s:[[-0.1,0.88],[-0.35,0.72],[-0.08,0.75],[0.28,0.85],[0.0,0.5],[-0.15,0.12],[-0.45,-0.18],[-0.2,-0.55],[0.18,-0.6],[0.5,-0.85],[0.45,-0.65],[0.2,-0.45]],
+                   l:[[0,1],[0,2],[2,3],[0,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11]] },
+  // Keystone quadrilateral, head, club arm, legs
+  'Hercules':    { s:[[0,0.9],[-0.3,0.5],[0.3,0.5],[-0.35,-0.02],[0.35,-0.02],[0.65,0.75],[0.88,0.88],[-0.65,0.3],[-0.88,0.12],[0.5,-0.5],[0.6,-0.88],[-0.45,-0.55],[-0.55,-0.88]],
+                   l:[[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[2,5],[5,6],[1,7],[7,8],[4,9],[9,10],[3,11],[11,12]] },
+  // Large figure: Rasalhague head, body, Yed hands holding serpent, legs
+  'Ophiuchus':   { s:[[0,0.9],[0.45,0.55],[-0.45,0.6],[0.5,0.0],[-0.5,0.05],[0.18,-0.28],[0.58,-0.55],[0.65,-0.88],[-0.38,-0.6],[-0.45,-0.88],[0.82,0.3],[-0.82,0.2]],
+                   l:[[0,1],[0,2],[1,3],[2,4],[3,5],[4,5],[5,6],[6,7],[5,8],[8,9],[1,10],[2,11]] },
+  // Vega top, then parallelogram of ζ,δ,γ,β,ε
+  'Lyra':        { s:[[0,0.88],[0.38,0.28],[-0.32,0.22],[0.42,-0.32],[-0.38,-0.38],[0.02,-0.62]],
+                   l:[[0,1],[0,2],[1,2],[1,3],[2,4],[3,5],[4,5]] },
+  // The Teapot: spout (γ,δ), base (ε), body (ζ), lid (λ), handle (σ,τ,φ)
+  'Sagittarius': { s:[[-0.82,-0.1],[-0.42,0.12],[-0.08,-0.58],[0.18,0.22],[0.08,0.82],[0.62,0.38],[0.85,-0.08],[0.72,-0.52],[-0.12,-0.88]],
+                   l:[[0,1],[1,3],[3,4],[4,5],[5,6],[6,7],[7,2],[2,8],[8,0],[1,2],[0,2]] },
+  // Altair center (Summer Triangle), wings spread, tail
+  'Aquila':      { s:[[0,0.1],[-0.15,0.5],[0.15,-0.3],[-0.75,0.65],[-0.5,0.12],[0.35,-0.6],[0.28,-0.88],[-0.35,-0.65],[0.55,0.35],[0.85,0.6]],
+                   l:[[3,4],[4,1],[1,0],[0,2],[2,5],[5,6],[2,7],[1,8],[8,9],[4,3]] },
+  // Northern Cross: Deneb top, Sadr center, Albireo bottom, wings
+  'Cygnus':      { s:[[0,0.88],[0,0.05],[0,-0.88],[-0.78,0.15],[0.45,0.25],[0.8,0.35],[-0.45,-0.3],[0.0,0.52]],
+                   l:[[0,1],[1,2],[3,1],[1,4],[4,5],[3,6],[0,7],[7,1]] },
+  // Sea-goat: horn tips, head, body loop, fish tail
+  'Capricornus': { s:[[-0.88,0.62],[-0.68,0.82],[-0.68,0.35],[-0.3,-0.08],[0.0,0.08],[0.38,0.0],[0.72,-0.18],[0.55,0.15],[0.48,-0.6],[0.0,-0.72],[-0.35,-0.55]],
+                   l:[[0,2],[1,2],[2,3],[3,4],[4,5],[5,7],[7,6],[6,8],[8,9],[9,10],[10,3],[5,6]] },
+  // Water bearer: shoulders, urn, water stream flowing down
+  'Aquarius':    { s:[[0.3,0.85],[-0.3,0.72],[0.0,0.2],[0.32,0.1],[-0.28,0.08],[0.0,-0.18],[0.15,-0.42],[-0.18,-0.62],[0.1,-0.82],[0.68,0.42],[-.55,-0.5],[-.68,-0.82]],
+                   l:[[0,1],[0,9],[0,2],[1,4],[4,3],[3,2],[2,5],[5,6],[6,7],[7,8],[1,10],[10,11]] },
+  // Great Square, neck/head left, wing extensions
+  'Pegasus':     { s:[[-0.65,0.5],[0.65,0.5],[0.65,-0.45],[-0.65,-0.45],[-0.65,0.9],[-0.3,1.0],[0.0,0.82],[0.5,0.88]],
+                   l:[[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[0,6],[1,7]] },
+};
+
+// ─── Constellation lore ──────────────────────────────────────────────
+const CONSTELLATION_LORE = {
+  'Cassiopeia':  "The vain queen of Ethiopia, Cassiopeia boasted that her daughter Andromeda surpassed the sea-nymphs in beauty — an arrogance that angered Poseidon. As punishment she was set in the sky forever circling the North Pole, sometimes hanging upside down in humiliation. Her distinctive W shape is one of the easiest star patterns to find on any clear night.",
+  'Andromeda':   "Princess Andromeda was chained to a sea-cliff as a sacrifice to the monster Cetus, to appease Poseidon's wrath at her mother Cassiopeia's boasting. She was rescued at the last moment by the hero Perseus, who swooped down on winged sandals and turned Cetus to stone with the head of Medusa. The Andromeda Galaxy — the most distant object visible to the naked eye — floats just off her hip.",
+  'Pisces':      "The two fish of Pisces represent Aphrodite and her son Eros, who transformed themselves into fish and leapt into the Euphrates river to escape the monster Typhon. A cord binds their tails so they would not lose each other in the current. The faint stars make Pisces one of the harder zodiac constellations to trace, but the circlet asterism marks the western fish clearly.",
+  'Aries':       "The golden ram of Aries carried Phrixus and Helle through the sky to safety, fleeing their wicked stepmother. Helle fell into the strait now called the Hellespont, but Phrixus reached Colchis and sacrificed the ram in gratitude, hanging its fleece in a sacred grove — the very Golden Fleece that Jason and the Argonauts later sought. Only three main stars form the constellation, with bright Hamal as the ram's head.",
+  'Perseus':     "Perseus, the slayer of Medusa, wears the Gorgon's severed head in one hand and a sword in the other as he strides across the sky. He used the head — which turned any onlooker to stone — to rescue Andromeda and defeat the sea-monster Cetus. The star Algol marks the Gorgon's eye and is a famous eclipsing binary, dimming noticeably every 2.87 days.",
+  'Taurus':      "Taurus is the bull that Zeus became to woo the Phoenician princess Europa, carrying her away across the sea to Crete. Only the bull's head and forequarters are shown — the rest disappears below the horizon. The brilliant orange star Aldebaran marks the bull's fiery eye, and the V-shaped Hyades cluster forms the face, while the famous Pleiades seven sisters ride on his shoulder.",
+  'Orion':       "The great hunter Orion was the son of Poseidon and famed for his beauty and prowess. He boasted he would kill every beast on Earth, so Gaia sent a giant scorpion to slay him — the reason Orion and Scorpius are on opposite sides of the sky, never visible at the same time. His three-star belt is among the most recognizable sights in the night sky, flanked by the red supergiant Betelgeuse at his shoulder and blue Rigel at his foot.",
+  'Canis Major': "Canis Major is the Great Dog, one of Orion's faithful hunting hounds following his master across the sky. The constellation is home to Sirius, the brightest star in the entire night sky — the ancient Egyptians called it Sopdet and used its heliacal rising to predict the Nile flood. In the heat of summer when Sirius rises with the sun, the Romans blamed it for the sweltering 'dog days.'",
+  'Auriga':      "Auriga the Charioteer is usually depicted as a man holding a goat and two kids on his arm, along with the reins of a chariot. The brilliant yellow star Capella — meaning 'little she-goat' — is the sixth brightest star in the sky. One myth identifies Auriga with Erichthonius, a lame Athenian king who invented the four-horse chariot so he could move about more easily.",
+  'Gemini':      "The twin stars Castor and Pollux were the Dioscuri, sons of Zeus and Leda, inseparable brothers who sailed with Jason on the Argo and became patron gods of sailors. When Castor was killed in battle, the immortal Pollux begged Zeus to let him share his immortality, and the twins were placed together in the sky. Pollux is slightly brighter and truly a single star; Castor, though it appears dimmer, is actually a spectacular system of six stars.",
+  'Cancer':      "Cancer the Crab played a small but valiant role in mythology — Hera sent it to distract Hercules during his battle with the nine-headed Hydra. Hercules crushed it underfoot, and Hera placed it in the sky as a reward for its loyalty. The faint stars make Cancer the dimmest zodiac constellation, but it holds the beautiful Beehive Cluster (M44), a swarm of over a thousand stars visible to the naked eye on dark nights.",
+  'Leo':         "Leo the Lion is the Nemean Lion, the fearsome beast with impenetrable golden hide that was the first of Hercules' twelve labors. Unable to pierce its skin with weapons, Hercules strangled it with his bare hands and thereafter wore its pelt as armor. Regulus, the bright star at the base of the Sickle asterism, means 'little king' and was one of the four Royal Stars of ancient Persia.",
+  'Ursa Major':  "The Great Bear was once the nymph Callisto, transformed into a bear by the jealous goddess Hera after Zeus fell in love with her. Her son Arcas nearly killed her while hunting, not recognizing his mother, before Zeus swept them both into the sky as the Great and Little Bears. The seven stars of the Big Dipper are the most recognized star pattern in the Northern Hemisphere, and the two 'pointer stars' of the Dipper's bowl reliably lead the eye to Polaris.",
+  'Virgo':       "Virgo is most often identified with Demeter, the goddess of the harvest, or her daughter Persephone who descends to the underworld each winter causing the earth to go barren. She holds a shaft of wheat in her outstretched hand, marked by the brilliant blue-white star Spica — one of the brightest in the sky. The Virgo Cluster, a vast grouping of over 1,300 galaxies, lies in this direction about 54 million light-years away.",
+  'Boötes':      "Boötes the Herdsman follows the Great Bear around the pole, driving the celestial oxen with a crook. He is sometimes identified with Arcas, the son of Callisto, or with Icarius, an Athenian farmer whom Dionysus taught to make wine. His brightest star Arcturus — meaning 'bear guardian' — is the fourth brightest star in the sky, a giant orange star about 37 light-years away.",
+  'Libra':       "Libra the Scales is the only zodiac constellation representing an inanimate object. In ancient Greece the scales were seen as belonging to Virgo (Justice), used to weigh the souls of the dead. The two brightest stars are named Zubenelgenubi and Zubeneschamali, meaning 'the southern claw' and 'the northern claw' — a reminder that the stars were once considered part of Scorpius before being separated as their own constellation.",
+  'Corona Bor.': "Corona Borealis, the Northern Crown, represents the jeweled crown given by Dionysus to Ariadne, the Cretan princess who helped Theseus navigate the labyrinth and slay the Minotaur. When Ariadne died, Dionysus flung the crown into the heavens. The delicate semicircle of seven stars is easy to find and forms one of the night sky's most elegant little patterns.",
+  'Scorpius':    "Scorpius is the great scorpion sent by Gaia to hunt down the boastful hunter Orion, and the two were placed on opposite sides of the sky so they would never meet. The brilliant red star Antares — whose name means 'rival of Mars' — marks the scorpion's heart and is one of the largest stars visible to the naked eye, a red supergiant hundreds of times the size of our Sun. The curving tail ending in a stinger is one of the most dramatic constellation outlines in the sky.",
+  'Hercules':    "The greatest of Greek heroes, Hercules was the son of Zeus and the mortal Alcmene. To atone for killing his family in a fit of madness sent by Hera, he was tasked with twelve nearly impossible labors, including slaying the Nemean Lion and the Hydra, and capturing the three-headed dog Cerberus from the underworld. He kneels in the sky with his foot on the head of the dragon Draco, as if in the midst of some great struggle.",
+  'Ophiuchus':   "Ophiuchus the Serpent-Bearer is Asclepius, the god of medicine, who learned the secret of resurrection by watching one snake revive another with healing herbs. He is depicted wrestling the serpent Serpens, which he holds divided in two halves across the sky. Hades feared his power would empty the underworld, so Zeus struck him down with a thunderbolt and placed him among the stars.",
+  'Lyra':        "Lyra represents the lyre of Orpheus, the greatest musician who ever lived, whose music could charm animals, trees, and stones. When his wife Eurydice died, he descended into the underworld and so moved Hades with his playing that she was released — on condition he not look back. He looked, lost her forever, and in his grief was eventually torn apart by the Maenads; the gods placed his lyre in the sky. The brilliant blue-white star Vega is the brightest in Lyra and the fifth brightest in the sky.",
+  'Sagittarius': "Sagittarius is the archer centaur, usually identified with Chiron or the wise Crotus, son of Pan, who invented archery. He aims his arrow directly at the heart of Scorpius in the sky. The center of our Milky Way galaxy lies in this direction, making Sagittarius one of the richest star fields in the heavens; the famous Teapot asterism appears to be pouring steam toward the galactic core.",
+  'Aquila':      "Aquila is the eagle of Zeus, who carried his thunderbolts and once swooped down to snatch the beautiful shepherd boy Ganymede from a mountainside to serve as cupbearer to the gods. The bright star Altair, just 17 light-years away and spinning so fast it bulges at the equator, marks the eagle's heart. Altair is one vertex of the famous Summer Triangle along with Vega and Deneb.",
+  'Cygnus':      "Cygnus the Swan is sometimes said to be Zeus in disguise — he transformed into a swan to approach the Spartan queen Leda, resulting in the births of Helen of Troy and the Dioscuri twins. Others identify it with Orpheus, transformed into a swan after his death. The brilliant star Deneb marks the tail of the swan and is one of the most luminous stars known — so far away (roughly 2,600 light-years) that its true distance is still uncertain. The cross shape formed by the constellation is called the Northern Cross.",
+  'Capricornus': "Capricornus, the sea-goat, is one of the oldest zodiac constellations, recognized by the Sumerians over 4,000 years ago as the god Enki who had the body of a goat and the tail of a fish. In Greek myth, the goat-god Pan leapt into the Nile to escape the monster Typhon and transformed himself into a creature half-goat, half-fish. The faint stars form a triangle or arrowhead pointing westward.",
+  'Aquarius':    "Aquarius is the water-bearer, most often identified with Ganymede, the beautiful youth seized by Zeus's eagle to be cupbearer of the gods on Olympus. In earlier traditions he was the god who caused the great floods, tipping his celestial urn to send rain to the world below. The Aquarius stream of shooting stars — the Eta Aquariids and Delta Aquariids — originates from this part of the sky.",
+  'Pegasus':     "Pegasus is the winged horse born from the blood of Medusa when Perseus slew her — springing fully formed from the sea foam at the spot where her head fell. The hero Bellerophon later tamed Pegasus with a golden bridle given by Athena, riding him to slay the fire-breathing Chimera. The Great Square of Pegasus, formed by four bright stars, is one of the most useful navigation landmarks in the autumn sky.",
+};
+
 // ─── Planetary positions (JPL Keplerian elements, ~1° accuracy) ─────
 
 const PLANET_SYMBOLS = {Mercury:'☿', Venus:'♀', Mars:'♂', Jupiter:'♃', Saturn:'♄'};
@@ -346,6 +463,35 @@ function getVisiblePlanets(gregDate) {
     const elong=_angSep(p.ra,p.dec,sun.ra,sun.dec);
     return {name, elong:Math.round(elong), evening:_isEvening(p.ra,sun.ra)};
   }).filter(p=>p.elong>20&&p.evening);
+}
+
+// Returns alt/az for all planets above horizon at ~9pm local on gregDate
+function getPlanetAltAz(gregDate) {
+  const Y = gregDate.getUTCFullYear(), Mo = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
+  const UT = 2.0; // ~9pm US Eastern
+  const JD = 367*Y - Math.trunc(7*(Y+Math.trunc((Mo+9)/12))/4)
+           + Math.trunc(275*Mo/9) + D + 1721013.5 + UT/24;
+  const T    = (JD - 2451545.0) / 36525;
+  const GMST = ((6.697375 + 2400.0513368*T + 1.0027379*UT) % 24 + 24) % 24;
+  const LST  = (GMST + OBSERVER.lon/15 + 24) % 24;
+  const lat  = OBSERVER.lat * Math.PI / 180;
+  const sun  = _sunRADecT(T);
+  return PLANET_NAMES_VIS.map(name => {
+    const p   = _geocentricRADec(name, T); // ra/dec in radians
+    const elong = _angSep(p.ra, p.dec, sun.ra, sun.dec);
+    if (elong < 15) return null; // too close to sun
+    const raH  = ((p.ra * 12 / Math.PI) % 24 + 24) % 24;
+    const ha   = ((LST - raH) % 24 + 24) % 24;
+    const haR  = ha * Math.PI / 12;
+    const sinAlt = Math.sin(p.dec)*Math.sin(lat) + Math.cos(p.dec)*Math.cos(lat)*Math.cos(haR);
+    const alt  = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180/Math.PI;
+    if (alt < 5) return null;
+    const cosAlt = Math.cos(Math.asin(sinAlt));
+    const cosAz  = cosAlt > 0.001 ? (Math.sin(p.dec) - sinAlt*Math.sin(lat)) / (cosAlt*Math.cos(lat)) : 0;
+    let az = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180/Math.PI;
+    if (Math.sin(haR) > 0) az = 360 - az;
+    return { name, az, alt, symbol: PLANET_SYMBOLS[name] };
+  }).filter(Boolean);
 }
 
 const _PLANET_PAIRS = [

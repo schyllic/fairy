@@ -52,6 +52,7 @@ function el(tag, cls, text) {
 function renderGreg(fy) {
   const root = document.getElementById('calendar-root');
   root.className = 'view-greg' + (state.showOtherDate ? '' : ' hide-other-date');
+  const prevFY = buildFairyYear(fy.holYear - 1);
   const yt = el('div','fairy-year-title');
   yt.innerHTML = `<span class="year-hero-wrap">${getHeaderSVG(fy.yearAnimal, state.theme)}</span>`
     + `<span class="year-number">${fy.gregYear}</span>`
@@ -72,7 +73,7 @@ function renderGreg(fy) {
     for (let i=0;i<startDow;i++) dg.appendChild(el('div','greg-cell empty-cell'));
     for (let d=1; d<=lastDay.getUTCDate(); d++) {
       const ds = `${fy.gregYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const fd = fy.dayMap.get(ds);
+      const fd = fy.dayMap.get(ds) || prevFY.dayMap.get(ds);
       const cell = el('div', 'greg-cell' + (fd?.isToday?' is-today':'') + (fd?.fairyDay===1?' new-moon-cell':''));
       if (ds === selectedDate) cell.classList.add('is-selected');
       if (state.showHolidays && fd?.holiday) cell.classList.add('holiday-cell');
@@ -143,7 +144,7 @@ function renderFairy(fy) {
     const tbody = document.createElement('tbody');
     let row = document.createElement('tr'), col=0;
     const firstWd = moon.days[0].fairyWeekdayIndex;
-    for (let i=0;i<firstWd;i++) { row.appendChild(el('td','fairy-cell empty-cell')); col++; }
+    for (let i=0;i<firstWd;i++) { const ec=el('td','fairy-cell empty-cell'); if(state.theme==='fairy'&&i===0) ec.innerHTML=getFairyMoonSVG(moon.name); row.appendChild(ec); col++; }
 
     for (const fd of moon.days) {
       if (col===7) { tbody.appendChild(row); row=document.createElement('tr'); col=0; }
@@ -163,7 +164,9 @@ function renderFairy(fy) {
       const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
       row.appendChild(td); col++;
     }
-    while(col>0&&col<7){row.appendChild(el('td','fairy-cell empty-cell'));col++;}
+    const trailingCells=[];
+    while(col>0&&col<7){const ec=el('td','fairy-cell empty-cell');trailingCells.push(ec);row.appendChild(ec);col++;}
+    if(state.theme==='fairy'&&firstWd===0&&trailingCells.length>0) trailingCells[trailingCells.length-1].innerHTML=getFairyMoonSVG(moon.name);
     if(col>0) tbody.appendChild(row);
     tbl.appendChild(tbody); sec.appendChild(tbl); root.appendChild(sec);
   }
@@ -215,6 +218,7 @@ function renderWeek(fy) {
         const fdDateStr = utcDateStr(fd.gregDate);
         if (fd.isToday) td.classList.add('is-today');
         if (fdDateStr === selectedDate) td.classList.add('is-selected');
+        if (fd.fairyDay === 1) td.classList.add('new-moon-cell');
         if (fd.darkmoonPart) td.classList.add(`dp-${fd.darkmoonPart.toLowerCase()}`);
         if (state.showHolidays && fd.holiday) td.classList.add('holiday-cell');
         if (fd.solarEvent) td.classList.add('solar-cell');
