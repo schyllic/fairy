@@ -221,7 +221,7 @@ function getEveningConstellations(gregDate) {
   const raSun = (((doy - 79) * 24 / 365.25) % 24 + 24) % 24; // Sun RA in hours
   const raMid = (raSun + 10) % 24; // meridian at ~10pm
   return EVENING_CONSTELLATIONS.filter(c => {
-    if (c.dec < -53) return false; // below horizon all night at 37°N
+    if (c.dec < -(90 - OBSERVER.lat)) return false; // below horizon all night at observer lat
     let diff = ((c.ra - raMid + 24) % 24);
     if (diff > 12) diff -= 24;
     return Math.abs(diff) <= 3.5;
@@ -496,11 +496,23 @@ function _buildFairyYear(holYear) {
 
   // Birthdays — keyed by "MM-DD"
   const birthdayMap = new Map();
-  const allBirthdays = (typeof BIRTHDAYS !== 'undefined') ? BIRTHDAYS : [];
+  const allBirthdays = runtimeBirthdays;
   for (const b of allBirthdays) {
     const key = `${String(b.month).padStart(2,'0')}-${String(b.day).padStart(2,'0')}`;
     if (!birthdayMap.has(key)) birthdayMap.set(key, []);
     birthdayMap.get(key).push(b);
+  }
+
+  // Holidays — keyed by "YYYY-MM-DD"
+  const holidayMap = new Map();
+  if (typeof US_HOLIDAYS !== 'undefined') {
+    for (const h of US_HOLIDAYS) {
+      const ds = h.day
+        ? `${gregYear}-${String(h.month).padStart(2,'0')}-${String(h.day).padStart(2,'0')}`
+        : utcDateStr(_resolveHolidayRule(h.rule, gregYear));
+      if (!holidayMap.has(ds)) holidayMap.set(ds, []);
+      holidayMap.get(ds).push(h);
+    }
   }
 
   // Perigee / Apogee
@@ -595,6 +607,7 @@ function _buildFairyYear(holYear) {
         eclipse:  eclipseMap.get(dateStr) || null,
         planets:  planetMap.get(dateStr) || null,
         birthday: birthdayMap.get(dateStr.slice(5)) || null,
+        holiday:  holidayMap.get(dateStr) || null,
         meteor:   meteorMap.get(dateStr) || null,
         comet:    cometMap.get(dateStr) || null,
       };
@@ -676,9 +689,10 @@ function moonIcons(fd) {
         h+=`<span class="icon planet-icon" title="${ev.planets.join(' & ')} conjunction (${ev.sep}°)">${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}</span>`;
     }
   }
-  if (fd.meteor)   { for (const m of fd.meteor) { if (m.isNearPeak) h+=`<span class="icon meteor-icon" title="${m.name}${m.isPeak?' peak':''} — ZHR ~${m.zhr}, ${m.note}">🌠</span>`; } }
-  if (fd.comet)    { for (const c of fd.comet) h+=`<span class="icon comet-icon" title="${c.name}${c.note?' — '+c.note:''}">☄</span>`; }
-  if (fd.birthday) { for (const b of fd.birthday) h+=`<span class="birthday-label">🎂 ${b.name}</span>`; }
+  if (state.showMeteors && fd.meteor) { for (const m of fd.meteor) { if (m.isNearPeak) h+=`<span class="icon meteor-icon" title="${m.name}${m.isPeak?' peak':''} — ZHR ~${m.zhr}, ${m.note}">🌠</span>`; } }
+  if (state.showComets  && fd.comet)  { for (const c of fd.comet) h+=`<span class="icon comet-icon" title="${c.name}${c.note?' — '+c.note:''}">☄</span>`; }
+  if (state.showBirthdays && fd.birthday) { for (const b of fd.birthday) h+=`<span class="birthday-label">🎂 ${b.name}</span>`; }
+  if (state.showHolidays && fd.holiday) { for (const hol of fd.holiday) h+=`<span class="holiday-label">${hol.name}</span>`; }
   return h;
 }
 
@@ -695,10 +709,10 @@ function el(tag, cls, text) {
 
 function renderGreg(fy) {
   const root = document.getElementById('calendar-root');
-  root.className = 'view-greg';
+  root.className = 'view-greg' + (state.showOtherDate ? '' : ' hide-other-date');
   const yt = el('div','fairy-year-title');
   yt.innerHTML = `<span class="year-hero-wrap">${getHeaderSVG(fy.yearAnimal, state.theme)}</span>`
-    + `<span class="year-animal">${fy.yearAnimal} Year</span> <span class="year-number">${fy.holYear}</span>`
+    + `<span class="year-number">${fy.gregYear}</span>`
     + (fy.hasBluemoon ? ` <span class="bluemoon-badge">13 Moons · Bluemoon Year</span>` : '');
   const grid = el('div','greg-grid');
   for (let m = 0; m < 12; m++) {
@@ -709,7 +723,7 @@ function renderGreg(fy) {
     mhdr.innerHTML = `<span>${GREG_MONTH_NAMES[m]}</span><button class="info-btn" data-from="${mFromStr}" data-label="${GREG_MONTH_NAMES[m]} ${fy.gregYear}">ⓘ</button>`;
     mon.appendChild(mhdr);
     const wr = el('div','greg-weekrow');
-    for (const a of GREG_WEEKDAY_ABBR) wr.appendChild(el('div','greg-wday',a));
+    for (const wd of getWeekdays()) wr.appendChild(el('div','greg-wday', wd.slice(0,3)));
     mon.appendChild(wr);
     const dg = el('div','greg-days');
     const startDow = (new Date(Date.UTC(fy.gregYear,m,1)).getUTCDay() + 6) % 7;
@@ -719,13 +733,16 @@ function renderGreg(fy) {
       const fd = fy.dayMap.get(ds);
       const cell = el('div', 'greg-cell' + (fd?.isToday?' is-today':'') + (fd?.fairyDay===1?' new-moon-cell':''));
       if (ds === selectedDate) cell.classList.add('is-selected');
+      if (state.showHolidays && fd?.holiday) cell.classList.add('holiday-cell');
+      if (fd?.solarEvent) cell.classList.add('solar-cell');
       cell.dataset.date = ds;
       cell.appendChild(el('span','greg-daynum', String(d)));
+      if (fd?.isToday) cell.appendChild(el('span','today-label','Today'));
       if (fd) {
         const fl = el('span','fairy-label', `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`);
         if (fd.darkmoonPart) { fl.classList.add('darkmoon-label'); fl.title=`Darkmoon · ${fd.darkmoonPart}`; }
         cell.appendChild(fl);
-        if (fd.isToday) { const ib=el('button','info-btn'); ib.dataset.from=ds; ib.dataset.label='Today'; ib.textContent='ⓘ'; ib.classList.add('today-info-btn'); cell.appendChild(ib); }
+        { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=ds; ib.dataset.label=`${fd.isToday?'Today · ':''}${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`; ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); cell.appendChild(ib); }
         const ic = moonIcons(fd);
         if (ic) { const ig=el('span','icon-group'); ig.innerHTML=ic; cell.appendChild(ig); }
       }
@@ -740,7 +757,7 @@ function renderGreg(fy) {
 function renderFairy(fy) {
   const root = document.getElementById('calendar-root');
   root.innerHTML = '';
-  root.className = 'view-fairy';
+  root.className = 'view-fairy' + (state.showOtherDate ? '' : ' hide-other-date');
   const yt = el('div','fairy-year-title');
   yt.innerHTML = `<span class="year-hero-wrap">${getHeaderSVG(fy.yearAnimal, state.theme)}</span>`
     + `<span class="year-animal">${fy.yearAnimal} Year</span> <span class="year-number">${fy.holYear}</span>`
@@ -773,7 +790,7 @@ function renderFairy(fy) {
     const thead = document.createElement('thead');
     const thr = document.createElement('tr');
     for (const [wi, wd] of getWeekdays().entries()) {
-      const th = el('th', wi>=5?'weekend-col':null, wd);
+      const th = el('th', wi>=5?'weekend-col':null, wd.slice(0,3));
       th.dataset.short = wd.slice(0,3);
       thr.appendChild(th);
     }
@@ -792,10 +809,13 @@ function renderFairy(fy) {
       if (fdDateStr === selectedDate) td.classList.add('is-selected');
       if (fd.fairyWeekdayIndex>=5) td.classList.add('weekend-col');
       if (fd.darkmoonPart) td.classList.add(`dp-${fd.darkmoonPart.toLowerCase()}`);
+      if (state.showHolidays && fd.holiday) td.classList.add('holiday-cell');
+      if (fd.solarEvent) td.classList.add('solar-cell');
       td.dataset.date = fdDateStr;
       td.appendChild(el('span','fairy-daynum', String(fd.fairyDay)));
+      if (fd.isToday) td.appendChild(el('span','today-label','Today'));
       td.appendChild(el('span','fairy-greg-date', fmtGreg(fd.gregDate)));
-      if (fd.isToday) { const ib=el('button','info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label='Today'; ib.textContent='ⓘ'; ib.classList.add('today-info-btn'); td.appendChild(ib); }
+      { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=`${fd.isToday?'Today · ':''}${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`; ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
       const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
       row.appendChild(td); col++;
     }
@@ -808,7 +828,7 @@ function renderFairy(fy) {
 function renderWeek(fy) {
   const root = document.getElementById('calendar-root');
   root.innerHTML = '';
-  root.className = 'view-week';
+  root.className = 'view-week' + (state.showOtherDate ? '' : ' hide-other-date');
   const yt = el('div','fairy-year-title');
   yt.innerHTML = `<span class="year-hero-wrap">${getHeaderSVG(fy.yearAnimal, state.theme)}</span>`
     + `<span class="year-animal">${fy.yearAnimal} Year</span> <span class="year-number">${fy.holYear}</span>`
@@ -852,12 +872,15 @@ function renderWeek(fy) {
         if (fd.isToday) td.classList.add('is-today');
         if (fdDateStr === selectedDate) td.classList.add('is-selected');
         if (fd.darkmoonPart) td.classList.add(`dp-${fd.darkmoonPart.toLowerCase()}`);
+        if (state.showHolidays && fd.holiday) td.classList.add('holiday-cell');
+        if (fd.solarEvent) td.classList.add('solar-cell');
         td.dataset.date = fdDateStr;
         const wfd = el('div','week-fairy-date',`${fd.fairyMonth.replace(/moon$/i,'')} ${fd.fairyDay}`);
         wfd.dataset.short = `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`;
         td.appendChild(wfd);
         td.appendChild(el('div','week-greg-date', fmtGreg(fd.gregDate)));
-        if (fd.isToday) { const ib=el('button','info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label='Today'; ib.textContent='ⓘ'; ib.classList.add('today-info-btn'); td.appendChild(ib); }
+        if (fd.isToday) td.appendChild(el('span','today-label','Today'));
+        { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=`${fd.isToday?'Today · ':''}${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`; ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
         const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
         i++;
       }
@@ -916,6 +939,15 @@ function _nthWeekday(year, month, weekday, n) {
   const d = new Date(Date.UTC(year, month - 1, 1));
   const first = (weekday - d.getUTCDay() + 7) % 7;
   return new Date(Date.UTC(year, month - 1, 1 + first + (n - 1) * 7));
+}
+
+function _resolveHolidayRule({month, weekday, n}, year) {
+  if (n === -1) {
+    const last = new Date(Date.UTC(year, month, 0)); // last day of month
+    const diff = (last.getUTCDay() - weekday + 7) % 7;
+    return new Date(Date.UTC(year, month - 1, last.getUTCDate() - diff));
+  }
+  return _nthWeekday(year, month, weekday, n);
 }
 
 function _easternOffsetHours(date) {
@@ -978,12 +1010,240 @@ function initModal() {
   document.getElementById('modal-backdrop').addEventListener('click', closeModal);
   document.getElementById('modal-close').addEventListener('click', closeModal);
   document.getElementById('modal-today-btn').addEventListener('click', () => {
-    if (currentFY) showModal(utcDateStr(new Date()), 'Today', currentFY);
+    if (!currentFY) return;
+    const todayStr = utcDateStr(new Date());
+    const fd = currentFY.dayMap.get(todayStr);
+    const label = fd
+      ? `Today · ${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`
+      : 'Today';
+    showModal(todayStr, label, currentFY);
   });
 }
 
 function closeModal() {
   document.getElementById('cal-modal').setAttribute('hidden', '');
+}
+
+// ─── Help Modal ───────────────────────────────────────────────────────
+
+const HELP_HTML = `
+<h3>The Year Number</h3>
+<p>This calendar uses the <strong>Human Era</strong> (Holocene Era), proposed by scientist Cesare Emiliani. Instead of counting from an arbitrary religious date, it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = <strong>Year 12026</strong>.</p>
+<hr>
+<h3>The Moons (Lunar Months)</h3>
+<p>The calendar has 12 moons per year, each beginning on a new moon:</p>
+<p>Snowmoon · Wakingmoon · Seedmoon · Bloommoon · Flowermoon · Berrymoon · Summermoon · Harvestmoon · Gathermoon · Leafmoon · Frostmoon · <strong>Darkmoon</strong></p>
+<p><strong>Darkmoon</strong> is always the last moon of the year — the one containing the winter solstice.</p>
+<p><strong>Bluemoon:</strong> When the solstice falls on day 19 or later of Darkmoon (Bear or Fox), a 13th moon (Bluemoon) is added after Darkmoon, making a 13-moon year.</p>
+<p>The threshold isn't arbitrary. A solar year (~365.24 days) is about 10.88 days longer than 12 lunar months (~354.36 days). If the solstice falls on day 19 of Darkmoon, next year without correction it would land on day ~30 — right at the edge of the month, or just past it. Day 20 or later means the solstice would overshoot into the <em>following</em> moon entirely, so Darkmoon would no longer contain the solstice. The Bear/Fox rule is the exact astronomical threshold for when the calendar must self-correct. Adding Bluemoon resets the solstice back to Robin or Rabbit territory (~day 6) the following year, and the cycle begins again.</p>
+<hr>
+<h3>The Year Animal</h3>
+<p>Darkmoon is divided into five named parts. Whichever part the winter solstice falls in names the year:</p>
+<table class="help-table">
+  <tr><th>Part</th><th>Days</th><th>Character</th></tr>
+  <tr><td><strong>Robin</strong></td><td>1–6</td><td>Early and bright — the year begins before the dark has truly settled</td></tr>
+  <tr><td><strong>Rabbit</strong></td><td>7–12</td><td>Alert and watchful, sitting at the threshold</td></tr>
+  <tr><td><strong>Turkey</strong></td><td>13–18</td><td>Mid-dark, gathering and deliberate</td></tr>
+  <tr><td><strong>Bear</strong></td><td>19–24</td><td>Deep in the dark — needs to sleep a little longer this year</td></tr>
+  <tr><td><strong>Fox</strong></td><td>25–end</td><td>Deepest drift — already out hunting in the long night</td></tr>
+</table>
+<p>The year animal is a shorthand for the offset between the solar and lunar calendar. A Robin year means the solstice arrived early in Darkmoon; a Fox year means the calendar has drifted far and a Bluemoon is coming.</p>
+<hr>
+<h3>The Weekday Names</h3>
+<p>In <strong>Myth</strong> mode, the days are named for Norse gods and celestial bodies. The standard English weekday names already hide these figures — this calendar brings them forward.</p>
+<table class="help-table">
+  <tr><th>Fairy</th><th>Standard</th><th>Named for</th></tr>
+  <tr><td><strong>Heimday</strong></td><td>Monday</td><td><strong>Heimdall</strong> — watchman of Asgard, guardian of the Bifrost rainbow bridge. He stands at the threshold, ever-watching — a fitting start to the week.</td></tr>
+  <tr><td><strong>Tyrsday</strong></td><td>Tuesday</td><td><strong>Tyr</strong> — god of justice and honorable combat. He sacrificed his hand to bind the wolf Fenrir, upholding the law of the gods.</td></tr>
+  <tr><td><strong>Wodensday</strong></td><td>Wednesday</td><td><strong>Woden (Odin)</strong> — the All-Father, god of wisdom, poetry, and the dead. He hung himself on Yggdrasil for nine days to earn the knowledge of the runes.</td></tr>
+  <tr><td><strong>Thorsday</strong></td><td>Thursday</td><td><strong>Thor</strong> — god of thunder and lightning, defender of both gods and humans.</td></tr>
+  <tr><td><strong>Freyasday</strong></td><td>Friday</td><td><strong>Freya</strong> — goddess of love, beauty, gold, and magic. She leads the Valkyries and weeps tears of red gold.</td></tr>
+  <tr><td><strong>Moonday</strong></td><td>Saturday</td><td><strong>The Moon.</strong> Saturday is named for Saturn, a Roman deity who has no place among these Norse gods. Monday is already Moon's day — but that means a billion people begin their work week cursing the Moon. Moving it to the weekend transforms it from a burden into a blessing, and gives it the night sky it deserves.</td></tr>
+  <tr><td><strong>Sunday</strong></td><td>Sunday</td><td><strong>The Sun</strong> — unchanged.</td></tr>
+</table>
+<hr>
+<h3>Icons on Calendar Days</h3>
+<table class="help-table">
+  <tr><th>Icon</th><th>Meaning</th></tr>
+  <tr><td>🌑 🌓 🌕 🌗</td><td>New moon, first quarter, full moon, last quarter</td></tr>
+  <tr><td>☀</td><td>Solstice or equinox</td></tr>
+  <tr><td>Ⓟ + %</td><td>Lunar perigee (Moon closest to Earth); illumination percentage</td></tr>
+  <tr><td>@</td><td>Lunar apogee (Moon farthest from Earth)</td></tr>
+  <tr><td>🌠</td><td>Meteor shower near peak</td></tr>
+  <tr><td>☄</td><td>Comet in visibility window</td></tr>
+  <tr><td>🎂</td><td>Birthday</td></tr>
+  <tr><td>Colored border</td><td>US federal holiday</td></tr>
+</table>
+<hr>
+<h3>The Night Sky Panel</h3>
+<p>Click any <strong>ⓘ</strong> button to open the events panel. When viewing today, the <strong>Tonight</strong> section shows sunset time, astronomical twilight (when the sky is truly dark — sun 18° below horizon, roughly 1.5–2 hours after sunset), visible planets, active meteor showers, and evening constellations visible from your location.</p>
+<hr>
+<h3>Other Lunar Calendars</h3>
+<p>Many cultures have tracked time by the moon. The most widely used today is the <strong>Hebrew calendar</strong>, which shares some features with this one — and differs in revealing ways.</p>
+<p><strong>What they share:</strong> Both are <em>lunisolar</em> — they follow the moon for months but add an intercalary (leap) month to stay aligned with the solar year. Both start each month on the new moon.</p>
+<p><strong>How the Hebrew calendar works:</strong> It has 12 months of 29–30 days. Seven times in every 19-year cycle (the Metonic cycle), a 13th month is inserted on a fixed arithmetic schedule. The year begins in autumn around the fall equinox (Rosh Hashanah). Months carry ancient Babylonian names: Nisan, Iyar, Sivan… The year count runs from a calculated date of creation, placing 2026 CE at approximately year 5786.</p>
+<p><strong>How this calendar differs:</strong></p>
+<table class="help-table">
+  <tr><td><strong>Year anchor</strong></td><td>The Hebrew year begins in <em>autumn</em>. This calendar begins in <em>winter</em> — Snowmoon starts just after the darkest night. The year rises from darkness toward light.</td></tr>
+  <tr><td><strong>Leap month rule</strong></td><td>Hebrew intercalation follows a fixed 19-year schedule. This calendar uses a purely astronomical trigger: Bluemoon is added only when the winter solstice drifts late enough in Darkmoon that skipping it would push next year's solstice outside Darkmoon entirely.</td></tr>
+  <tr><td><strong>Accuracy</strong></td><td>The modern Hebrew calendar uses a standardized lunar month length fixed since the 4th century CE and no longer tracks actual moon observation. This calendar computes real new moons using Meeus astronomical algorithms — it reflects the actual sky.</td></tr>
+  <tr><td><strong>Month names</strong></td><td>Hebrew months retain ancient Babylonian names. These months are named for what the natural world is doing.</td></tr>
+  <tr><td><strong>The week</strong></td><td>The Hebrew week counts numbered days ending in Sabbath. This calendar names the days for the Norse gods who already secretly inhabit the English weekday names.</td></tr>
+</table>
+<p>The <strong>Islamic calendar</strong> is purely lunar with no intercalation, drifting through all seasons over ~33 years. The <strong>Chinese calendar</strong> is lunisolar and adds leap months similarly to Hebrew. Both are old and rich — this calendar is simply a new one, built for a specific family, in a specific place, watching a specific sky.</p>
+`;
+
+function initHelpModal() {
+  const modal = document.createElement('div');
+  modal.id = 'help-modal';
+  modal.setAttribute('hidden', '');
+  modal.innerHTML =
+    `<div id="modal-backdrop"></div>` +
+    `<div id="modal-box">` +
+      `<div id="modal-header">` +
+        `<h2 id="modal-title">About This Calendar</h2>` +
+        `<div id="modal-header-btns">` +
+          `<button id="modal-close" aria-label="Close">✕</button>` +
+        `</div>` +
+      `</div>` +
+      `<div id="modal-body">${HELP_HTML}</div>` +
+    `</div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#modal-backdrop').addEventListener('click', closeHelp);
+  modal.querySelector('#modal-close').addEventListener('click', closeHelp);
+}
+
+function showHelp() {
+  document.getElementById('help-modal').removeAttribute('hidden');
+}
+
+function closeHelp() {
+  document.getElementById('help-modal').setAttribute('hidden', '');
+}
+
+// ─── Settings Modal ───────────────────────────────────────────────────────
+
+function initSettingsModal() {
+  const modal = document.createElement('div');
+  modal.id = 'settings-modal';
+  modal.setAttribute('hidden', '');
+  modal.innerHTML =
+    `<div id="modal-backdrop"></div>` +
+    `<div id="modal-box">` +
+      `<div id="modal-header">` +
+        `<h2 id="modal-title">Settings</h2>` +
+        `<div id="modal-header-btns">` +
+          `<button id="modal-close" aria-label="Close">✕</button>` +
+        `</div>` +
+      `</div>` +
+      `<div id="modal-body">` +
+        `<h3 class="settings-section-head">Location</h3>` +
+        `<p class="settings-hint">Used for sunset, twilight, and constellation calculations.</p>` +
+        `<div class="settings-row">` +
+          `<label for="settings-lat">Latitude</label>` +
+          `<input type="number" id="settings-lat" min="-90" max="90" step="0.1" placeholder="e.g. 37.0">` +
+          `<span class="settings-unit">° N</span>` +
+        `</div>` +
+        `<div class="settings-row">` +
+          `<label for="settings-lon">Longitude</label>` +
+          `<input type="number" id="settings-lon" min="-180" max="180" step="0.1" placeholder="e.g. -80.0">` +
+          `<span class="settings-unit">° E</span>` +
+        `</div>` +
+        `<p class="settings-hint">Negative longitude = West. Times display in US Eastern timezone.</p>` +
+        `<div class="settings-actions">` +
+          `<button id="settings-save" class="btn">Save</button>` +
+          `<button id="settings-cancel" class="btn">Cancel</button>` +
+        `</div>` +
+        `<hr class="settings-divider">` +
+        `<h3 class="settings-section-head">Birthdays</h3>` +
+        `<div id="birthday-list"></div>` +
+        `<div class="settings-row bday-add-row">` +
+          `<input type="text" id="bday-name" class="bday-input" placeholder="Name" maxlength="40">` +
+          `<select id="bday-month" class="bday-select">` +
+            `<option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>` +
+            `<option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>` +
+            `<option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>` +
+            `<option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>` +
+          `</select>` +
+          `<input type="number" id="bday-day" class="bday-input bday-day-input" min="1" max="31" placeholder="Day">` +
+          `<button id="bday-add-btn" class="btn">Add</button>` +
+        `</div>` +
+      `</div>` +
+    `</div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#modal-backdrop').addEventListener('click', closeSettings);
+  modal.querySelector('#modal-close').addEventListener('click', closeSettings);
+  modal.querySelector('#settings-cancel').addEventListener('click', closeSettings);
+  modal.querySelector('#settings-save').addEventListener('click', saveSettings);
+  modal.querySelector('#bday-add-btn').addEventListener('click', () => {
+    const name  = modal.querySelector('#bday-name').value.trim();
+    const month = parseInt(modal.querySelector('#bday-month').value, 10);
+    const day   = parseInt(modal.querySelector('#bday-day').value, 10);
+    if (!name || isNaN(day) || day < 1 || day > 31) return;
+    runtimeBirthdays.push({ name, month, day });
+    _saveBirthdays();
+    modal.querySelector('#bday-name').value = '';
+    modal.querySelector('#bday-day').value  = '';
+    _renderBirthdayList();
+    refresh();
+  });
+}
+
+function showSettings() {
+  document.getElementById('settings-lat').value = OBSERVER.lat;
+  document.getElementById('settings-lon').value = OBSERVER.lon;
+  _renderBirthdayList();
+  document.getElementById('settings-modal').removeAttribute('hidden');
+}
+
+function _saveBirthdays() {
+  try { localStorage.setItem('fairy-cal-birthdays', JSON.stringify(runtimeBirthdays)); } catch(_) {}
+}
+
+function _renderBirthdayList() {
+  const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const list = document.getElementById('birthday-list');
+  list.innerHTML = '';
+  if (runtimeBirthdays.length === 0) {
+    list.innerHTML = '<p class="settings-hint">No birthdays added yet.</p>';
+    return;
+  }
+  const sorted = [...runtimeBirthdays].sort((a,b) => a.month - b.month || a.day - b.day);
+  sorted.forEach(b => {
+    const row = document.createElement('div');
+    row.className = 'bday-list-item';
+    row.innerHTML =
+      `<span class="bday-list-name">${b.name}</span>` +
+      `<span class="bday-list-date">${MONTH_ABBR[b.month-1]} ${b.day}</span>` +
+      `<button class="bday-delete-btn" data-name="${b.name}" data-month="${b.month}" data-day="${b.day}" aria-label="Remove">✕</button>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.bday-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const { name, month, day } = btn.dataset;
+      runtimeBirthdays = runtimeBirthdays.filter(b =>
+        !(b.name === name && b.month === Number(month) && b.day === Number(day)));
+      _saveBirthdays();
+      _renderBirthdayList();
+      refresh();
+    });
+  });
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').setAttribute('hidden', '');
+}
+
+function saveSettings() {
+  const lat = parseFloat(document.getElementById('settings-lat').value);
+  const lon = parseFloat(document.getElementById('settings-lon').value);
+  if (isNaN(lat) || lat < -90 || lat > 90) return;
+  if (isNaN(lon) || lon < -180 || lon > 180) return;
+  OBSERVER.lat = lat;
+  OBSERVER.lon = lon;
+  try { localStorage.setItem('fairy-cal-observer', JSON.stringify({ lat, lon })); } catch(_) {}
+  closeSettings();
+  refresh();
 }
 
 function _formatEvent(ev) {
@@ -1031,16 +1291,11 @@ function showModal(fromDateStr, label, fy) {
 
   let eveningSkyHTML = '';
   if (consts.length > 0 || visPlans.length > 0 || activeMeteors.length > 0) {
-    const _skyFd = fy.dayMap.get(fromDateStr);
-    const _skyGd = _skyFd?.gregDate || skyDate;
-    const _skyDateFmt = ((state.viewMode === 'fairy' || state.viewMode === 'week') && _skyFd)
-      ? `${_skyFd.fairyMonth.replace(/moon$/i,'')} ${_skyFd.fairyDay}`
-      : `${GREG_MONTH_NAMES[_skyGd.getUTCMonth()].slice(0,3)} ${_skyGd.getUTCDate()}`;
     const sunset   = sunsetTime(skyDate);
     const twilight = astroTwilightEnd(skyDate);
     const tomorrow = new Date(skyDate.getTime() + 86400000);
     const sunrise  = sunriseTime(tomorrow);
-    const parts = [_skyDateFmt, `🌙 ${moonIllum}%`];
+    const parts = [`🌙 ${moonIllum}%`];
     if (sunset)   parts.push(`↓${sunset}`);
     if (twilight) parts.push(`✦ ${twilight}`);
     if (sunrise)  parts.push(`↑${sunrise}`);
@@ -1243,7 +1498,7 @@ const PATTERNS = {
   celtic: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='none'/%3E%3Cpath d='M10 10 Q20 0 30 10 Q40 20 50 10 M10 50 Q20 40 30 50 Q40 60 50 50 M10 10 Q0 20 10 30 Q20 40 10 50 M50 10 Q60 20 50 30 Q40 40 50 50 M30 10 L30 50 M10 30 L50 30' stroke='%23c8a96e' stroke-width='1.5' fill='none' opacity='0.25'/%3E%3C/svg%3E")`,
   wizard: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' fill='none'/%3E%3Ccircle cx='15' cy='15' r='2' fill='%23c8b8e8' opacity='0.4'/%3E%3Ccircle cx='45' cy='8' r='1.5' fill='%23e8d8ff' opacity='0.35'/%3E%3Ccircle cx='65' cy='25' r='1' fill='%23c8b8e8' opacity='0.3'/%3E%3Ccircle cx='30' cy='45' r='2.5' fill='%23e8d8ff' opacity='0.4'/%3E%3Ccircle cx='70' cy='60' r='1.5' fill='%23c8b8e8' opacity='0.35'/%3E%3Ccircle cx='10' cy='65' r='1' fill='%23e8d8ff' opacity='0.3'/%3E%3Ccircle cx='55' cy='50' r='2' fill='%23c8b8e8' opacity='0.35'/%3E%3Cpath d='M40 20 L42 26 L48 26 L43 30 L45 36 L40 32 L35 36 L37 30 L32 26 L38 26 Z' fill='%23ffd700' opacity='0.2'/%3E%3Cpath d='M20 55 Q25 48 30 55' stroke='%23c8b8e8' stroke-width='1' fill='none' opacity='0.25'/%3E%3C/svg%3E")`,
   fairy:  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='none'/%3E%3Ccircle cx='15' cy='15' r='3' fill='%23ffb7d5' opacity='0.3'/%3E%3Ccircle cx='15' cy='10' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='20' cy='15' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='10' cy='15' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='15' cy='20' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='45' cy='45' r='3' fill='%23ffb7d5' opacity='0.3'/%3E%3Ccircle cx='45' cy='40' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='50' cy='45' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='40' cy='45' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3Ccircle cx='45' cy='50' r='1.5' fill='%23fff0f5' opacity='0.35'/%3E%3C/svg%3E")`,
-  animal: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70'%3E%3Crect width='70' height='70' fill='none'/%3E%3Cellipse cx='20' cy='20' rx='5' ry='6' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='17' cy='17' r='2' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='23' cy='17' r='2' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='17' cy='23' r='2' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='23' cy='23' r='2' fill='%23a0785a' opacity='0.15'/%3E%3Cellipse cx='50' cy='50' rx='5' ry='6' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='47' cy='47' r='2' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='53' cy='47' r='2' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='47' cy='53' r='2' fill='%23a0785a' opacity='0.15'/%3E%3Ccircle cx='53' cy='53' r='2' fill='%23a0785a' opacity='0.15'/%3E%3C/svg%3E")`,
+  animal: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cellipse cx='24' cy='30' rx='9' ry='7' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='13' cy='20' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='21' cy='15' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='30' cy='15' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='38' cy='20' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='64' cy='68' rx='9' ry='7' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='53' cy='58' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='61' cy='53' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='70' cy='53' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3Cellipse cx='78' cy='58' rx='4' ry='4.5' fill='%238a6040' opacity='0.18'/%3E%3C/svg%3E")`,
   flower: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='none'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(0 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(60 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(120 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(180 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(240 32 32)'/%3E%3Cellipse cx='32' cy='24' rx='4' ry='7' fill='%23f9a8d4' opacity='0.25' transform='rotate(300 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23fde68a' opacity='0.4'/%3E%3C/svg%3E")`,
 };
 
@@ -1256,11 +1511,11 @@ const THEMES = {
     '--color-moon-icon':'#2d6a4f','--color-solar-icon':'#c8a96e',
     '--border-radius-cell':'2px','--pattern-bg':PATTERNS.celtic,
     variants:{
-      a:{'--color-bg':'#f0ede4','--color-bg-alt':'#e6e0d0','--color-surface':'#faf8f2','--color-border':'#c8a96e','--color-text-primary':'#2a2010','--color-text-secondary':'#6b5a3a','--color-today-highlight':'#d4edda','--color-weekend':'rgba(200,169,110,0.1)'},
-      b:{'--color-bg':'#e8f4ee','--color-bg-alt':'#d8ead8','--color-surface':'#f2faf4','--color-border':'#2d6a4f','--color-text-primary':'#0d2b1a','--color-text-secondary':'#3a6a50','--color-today-highlight':'#b7e4c7','--color-weekend':'rgba(45,106,79,0.08)'},
-      c:{'--color-bg':'#f5f0e8','--color-bg-alt':'#e8e0d0','--color-surface':'#fdfaf5','--color-border':'#8b6914','--color-text-primary':'#2a1f08','--color-text-secondary':'#7a5a20','--color-today-highlight':'#fde8a0','--color-weekend':'rgba(139,105,20,0.08)'},
-      d:{'--color-bg':'#ece8f0','--color-bg-alt':'#ddd8e8','--color-surface':'#f8f6fc','--color-border':'#6b4a8a','--color-text-primary':'#1a1028','--color-text-secondary':'#5a3a7a','--color-today-highlight':'#e0d0f8','--color-weekend':'rgba(107,74,138,0.08)'},
-      e:{'--color-bg':'#f0e8e8','--color-bg-alt':'#e4d8d8','--color-surface':'#fdf8f8','--color-border':'#8a3a3a','--color-text-primary':'#280d0d','--color-text-secondary':'#7a3030','--color-today-highlight':'#f8d0d0','--color-weekend':'rgba(138,58,58,0.08)'},
+      a:{'--color-header':'#5a3a1a','--color-bg':'#f0ede4','--color-bg-alt':'#e6e0d0','--color-surface':'#faf8f2','--color-border':'#c8a96e','--color-text-primary':'#2a2010','--color-text-secondary':'#6b5a3a','--color-today-highlight':'#d4edda','--color-weekend':'rgba(200,169,110,0.1)'},
+      b:{'--color-header':'#1a4a30','--color-bg':'#e8f4ee','--color-bg-alt':'#d8ead8','--color-surface':'#f2faf4','--color-border':'#2d6a4f','--color-text-primary':'#0d2b1a','--color-text-secondary':'#3a6a50','--color-today-highlight':'#b7e4c7','--color-weekend':'rgba(45,106,79,0.08)'},
+      c:{'--color-header':'#5a3a08','--color-bg':'#f5f0e8','--color-bg-alt':'#e8e0d0','--color-surface':'#fdfaf5','--color-border':'#8b6914','--color-text-primary':'#2a1f08','--color-text-secondary':'#7a5a20','--color-today-highlight':'#fde8a0','--color-weekend':'rgba(139,105,20,0.08)'},
+      d:{'--color-header':'#3a2060','--color-bg':'#ece8f0','--color-bg-alt':'#ddd8e8','--color-surface':'#f8f6fc','--color-border':'#6b4a8a','--color-text-primary':'#1a1028','--color-text-secondary':'#5a3a7a','--color-today-highlight':'#e0d0f8','--color-weekend':'rgba(107,74,138,0.08)'},
+      e:{'--color-header':'#4a1520','--color-bg':'#f0e8e8','--color-bg-alt':'#e4d8d8','--color-surface':'#fdf8f8','--color-border':'#8a3a3a','--color-text-primary':'#280d0d','--color-text-secondary':'#7a3030','--color-today-highlight':'#f8d0d0','--color-weekend':'rgba(138,58,58,0.08)'},
     },
   },
   wizard: {
@@ -1271,11 +1526,11 @@ const THEMES = {
     '--color-moon-icon':'#c8b8e8','--color-solar-icon':'#f1c40f',
     '--border-radius-cell':'4px','--pattern-bg':PATTERNS.wizard,
     variants:{
-      a:{'--color-bg':'#1e1030','--color-bg-alt':'#2a1845','--color-surface':'#26163a','--color-border':'#7b4fa0','--color-text-primary':'#e8d8ff','--color-text-secondary':'#b09ad0','--color-today-highlight':'#4a2a6a','--color-weekend':'rgba(123,79,160,0.2)'},
-      b:{'--color-bg':'#0d1a2e','--color-bg-alt':'#162440','--color-surface':'#111e38','--color-border':'#2980b9','--color-text-primary':'#d8eeff','--color-text-secondary':'#7ab8d8','--color-today-highlight':'#1a3a5a','--color-weekend':'rgba(41,128,185,0.15)'},
-      c:{'--color-bg':'#091a0d','--color-bg-alt':'#102616','--color-surface':'#0d2010','--color-border':'#1e8a3a','--color-text-primary':'#c8ffcf','--color-text-secondary':'#6abf78','--color-today-highlight':'#1a4a22','--color-weekend':'rgba(30,138,58,0.18)'},
-      d:{'--color-bg':'#1a0808','--color-bg-alt':'#280d0d','--color-surface':'#200b0b','--color-border':'#c0392b','--color-text-primary':'#ffe0e0','--color-text-secondary':'#d08080','--color-today-highlight':'#4a1010','--color-weekend':'rgba(192,57,43,0.18)'},
-      e:{'--color-bg':'#041318','--color-bg-alt':'#081e26','--color-surface':'#061820','--color-border':'#00919e','--color-text-primary':'#c0f0f8','--color-text-secondary':'#5abcc8','--color-today-highlight':'#083040','--color-weekend':'rgba(0,145,158,0.18)'},
+      a:{'--color-header':'#5a2a80','--color-bg':'#1e1030','--color-bg-alt':'#2a1845','--color-surface':'#26163a','--color-border':'#7b4fa0','--color-text-primary':'#e8d8ff','--color-text-secondary':'#b09ad0','--color-today-highlight':'#4a2a6a','--color-weekend':'rgba(123,79,160,0.2)'},
+      b:{'--color-header':'#1a4a70','--color-bg':'#0d1a2e','--color-bg-alt':'#162440','--color-surface':'#111e38','--color-border':'#2980b9','--color-text-primary':'#d8eeff','--color-text-secondary':'#7ab8d8','--color-today-highlight':'#1a3a5a','--color-weekend':'rgba(41,128,185,0.15)'},
+      c:{'--color-header':'#1a5a28','--color-bg':'#091a0d','--color-bg-alt':'#102616','--color-surface':'#0d2010','--color-border':'#1e8a3a','--color-text-primary':'#c8ffcf','--color-text-secondary':'#6abf78','--color-today-highlight':'#1a4a22','--color-weekend':'rgba(30,138,58,0.18)'},
+      d:{'--color-header':'#6a1a1a','--color-bg':'#1a0808','--color-bg-alt':'#280d0d','--color-surface':'#200b0b','--color-border':'#c0392b','--color-text-primary':'#ffe0e0','--color-text-secondary':'#d08080','--color-today-highlight':'#4a1010','--color-weekend':'rgba(192,57,43,0.18)'},
+      e:{'--color-header':'#6a5000','--color-bg':'#141008','--color-bg-alt':'#1e180a','--color-surface':'#1a140a','--color-border':'#c8a000','--color-text-primary':'#fff8c0','--color-text-secondary':'#c8b040','--color-today-highlight':'#3a2e00','--color-weekend':'rgba(200,160,0,0.18)'},
     },
   },
   fairy: {
@@ -1286,26 +1541,26 @@ const THEMES = {
     '--color-moon-icon':'#d63384','--color-solar-icon':'#f59e0b',
     '--border-radius-cell':'8px','--pattern-bg':PATTERNS.fairy,
     variants:{
-      a:{'--color-bg':'#fff0f8','--color-bg-alt':'#fce4f0','--color-surface':'#fff8fc','--color-border':'#f0a0c8','--color-text-primary':'#3a0828','--color-text-secondary':'#a03060','--color-today-highlight':'#ffd0e8','--color-weekend':'rgba(214,51,132,0.07)'},
-      b:{'--color-bg':'#f0e8ff','--color-bg-alt':'#e4d8f8','--color-surface':'#f8f4ff','--color-border':'#b080d8','--color-text-primary':'#200838','--color-text-secondary':'#8040c0','--color-today-highlight':'#e0c8ff','--color-weekend':'rgba(156,90,184,0.08)'},
-      c:{'--color-bg':'#f0fff4','--color-bg-alt':'#d8f8e4','--color-surface':'#f8fff8','--color-border':'#80c8a0','--color-text-primary':'#082820','--color-text-secondary':'#408060','--color-today-highlight':'#c0f0d0','--color-weekend':'rgba(64,128,96,0.08)'},
-      d:{'--color-bg':'#fffff0','--color-bg-alt':'#f8f8d8','--color-surface':'#fffff8','--color-border':'#c8c840','--color-text-primary':'#282808','--color-text-secondary':'#808020','--color-today-highlight':'#f0f0a0','--color-weekend':'rgba(200,200,64,0.08)'},
-      e:{'--color-bg':'#fff8f0','--color-bg-alt':'#f8e8d0','--color-surface':'#fffcf8','--color-border':'#e0a060','--color-text-primary':'#281808','--color-text-secondary':'#a06020','--color-today-highlight':'#ffe0b0','--color-weekend':'rgba(224,160,96,0.08)'},
+      a:{'--color-header':'#a0205a','--color-bg':'#fff0f8','--color-bg-alt':'#fce4f0','--color-surface':'#fff8fc','--color-border':'#f0a0c8','--color-text-primary':'#3a0828','--color-text-secondary':'#a03060','--color-today-highlight':'#ffd0e8','--color-weekend':'rgba(214,51,132,0.07)'},
+      b:{'--color-header':'#5a2090','--color-bg':'#f0e8ff','--color-bg-alt':'#e4d8f8','--color-surface':'#f8f4ff','--color-border':'#b080d8','--color-text-primary':'#200838','--color-text-secondary':'#8040c0','--color-today-highlight':'#e0c8ff','--color-weekend':'rgba(156,90,184,0.08)'},
+      c:{'--color-header':'#285a40','--color-bg':'#f0fff4','--color-bg-alt':'#d8f8e4','--color-surface':'#f8fff8','--color-border':'#80c8a0','--color-text-primary':'#082820','--color-text-secondary':'#408060','--color-today-highlight':'#c0f0d0','--color-weekend':'rgba(64,128,96,0.08)'},
+      d:{'--color-header':'#6a6a10','--color-bg':'#fffff0','--color-bg-alt':'#f8f8d8','--color-surface':'#fffff8','--color-border':'#c8c840','--color-text-primary':'#282808','--color-text-secondary':'#808020','--color-today-highlight':'#f0f0a0','--color-weekend':'rgba(200,200,64,0.08)'},
+      e:{'--color-header':'#7a4010','--color-bg':'#fff8f0','--color-bg-alt':'#f8e8d0','--color-surface':'#fffcf8','--color-border':'#e0a060','--color-text-primary':'#281808','--color-text-secondary':'#a06020','--color-today-highlight':'#ffe0b0','--color-weekend':'rgba(224,160,96,0.08)'},
     },
   },
   animal: {
     '--font-family-header':'Georgia,"Times New Roman",serif',
     '--font-family-body':'Georgia,"Times New Roman",serif',
-    '--color-accent':'#7a5a2a','--color-accent-2':'#c87840',
-    '--color-darkmoon':'#1a0f08','--color-bluemoon':'#080f1a',
+    '--color-accent':'#8b5e20','--color-accent-2':'#c87840',
+    '--color-darkmoon':'#1a0f08','--color-bluemoon':'#0a1a0a',
     '--color-moon-icon':'#c87840','--color-solar-icon':'#e8a020',
     '--border-radius-cell':'3px','--pattern-bg':PATTERNS.animal,
     variants:{
-      a:{'--color-bg':'#f5efe0','--color-bg-alt':'#ece0c8','--color-surface':'#faf6ee','--color-border':'#b08040','--color-text-primary':'#1a1008','--color-text-secondary':'#6a4820','--color-today-highlight':'#f0d898','--color-weekend':'rgba(176,128,64,0.08)'},
-      b:{'--color-bg':'#e8f0e0','--color-bg-alt':'#d8e8c8','--color-surface':'#f2f8ec','--color-border':'#608040','--color-text-primary':'#101808','--color-text-secondary':'#406028','--color-today-highlight':'#c8e890','--color-weekend':'rgba(96,128,64,0.08)'},
-      c:{'--color-bg':'#f0e8e0','--color-bg-alt':'#e4d8c8','--color-surface':'#f8f4ee','--color-border':'#a07060','--color-text-primary':'#201008','--color-text-secondary':'#806040','--color-today-highlight':'#e8c8b0','--color-weekend':'rgba(160,112,96,0.08)'},
-      d:{'--color-bg':'#e0e8f0','--color-bg-alt':'#c8d8e8','--color-surface':'#eef4f8','--color-border':'#4878a0','--color-text-primary':'#081020','--color-text-secondary':'#306080','--color-today-highlight':'#90c8e8','--color-weekend':'rgba(72,120,160,0.08)'},
-      e:{'--color-bg':'#ece0f0','--color-bg-alt':'#dcc8e8','--color-surface':'#f6f0fc','--color-border':'#8050a0','--color-text-primary':'#180828','--color-text-secondary':'#604880','--color-today-highlight':'#d0a8e8','--color-weekend':'rgba(128,80,160,0.08)'},
+      a:{'--color-header':'#6a4010','--color-bg':'#f5ede0','--color-bg-alt':'#ede0cc','--color-surface':'#faf6ee','--color-border':'#b08840','--color-text-primary':'#1a1008','--color-text-secondary':'#6a4820','--color-today-highlight':'#f0d898','--color-weekend':'rgba(176,136,64,0.10)'},
+      b:{'--color-header':'#2a5018','--color-bg':'#eef4e8','--color-bg-alt':'#deecd4','--color-surface':'#f4f8f0','--color-border':'#5a8040','--color-text-primary':'#0e1808','--color-text-secondary':'#3a6020','--color-today-highlight':'#c8e8a0','--color-weekend':'rgba(90,128,64,0.10)'},
+      c:{'--color-header':'#7a3810','--color-bg':'#f5ede6','--color-bg-alt':'#ece0d4','--color-surface':'#faf6f2','--color-border':'#c07040','--color-text-primary':'#200e06','--color-text-secondary':'#8a4820','--color-today-highlight':'#f0c898','--color-weekend':'rgba(192,112,64,0.10)'},
+      d:{'--color-header':'#304050','--color-bg':'#eaeef0','--color-bg-alt':'#d8dee2','--color-surface':'#f2f4f6','--color-border':'#607080','--color-text-primary':'#0e1218','--color-text-secondary':'#405060','--color-today-highlight':'#b8ccd8','--color-weekend':'rgba(96,112,128,0.10)'},
+      e:{'--color-header':'#4a3018','--color-bg':'#f0ebe4','--color-bg-alt':'#e4dbd0','--color-surface':'#f8f4ee','--color-border':'#806040','--color-text-primary':'#180e06','--color-text-secondary':'#604830','--color-today-highlight':'#d8c090','--color-weekend':'rgba(128,96,64,0.10)'},
     },
   },
   flower: {
@@ -1316,21 +1571,28 @@ const THEMES = {
     '--color-moon-icon':'#e05080','--color-solar-icon':'#e0a020',
     '--border-radius-cell':'6px','--pattern-bg':PATTERNS.flower,
     variants:{
-      a:{'--color-bg':'#fff4f8','--color-bg-alt':'#f8e4ee','--color-surface':'#fff8fc','--color-border':'#f080a8','--color-text-primary':'#280818','--color-text-secondary':'#c04878','--color-today-highlight':'#ffc8de','--color-weekend':'rgba(240,128,168,0.08)'},
-      b:{'--color-bg':'#f4fff0','--color-bg-alt':'#e4f8e0','--color-surface':'#f8fff6','--color-border':'#50c070','--color-text-primary':'#082018','--color-text-secondary':'#308050','--color-today-highlight':'#b0e8c0','--color-weekend':'rgba(80,192,112,0.08)'},
-      c:{'--color-bg':'#fffff0','--color-bg-alt':'#f8f8d8','--color-surface':'#fffffC','--color-border':'#d0c020','--color-text-primary':'#201e08','--color-text-secondary':'#807818','--color-today-highlight':'#eeee88','--color-weekend':'rgba(208,192,32,0.08)'},
-      d:{'--color-bg':'#f0f8ff','--color-bg-alt':'#e0ecf8','--color-surface':'#f8fbff','--color-border':'#5890d8','--color-text-primary':'#081828','--color-text-secondary':'#3870b0','--color-today-highlight':'#b0d4f8','--color-weekend':'rgba(88,144,216,0.08)'},
-      e:{'--color-bg':'#fff8f0','--color-bg-alt':'#f8e8d8','--color-surface':'#fffcf8','--color-border':'#d07030','--color-text-primary':'#281008','--color-text-secondary':'#a05020','--color-today-highlight':'#f8c890','--color-weekend':'rgba(208,112,48,0.08)'},
+      a:{'--color-header':'#903040','--color-bg':'#fff4f8','--color-bg-alt':'#f8e4ee','--color-surface':'#fff8fc','--color-border':'#f080a8','--color-text-primary':'#280818','--color-text-secondary':'#c04878','--color-today-highlight':'#ffc8de','--color-weekend':'rgba(240,128,168,0.08)'},
+      b:{'--color-header':'#186038','--color-bg':'#f4fff0','--color-bg-alt':'#e4f8e0','--color-surface':'#f8fff6','--color-border':'#50c070','--color-text-primary':'#082018','--color-text-secondary':'#308050','--color-today-highlight':'#b0e8c0','--color-weekend':'rgba(80,192,112,0.08)'},
+      c:{'--color-header':'#505010','--color-bg':'#fffff0','--color-bg-alt':'#f8f8d8','--color-surface':'#fffffC','--color-border':'#d0c020','--color-text-primary':'#201e08','--color-text-secondary':'#807818','--color-today-highlight':'#eeee88','--color-weekend':'rgba(208,192,32,0.08)'},
+      d:{'--color-header':'#2a5090','--color-bg':'#f0f8ff','--color-bg-alt':'#e0ecf8','--color-surface':'#f8fbff','--color-border':'#5890d8','--color-text-primary':'#081828','--color-text-secondary':'#3870b0','--color-today-highlight':'#b0d4f8','--color-weekend':'rgba(88,144,216,0.08)'},
+      e:{'--color-header':'#804020','--color-bg':'#fff8f0','--color-bg-alt':'#f8e8d8','--color-surface':'#fffcf8','--color-border':'#d07030','--color-text-primary':'#281008','--color-text-secondary':'#a05020','--color-today-highlight':'#f8c890','--color-weekend':'rgba(208,112,48,0.08)'},
     },
   },
 };
 
 const VARIANT_SWATCH_COLORS = {
   fairy:  ['#fff0f8','#f0e8ff','#f0fff4','#fffff0','#fff8f0'],
-  wizard: ['#1e1030','#0d1a2e','#091a0d','#1a0808','#041318'],
+  wizard: ['#1e1030','#0d1a2e','#091a0d','#1a0808','#141008'],
   celtic: ['#f0ede4','#e8f4ee','#f5f0e8','#ece8f0','#f0e8e8'],
-  animal: ['#f5efe0','#e8f0e0','#f0e8e0','#e0e8f0','#ece0f0'],
+  animal: ['#f5ede0','#eef4e8','#f5ede6','#eaeef0','#f0ebe4'],
   flower: ['#fff4f8','#f4fff0','#fffff0','#f0f8ff','#fff8f0'],
+};
+const VARIANT_SWATCH_BORDERS = {
+  fairy:  ['#f0a0c8','#b080d8','#80c8a0','#c8c840','#e0a060'],
+  wizard: ['#7b4fa0','#2980b9','#1e8a3a','#c0392b','#c8a000'],
+  celtic: ['#c8a96e','#2d6a4f','#8b6914','#6b4a8a','#8a3a3a'],
+  animal: ['#b08840','#5a8040','#c07040','#607080','#806040'],
+  flower: ['#f080a8','#50c070','#d0c020','#5890d8','#d07030'],
 };
 
 function applyTheme(themeName, variantName) {
@@ -1349,13 +1611,31 @@ function applyTheme(themeName, variantName) {
 
 const VARIANT_NAMES = ['a','b','c','d','e'];
 
+let runtimeBirthdays = (typeof BIRTHDAYS !== 'undefined') ? [...BIRTHDAYS] : [];
+
 let state = {
   holYear: new Date().getFullYear() + 10000,
   viewMode: 'fairy',
   theme: 'fairy',
   variant: 'a',
   weekNames: 'myth',
+  showHolidays: true,
+  showMeteors: true,
+  showComets: true,
+  showBirthdays: true,
+  showOtherDate: true,
 };
+
+try {
+  const savedBdays = JSON.parse(localStorage.getItem('fairy-cal-birthdays') || 'null');
+  if (Array.isArray(savedBdays)) runtimeBirthdays = savedBdays;
+} catch(_) {}
+
+try {
+  const obs = JSON.parse(localStorage.getItem('fairy-cal-observer') || '{}');
+  if (obs.lat !== undefined) OBSERVER.lat = Number(obs.lat);
+  if (obs.lon !== undefined) OBSERVER.lon = Number(obs.lon);
+} catch(_) {}
 
 try {
   const saved = JSON.parse(localStorage.getItem('fairy-cal-state') || '{}');
@@ -1364,23 +1644,31 @@ try {
   if (saved.theme)      state.theme      = saved.theme;
   if (saved.variant)    state.variant    = saved.variant;
   if (saved.weekNames)  state.weekNames  = saved.weekNames;
+  if (saved.showHolidays !== undefined) state.showHolidays = saved.showHolidays;
+  if (saved.showMeteors    !== undefined) state.showMeteors    = saved.showMeteors;
+  if (saved.showComets     !== undefined) state.showComets     = saved.showComets;
+  if (saved.showBirthdays  !== undefined) state.showBirthdays  = saved.showBirthdays;
+  if (saved.showOtherDate  !== undefined) state.showOtherDate  = saved.showOtherDate;
 } catch(_) {}
 
 function buildSwatches() {
   const group = document.getElementById('variant-group');
   group.querySelectorAll('.variant-btn').forEach(b => b.remove());
-  const colors = VARIANT_SWATCH_COLORS[state.theme] || [];
+  const colors  = VARIANT_SWATCH_COLORS[state.theme]  || [];
+  const borders = VARIANT_SWATCH_BORDERS[state.theme] || [];
   VARIANT_NAMES.forEach((v, idx) => {
     const btn = document.createElement('button');
     btn.className = 'variant-btn' + (v===state.variant?' active':'');
     btn.dataset.variant = v;
-    btn.style.background = colors[idx] || '#eee';
+    const bg = colors[idx] || '#eee';
+    const ln = borders[idx] || '#999';
+    btn.style.background = `linear-gradient(${ln},${ln}) center/2px 100% no-repeat,linear-gradient(${ln},${ln}) center/100% 2px no-repeat,${bg}`;
     btn.title = `Color ${v.toUpperCase()}`;
     btn.addEventListener('click', () => {
       state.variant = v;
       applyTheme(state.theme, state.variant);
       document.querySelectorAll('.variant-btn').forEach(b => b.classList.toggle('active', b.dataset.variant === v));
-      try { localStorage.setItem('fairy-cal-state', JSON.stringify(state)); } catch(_) {}
+      _saveState();
     });
     group.appendChild(btn);
   });
@@ -1394,7 +1682,7 @@ function refresh() {
   applyTheme(state.theme, state.variant);
   buildSwatches();
   render(state.holYear, state.viewMode);
-  try { localStorage.setItem('fairy-cal-state', JSON.stringify(state)); } catch(_) {}
+  _saveState();
 }
 
 document.getElementById('prev-year').addEventListener('click', () => { state.holYear--; refresh(); });
@@ -1426,18 +1714,70 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
   if (currentFY) document.querySelectorAll('.year-hero-wrap').forEach(w => {
     w.innerHTML = getHeaderSVG(currentFY.yearAnimal, state.theme);
   });
+  _saveState();
+}));
+{ const btn = document.getElementById('toggle-mythic-week');
+  const update = () => btn.classList.toggle('active', state.weekNames === 'myth');
+  btn.addEventListener('click', () => {
+    const sh = document.documentElement.scrollHeight - window.innerHeight;
+    restoreScrollFracAfterRender = sh > 0 ? window.scrollY / sh : 0;
+    state.weekNames = state.weekNames === 'myth' ? 'std' : 'myth';
+    _saveState();
+    update();
+    showToast(state.weekNames === 'myth' ? 'Mythic week on' : 'Mythic week off');
+    refresh();
+  });
+  update();
+}
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.remove('toast-hide');
+  t.classList.add('toast-show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-hide'); }, 1800);
+}
+
+function _saveState() {
   try { localStorage.setItem('fairy-cal-state', JSON.stringify(state)); } catch(_) {}
-}));
-document.querySelectorAll('.week-name-btn').forEach(b => b.addEventListener('click', () => {
-  state.weekNames = b.dataset.weeks;
-  document.querySelectorAll('.week-name-btn').forEach(b2 => b2.classList.toggle('active', b2.dataset.weeks === state.weekNames));
-  refresh();
-}));
+}
+
+function _wireToggle(id, stateKey, labelOn, labelOff) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const update = () => btn.classList.toggle('active', state[stateKey]);
+  btn.addEventListener('click', () => {
+    const sh = document.documentElement.scrollHeight - window.innerHeight;
+    restoreScrollFracAfterRender = sh > 0 ? window.scrollY / sh : 0;
+    state[stateKey] = !state[stateKey];
+    _saveState();
+    update();
+    showToast(state[stateKey] ? labelOn : labelOff);
+    refresh();
+  });
+  update();
+}
+_wireToggle('toggle-holidays',   'showHolidays',   'Holidays on',   'Holidays off');
+_wireToggle('toggle-meteors',    'showMeteors',    'Meteors on',    'Meteors off');
+_wireToggle('toggle-comets',     'showComets',     'Comets on',     'Comets off');
+_wireToggle('toggle-birthdays',  'showBirthdays',  'Birthdays on',  'Birthdays off');
+{ const btn = document.getElementById('toggle-other-date');
+  const root = document.getElementById('calendar-root');
+  const apply = () => { root.classList.toggle('hide-other-date', !state.showOtherDate); btn.classList.toggle('active', state.showOtherDate); };
+  btn.addEventListener('click', () => {
+    state.showOtherDate = !state.showOtherDate;
+    _saveState();
+    apply();
+    showToast(state.showOtherDate ? 'Other date on' : 'Other date off');
+  });
+  apply();
+}
 document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT') return;
   if (e.key==='ArrowLeft')  { state.holYear--; refresh(); }
   if (e.key==='ArrowRight') { state.holYear++; refresh(); }
-  if (e.key==='Escape')     closeModal();
+  if (e.key==='Escape')     { closeModal(); closeHelp(); closeSettings(); }
 });
 
 document.body.addEventListener('click', e => {
@@ -1453,6 +1793,49 @@ document.body.addEventListener('click', e => {
   }
 });
 
-document.querySelectorAll('.week-name-btn').forEach(b => b.classList.toggle('active', b.dataset.weeks === state.weekNames));
 initModal();
+initHelpModal();
+initSettingsModal();
+document.getElementById('help-btn').addEventListener('click', showHelp);
+document.getElementById('settings-btn').addEventListener('click', showSettings);
+document.getElementById('print-btn').addEventListener('click', () => {
+  const fy = yearCache.get(state.holYear) || buildFairyYear(state.holYear);
+  const pt = document.createElement('div');
+  pt.id = 'print-titlepage';
+  pt.innerHTML =
+    `<div class="print-title-border">` +
+      `<div class="print-title-inner">` +
+        `<div class="print-title-pattern"></div>` +
+        `<p class="print-title-sub">Mythic Lunar</p>` +
+        `<p class="print-title-main">Calendar</p>` +
+        `<p class="print-title-year">${fy.gregYear}</p>` +
+        `<p class="print-title-holocene">Year ${fy.holYear} of the Human Era</p>` +
+        `<p class="print-title-animal">${fy.yearAnimal} Year · ${fy.hasBluemoon ? '13 Moons' : '12 Moons'}</p>` +
+      `</div>` +
+    `</div>`;
+  const ph = document.createElement('div');
+  ph.id = 'print-help';
+  ph.innerHTML = HELP_HTML;
+  document.body.insertBefore(pt, document.body.firstChild);
+  document.body.appendChild(ph);
+  window.print();
+  document.body.removeChild(pt);
+  document.body.removeChild(ph);
+});
+
+const _toolbarCollapsible = document.getElementById('toolbar-collapsible');
+const _toolbarToggle = document.getElementById('toolbar-toggle');
+try {
+  if (JSON.parse(localStorage.getItem('fairy-cal-toolbar-open') || 'false')) {
+    _toolbarCollapsible.removeAttribute('hidden');
+    _toolbarToggle.classList.add('open');
+  }
+} catch(_) {}
+_toolbarToggle.addEventListener('click', () => {
+  const open = _toolbarCollapsible.hasAttribute('hidden');
+  if (open) { _toolbarCollapsible.removeAttribute('hidden'); _toolbarToggle.classList.add('open'); }
+  else       { _toolbarCollapsible.setAttribute('hidden', ''); _toolbarToggle.classList.remove('open'); }
+  try { localStorage.setItem('fairy-cal-toolbar-open', JSON.stringify(open)); } catch(_) {}
+});
+
 refresh();

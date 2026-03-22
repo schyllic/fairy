@@ -9,37 +9,57 @@
 <body>
 
 <header id="toolbar">
-  <div class="toolbar-group">
-    <button class="btn nav-btn" id="prev-year" title="Previous year">&#8249;</button>
-    <input type="number" id="year-input" value="12026" title="Holocene year">
-    <button class="btn nav-btn" id="next-year" title="Next year">&#8250;</button>
-    <button class="btn" id="today-btn" title="Go to current year">Today</button>
+  <div id="toolbar-top">
+    <div class="toolbar-group">
+      <button class="btn nav-btn" id="prev-year" title="Previous year">&#8249;</button>
+      <input type="number" id="year-input" value="12026" title="Holocene year">
+      <button class="btn nav-btn" id="next-year" title="Next year">&#8250;</button>
+      <button class="btn" id="today-btn" title="Go to current year">Today</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <button class="btn" id="toolbar-toggle" title="Options">&#9662;</button>
   </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <span class="toolbar-label">View:</span>
-    <button class="btn view-btn" data-view="fairy">Lunar</button>
-    <button class="btn view-btn" data-view="greg">Greg</button>
-    <button class="btn view-btn" data-view="week">Week</button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <span class="toolbar-label">Weeks:</span>
-    <button class="btn week-name-btn" data-weeks="myth">Myth</button>
-    <button class="btn week-name-btn" data-weeks="std">Standard</button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group">
-    <span class="toolbar-label">Theme:</span>
-    <button class="btn theme-btn" data-theme="fairy">Fairy</button>
-    <button class="btn theme-btn" data-theme="wizard">Wizard</button>
-    <button class="btn theme-btn" data-theme="celtic">Celtic</button>
-    <button class="btn theme-btn" data-theme="animal">Animal</button>
-    <button class="btn theme-btn" data-theme="flower">Flower</button>
-  </div>
-  <div class="toolbar-sep"></div>
-  <div class="toolbar-group" id="variant-group">
-    <span class="toolbar-label">Color:</span>
+  <div id="toolbar-collapsible" hidden>
+    <div class="toolbar-group">
+      <span class="toolbar-label">View:</span>
+      <button class="btn view-btn" data-view="fairy">Lunar</button>
+      <button class="btn view-btn" data-view="greg">Greg</button>
+      <button class="btn view-btn" data-view="week">Week</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <button class="btn toggle-btn" id="toggle-mythic-week" title="Use Norse mythological weekday names">Mythic Week</button>
+      <button class="btn toggle-btn" id="toggle-other-date" title="Show secondary date in day cells">Other Date</button>
+      <button class="btn toggle-btn" id="toggle-holidays" title="US federal holidays">Holidays</button>
+      <button class="btn toggle-btn" id="toggle-birthdays" title="Birthdays">Birthdays</button>
+      <button class="btn toggle-btn" id="toggle-meteors" title="Meteor showers">Meteors</button>
+      <button class="btn toggle-btn" id="toggle-comets" title="Comets">Comets</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <span class="toolbar-label">Theme:</span>
+      <button class="btn theme-btn" data-theme="fairy">Fairy</button>
+      <button class="btn theme-btn" data-theme="wizard">Wizard</button>
+      <button class="btn theme-btn" data-theme="celtic">Celtic</button>
+      <button class="btn theme-btn" data-theme="animal">Animal</button>
+      <button class="btn theme-btn" data-theme="flower">Flower</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group" id="variant-group">
+      <span class="toolbar-label">Color:</span>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <button class="btn" id="settings-btn" title="Location settings">🗺</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <button class="btn" id="help-btn" title="About this calendar">?</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <button class="btn" id="print-btn" title="Print / Save as PDF">⎙</button>
+    </div>
   </div>
 </header>
 
@@ -50,6 +70,7 @@
 <script src="settings.js"></script>
 <script src="birthdays.js"></script>
 <script src="comets.js"></script>
+<script src="holidays.js"></script>
 <script src="app.js"></script>
 
 </body>
