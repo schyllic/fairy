@@ -761,6 +761,7 @@ function renderFairy(fy) {
     const thr = document.createElement('tr');
     for (const wd of FAIRY_WEEKDAYS) {
       const th = el('th', (wd==='Moonday'||wd==='Sunday')?'weekend-col':null, wd);
+      th.dataset.short = wd.replace(/day$/i, '');
       thr.appendChild(th);
     }
     thead.appendChild(thr); tbl.appendChild(thead);
@@ -807,6 +808,7 @@ function renderWeek(fy) {
   thr.appendChild(el('th','week-moon-col','Moon'));
   for (const wd of FAIRY_WEEKDAYS) {
     const th = el('th',(wd==='Moonday'||wd==='Sunday')?'weekend-col':null, wd);
+    th.dataset.short = wd.replace(/day$/i, '');
     thr.appendChild(th);
   }
   thead.appendChild(thr); tbl.appendChild(thead);

@@ -581,3 +581,15 @@ body {
 .planet-icon { font-style: normal; }
 .meteor-icon { font-style: normal; }
 .comet-icon  { font-style: normal; }
+
+/* ─── Responsive: short day names on narrow screens ─── */
+@media (max-width: 480px) {
+  .fairy-table th, .week-table th {
+    font-size: 0;
+  }
+  .fairy-table th::after, .week-table th::after {
+    content: attr(data-short);
+    font-size: 0.72rem;
+    font-weight: bold;
+  }
+}
