@@ -601,4 +601,12 @@ body {
     font-size: 0.72rem;
     font-weight: bold;
   }
+  .week-fairy-date {
+    font-size: 0;
+  }
+  .week-fairy-date::after {
+    content: attr(data-short);
+    font-size: 0.72rem;
+    font-weight: bold;
+  }
 }

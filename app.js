@@ -841,7 +841,9 @@ function renderWeek(fy) {
         if (fdDateStr === selectedDate) td.classList.add('is-selected');
         if (fd.darkmoonPart) td.classList.add(`dp-${fd.darkmoonPart.toLowerCase()}`);
         td.dataset.date = fdDateStr;
-        td.appendChild(el('div','week-fairy-date',`${fd.fairyMonth.replace(/moon$/i,'')} ${fd.fairyDay}`));
+        const wfd = el('div','week-fairy-date',`${fd.fairyMonth.replace(/moon$/i,'')} ${fd.fairyDay}`);
+        wfd.dataset.short = `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`;
+        td.appendChild(wfd);
         td.appendChild(el('div','week-greg-date', fmtGreg(fd.gregDate)));
         const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
         i++;
