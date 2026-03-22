@@ -277,10 +277,13 @@ body {
   background: var(--color-surface);
   transition: background 0.1s;
   border-radius: 0;
-  overflow: hidden;
 }
 .greg-cell:nth-child(7n) { border-right: none; }
 .greg-cell:hover { background: var(--color-bg-alt) !important; }
+.view-greg .icon-group { display: block; width: 100%; }
+.new-moon-cell { background: var(--color-text-primary); color: var(--color-bg); }
+.new-moon-cell .greg-daynum,
+.new-moon-cell .fairy-label { color: var(--color-bg); }
 
 .greg-daynum {
   font-size: 0.85rem;
@@ -293,7 +296,6 @@ body {
   color: var(--color-text-secondary);
   line-height: 1.2;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .darkmoon-label {
@@ -511,9 +513,6 @@ body {
   font-size: 0.72rem;
   color: var(--color-accent);
   font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   line-height: 1.4;
 }
 
@@ -529,6 +528,10 @@ body {
   color: inherit; line-height: 1; vertical-align: middle;
 }
 .info-btn:hover { opacity: 1; }
+.today-info-btn { position: absolute; top: 2px; right: 2px; padding: 0; font-size: 0.75rem; }
+.view-week .today-info-btn { top: auto; bottom: 2px; }
+.greg-cell, .fairy-cell { position: relative; }
+.view-week td { position: relative; }
 
 /* ─── 12. Modal ──────────────────────────────────────── */
 #cal-modal {

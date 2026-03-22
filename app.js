@@ -299,6 +299,14 @@ function _moonRADecT(T) {
   return {ra:Math.atan2(ye,xe), dec:Math.atan2(ze,Math.sqrt(xe*xe+ye*ye))};
 }
 
+function moonIllumPct(date) {
+  const T = (dateToJDE(date) - 2451545.0) / 36525;
+  const sun  = _sunRADecT(T);
+  const moon = _moonRADecT(T);
+  const elong = _angSep(sun.ra, sun.dec, moon.ra, moon.dec); // degrees
+  return Math.round((1 - Math.cos(rad(elong))) / 2 * 100);
+}
+
 function _angSep(ra1,dec1,ra2,dec2) {
   return Math.acos(Math.max(-1,Math.min(1,
     Math.sin(dec1)*Math.sin(dec2)+Math.cos(dec1)*Math.cos(dec2)*Math.cos(ra1-ra2)
@@ -655,7 +663,7 @@ function moonIcons(fd) {
   let h = '';
   if (fd.moonPhase)  { const p=PHASE_LABELS[fd.moonPhase];  h+=`<span class="icon" title="${p.label}">${p.icon}</span>`; }
   if (fd.solarEvent) { const s=SOLAR_LABELS[fd.solarEvent]; h+=`<span class="icon" title="${s.label}">${s.icon}</span>`; }
-  if (fd.perigee)    h+=`<span class="icon perigee-icon" title="Lunar Perigee">Ⓟ</span>`;
+  if (fd.perigee)    { const _pi=moonIllumPct(fd.gregDate); h+=`<span class="icon perigee-icon" title="Lunar Perigee">Ⓟ\u202f${_pi}%</span>`; }
   if (fd.apogee)     h+=`<span class="icon apogee-icon"  title="Lunar Apogee">@</span>`;
   if (fd.eclipse)    { const ei=fd.eclipse.type==='lunarEclipse'?'🌑':'☀'; h+=`<span class="icon eclipse-icon" title="${fd.eclipse.type} (${fd.eclipse.subtype})">${ei}✕</span>`; }
   if (fd.planets) {
@@ -707,14 +715,15 @@ function renderGreg(fy) {
     for (let d=1; d<=lastDay.getUTCDate(); d++) {
       const ds = `${fy.gregYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const fd = fy.dayMap.get(ds);
-      const cell = el('div', 'greg-cell' + (fd?.isToday?' is-today':''));
+      const cell = el('div', 'greg-cell' + (fd?.isToday?' is-today':'') + (fd?.fairyDay===1?' new-moon-cell':''));
       if (ds === selectedDate) cell.classList.add('is-selected');
       cell.dataset.date = ds;
       cell.appendChild(el('span','greg-daynum', String(d)));
       if (fd) {
-        const fl = el('span','fairy-label', `${fd.fairyMonth} ${fd.fairyDay}`);
+        const fl = el('span','fairy-label', `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`);
         if (fd.darkmoonPart) { fl.classList.add('darkmoon-label'); fl.title=`Darkmoon · ${fd.darkmoonPart}`; }
         cell.appendChild(fl);
+        if (fd.isToday) { const ib=el('button','info-btn'); ib.dataset.from=ds; ib.dataset.label='Today'; ib.textContent='ⓘ'; ib.classList.add('today-info-btn'); cell.appendChild(ib); }
         const ic = moonIcons(fd);
         if (ic) { const ig=el('span','icon-group'); ig.innerHTML=ic; cell.appendChild(ig); }
       }
@@ -784,6 +793,7 @@ function renderFairy(fy) {
       td.dataset.date = fdDateStr;
       td.appendChild(el('span','fairy-daynum', String(fd.fairyDay)));
       td.appendChild(el('span','fairy-greg-date', fmtGreg(fd.gregDate)));
+      if (fd.isToday) { const ib=el('button','info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label='Today'; ib.textContent='ⓘ'; ib.classList.add('today-info-btn'); td.appendChild(ib); }
       const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
       row.appendChild(td); col++;
     }
@@ -845,6 +855,7 @@ function renderWeek(fy) {
         wfd.dataset.short = `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`;
         td.appendChild(wfd);
         td.appendChild(el('div','week-greg-date', fmtGreg(fd.gregDate)));
+        if (fd.isToday) { const ib=el('button','info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label='Today'; ib.textContent='ⓘ'; ib.classList.add('today-info-btn'); td.appendChild(ib); }
         const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
         i++;
       }
@@ -956,30 +967,28 @@ function showModal(fromDateStr, label, fy) {
 
   const todayInWindow = todayStr >= fromDateStr && todayStr <= toStr;
 
-  // Pre-compute Evening Sky block, keyed to first new/first-quarter moon in window
+  // Pre-compute Evening Sky block, keyed to fromDate
+  const skyDate = fy.dayMap.get(fromDateStr)?.gregDate || new Date(fromDateStr);
   const starNight = fy.eventTimeline.find(e =>
     e.kind === 'phase' && (e.phase === 'new' || e.phase === 'first') &&
     e.dateStr >= fromDateStr && e.dateStr <= toStr
   );
-  const skyDate = starNight
-    ? (fy.dayMap.get(starNight.dateStr)?.gregDate || new Date(starNight.dateStr))
-    : new Date(fromDateStr);
   const consts = getEveningConstellations(skyDate);
   const visPlans = getVisiblePlanets(skyDate);
   const activeMeteors = fy.eventTimeline.filter(e =>
     e.kind === 'meteorShower' && e.dateStr >= fromDateStr && e.dateStr <= toStr
   );
+  const moonIllum = moonIllumPct(skyDate);
+
   let eveningSkyHTML = '';
   if (consts.length > 0 || visPlans.length > 0 || activeMeteors.length > 0) {
-    const _skyFd = starNight ? fy.dayMap.get(starNight.dateStr) : null;
+    const _skyFd = fy.dayMap.get(fromDateStr);
     const _skyGd = _skyFd?.gregDate || skyDate;
     const _skyDateFmt = ((state.viewMode === 'fairy' || state.viewMode === 'week') && _skyFd)
-      ? `${_skyFd.fairyMonth.slice(0,4)} ${_skyFd.fairyDay}`
+      ? `${_skyFd.fairyMonth.replace(/moon$/i,'')} ${_skyFd.fairyDay}`
       : `${GREG_MONTH_NAMES[_skyGd.getUTCMonth()].slice(0,3)} ${_skyGd.getUTCDate()}`;
-    const skyLabel = starNight
-      ? `${_skyDateFmt}, ${starNight.phase==='new'?'New Moon':'First Quarter'}, `
-      : `${_skyDateFmt}, `;
-    eveningSkyHTML += `<div class="modal-section-head">Evening Sky (${skyLabel}8pm–midnight)</div>`;
+    const moonIllumStr = `, 🌙 ${moonIllum}%`;
+    eveningSkyHTML += `<div class="modal-section-head">Evening Sky (${_skyDateFmt}${moonIllumStr}, 8pm–midnight)</div>`;
     if (visPlans.length > 0)
       eveningSkyHTML += `<div class="constellation-list"><b>Planets:</b> ${visPlans.map(p=>`${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ')}</div>`;
     if (activeMeteors.length > 0)
@@ -1001,22 +1010,22 @@ function showModal(fromDateStr, label, fy) {
         body += `<div class="modal-today-marker">— Today —</div>`;
         todayPlaced = true;
       }
+      // Inject Evening Sky before first event after fromDateStr
+      if (!skyPlaced && ev.dateStr > fromDateStr) {
+        body += eveningSkyHTML;
+        skyPlaced = true;
+      }
       const {icon, text} = _formatEvent(ev);
       const fd = fy.dayMap.get(ev.dateStr);
       const _gd = fd?.gregDate || new Date(ev.dateStr);
       const dateLabel = ((state.viewMode === 'fairy' || state.viewMode === 'week') && fd)
-        ? `${fd.fairyMonth.slice(0,4)} ${fd.fairyDay}`
+        ? `${fd.fairyMonth.replace(/moon$/i,'')} ${fd.fairyDay}`
         : `${GREG_MONTH_NAMES[_gd.getUTCMonth()].slice(0,3)} ${_gd.getUTCDate()}`;
       body += `<div class="modal-event">` +
         `<span class="modal-event-icon">${icon}</span>` +
         `<span class="modal-event-date">${dateLabel}</span>` +
         `<span class="modal-event-desc">${text}</span>` +
         `</div>`;
-      // Inject Evening Sky right after its anchor moon phase event
-      if (!skyPlaced && starNight && ev.dateStr === starNight.dateStr && ev.kind === 'phase') {
-        body += eveningSkyHTML;
-        skyPlaced = true;
-      }
     }
     if (todayInWindow && !todayPlaced) {
       body += `<div class="modal-today-marker">— Today —</div>`;
