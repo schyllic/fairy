@@ -516,7 +516,7 @@ body {
 /* ─── 11. Info button ────────────────────────────────── */
 .info-btn {
   background: none; border: none; cursor: pointer;
-  font-size: 0.9rem; opacity: 0.6; padding: 0 0.3rem;
+  font-size: 0.9rem; opacity: 0.85; padding: 0 0.3rem;
   color: inherit; line-height: 1; vertical-align: middle;
 }
 .info-btn:hover { opacity: 1; }
