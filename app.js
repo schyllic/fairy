@@ -1028,7 +1028,8 @@ function closeModal() {
 
 const HELP_HTML = `
 <h3>The Year Number</h3>
-<p>This calendar uses the <strong>Human Era</strong> (Holocene Era), proposed by scientist Cesare Emiliani. Instead of counting from an arbitrary religious date, it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = <strong>Year 12026</strong>.</p>
+<p>This calendar uses the <strong>Human Era</strong> (Holocene Era). Instead of counting from an arbitrary religious date, it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = <strong>Year 12026</strong>.</p>
+<p>This numbering was conceived independently for this calendar — it was only later discovered that scientist Cesare Emiliani had proposed the same idea decades earlier.</p>
 <hr>
 <h3>The Moons (Lunar Months)</h3>
 <p>The calendar has 12 moons per year, each beginning on a new moon:</p>
