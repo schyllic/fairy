@@ -418,7 +418,7 @@ function getMeteorShowerEvents(gregYear) {
 
 const JS_TO_FAIRY_WEEKDAY = [6, 0, 1, 2, 3, 4, 5]; // Sun→6, Mon→0, Tue→1, Wed→2, Thu→3, Fri→4, Sat→5
 const FAIRY_WEEKDAYS = ['Heimday','Tyrsday','Wodensday','Thorsday','Freyasday','Moonday','Sunday'];
-const MOON_NAMES = ['Snowmoon','Wakingmoon','Seedmoon','Bloomoon','Flowermoon',
+const MOON_NAMES = ['Snowmoon','Wakingmoon','Seedmoon','Bloommoon','Flowermoon',
                     'Berrymoon','Summermoon','Harvestmoon','Gathermoon','Leafmoon','Frostmoon','Darkmoon'];
 
 function getDarkmoonPart(dayNum) {
@@ -837,7 +837,7 @@ function renderWeek(fy) {
         if (fdDateStr === selectedDate) td.classList.add('is-selected');
         if (fd.darkmoonPart) td.classList.add(`dp-${fd.darkmoonPart.toLowerCase()}`);
         td.dataset.date = fdDateStr;
-        td.appendChild(el('div','week-fairy-date',`${fd.fairyMonth} ${fd.fairyDay}`));
+        td.appendChild(el('div','week-fairy-date',`${fd.fairyMonth.replace(/moon$/i,'')} ${fd.fairyDay}`));
         td.appendChild(el('div','week-greg-date', fmtGreg(fd.gregDate)));
         const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
         i++;
