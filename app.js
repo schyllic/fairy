@@ -401,11 +401,13 @@ function getMeteorShowerEvents(gregYear) {
   for (const s of METEOR_SHOWERS) {
     for (const yr of [gregYear-1, gregYear, gregYear+1]) {
       const peakMs = Date.UTC(yr, s.month-1, s.day);
+      const windowStart = utcDateStr(new Date(peakMs - before(s) * 86400000));
+      const windowEnd   = utcDateStr(new Date(peakMs + after(s)  * 86400000));
       for (let d = -before(s); d <= after(s); d++) {
         const ms = peakMs + d * 86400000;
         const dt = new Date(ms);
         const ds = utcDateStr(dt);
-        events.push({dateStr:ds, kind:'meteorShower', name:s.name, zhr:s.zhr, note:s.note, isPeak: d===0});
+        events.push({dateStr:ds, kind:'meteorShower', name:s.name, zhr:s.zhr, note:s.note, isPeak: d===0, isNearPeak: Math.abs(d)<=1, windowStart, windowEnd});
       }
     }
   }
@@ -664,7 +666,7 @@ function moonIcons(fd) {
         h+=`<span class="icon planet-icon" title="${ev.planets.join(' & ')} conjunction (${ev.sep}°)">${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}</span>`;
     }
   }
-  if (fd.meteor)   { for (const m of fd.meteor) h+=`<span class="icon meteor-icon" title="${m.name}${m.isPeak?' peak':''} — ZHR ~${m.zhr}, ${m.note}">🌠</span>`; }
+  if (fd.meteor)   { for (const m of fd.meteor) { if (m.isNearPeak) h+=`<span class="icon meteor-icon" title="${m.name}${m.isPeak?' peak':''} — ZHR ~${m.zhr}, ${m.note}">🌠</span>`; } }
   if (fd.comet)    { for (const c of fd.comet) h+=`<span class="icon comet-icon" title="${c.name}${c.note?' — '+c.note:''}">☄</span>`; }
   if (fd.birthday) { for (const b of fd.birthday) h+=`<span class="birthday-label">🎂 ${b.name}</span>`; }
   return h;
@@ -930,7 +932,11 @@ function _formatEvent(ev) {
   if (ev.kind==='greatElongation') return {icon:PLANET_SYMBOLS[ev.planet], text:`${ev.planet} — Greatest Elongation (${ev.isEvening?'Evening':'Morning'} Star, ${ev.elong}°)`};
   if (ev.kind==='moonConj')      return {icon:`${PLANET_SYMBOLS[ev.planet]}🌙`, text:`Moon near ${ev.planet} (${ev.sep}°)`};
   if (ev.kind==='planetConj')    return {icon:`${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}`, text:`${ev.planets[0]} & ${ev.planets[1]} conjunction (${ev.sep}°)`};
-  if (ev.kind==='meteorShower') return {icon:'🌠', text:`${ev.name} meteor shower peak — ZHR ~${ev.zhr}`};
+  if (ev.kind==='meteorShower') {
+    const fmtDs = ds => { const d=new Date(ds); return `${GREG_MONTH_NAMES[d.getUTCMonth()].slice(0,3)} ${d.getUTCDate()}`; };
+    const range = ev.windowStart && ev.windowEnd ? ` · active ${fmtDs(ev.windowStart)}–${fmtDs(ev.windowEnd)}` : '';
+    return {icon:'🌠', text:`${ev.name} meteor shower peak — ZHR ~${ev.zhr}${range}`};
+  }
   if (ev.kind==='cometStart')   return {icon:'☄',  text:`${ev.name}${ev.note?' — '+ev.note:''} (visible now)`};
   return {icon:'•', text:ev.kind};
 }
