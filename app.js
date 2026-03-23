@@ -464,22 +464,16 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0) {
   return `<div class="sky-chart-wrap"><svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" class="sky-chart-svg" data-base-vb="${vb}" aria-label="Sky chart">${svg}</svg></div>`;
 }
 
-// ─── Sky chart zoom ──────────────────────────────────────────────────
-let _skyZoom = { level: 1, cx: 170, cy: 170, attached: false };
+// ─── Sky chart zoom (CSS transform-based) ───────────────────────────
+let _skyZoom = { level: 1, tx: 0, ty: 0 };
 
 function _resetSkyZoom() {
-  _skyZoom = { level: 1, cx: 170, cy: 170, attached: false };
+  _skyZoom = { level: 1, tx: 0, ty: 0 };
 }
 
 function _applySkyZoom(svgEl) {
   const z = _skyZoom.level;
-  const w = 380 / z, h = 380 / z;
-  const x = _skyZoom.cx - w / 2;
-  const y = _skyZoom.cy - h / 2;
-  // Clamp so we don't pan outside the chart
-  const clampX = Math.max(-20, Math.min(x, 360 - w));
-  const clampY = Math.max(-20, Math.min(y, 360 - h));
-  svgEl.setAttribute('viewBox', `${clampX.toFixed(1)} ${clampY.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`);
+  svgEl.style.transform = `scale(${z}) translate(${_skyZoom.tx}px, ${_skyZoom.ty}px)`;
 
   // Fade in background stars at zoom >= 1.5
   const bgGroup = svgEl.querySelector('.sky-bg-stars');
@@ -487,33 +481,40 @@ function _applySkyZoom(svgEl) {
     const opacity = z < 1.5 ? 0 : Math.min(0.85, (z - 1.5) * 1.7);
     bgGroup.setAttribute('opacity', opacity.toFixed(2));
   }
+}
 
-  // Cursor hint
-  svgEl.style.cursor = z > 1.05 ? 'grab' : 'zoom-in';
+function _clampPan(svgEl) {
+  const z = _skyZoom.level;
+  if (z <= 1) { _skyZoom.tx = 0; _skyZoom.ty = 0; return; }
+  const rect = svgEl.parentElement.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  // Max pan: half the overflow on each side
+  const maxTx = (w * (z - 1)) / (2 * z);
+  const maxTy = (h * (z - 1)) / (2 * z);
+  _skyZoom.tx = Math.max(-maxTx, Math.min(maxTx, _skyZoom.tx));
+  _skyZoom.ty = Math.max(-maxTy, Math.min(maxTy, _skyZoom.ty));
 }
 
 function _attachSkyZoom(svgEl) {
   if (!svgEl) return;
-  _skyZoom.attached = true;
 
   // Mouse wheel zoom
   svgEl.addEventListener('wheel', e => {
     e.preventDefault();
-    const rect = svgEl.getBoundingClientRect();
-    // Convert mouse position to SVG coordinates
-    const vb = svgEl.getAttribute('viewBox').split(' ').map(Number);
-    const mx = vb[0] + (e.clientX - rect.left) / rect.width * vb[2];
-    const my = vb[1] + (e.clientY - rect.top) / rect.height * vb[3];
-
     const oldZ = _skyZoom.level;
-    const factor = e.deltaY < 0 ? 1.18 : 1 / 1.18;
-    _skyZoom.level = Math.max(1, Math.min(5, oldZ * factor));
+    const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2;
+    const newZ = Math.max(1, Math.min(6, oldZ * factor));
+    _skyZoom.level = newZ;
 
-    // Zoom toward cursor
-    const zRatio = _skyZoom.level / oldZ;
-    _skyZoom.cx = mx + (_skyZoom.cx - mx) / zRatio;
-    _skyZoom.cy = my + (_skyZoom.cy - my) / zRatio;
+    // Zoom toward cursor: adjust pan so point under cursor stays fixed
+    const rect = svgEl.parentElement.getBoundingClientRect();
+    const cx = (e.clientX - rect.left - rect.width / 2) / oldZ;
+    const cy = (e.clientY - rect.top - rect.height / 2) / oldZ;
+    const ratio = 1 - newZ / oldZ;
+    _skyZoom.tx += cx * ratio;
+    _skyZoom.ty += cy * ratio;
 
+    _clampPan(svgEl);
     _applySkyZoom(svgEl);
   }, { passive: false });
 
@@ -528,24 +529,21 @@ function _attachSkyZoom(svgEl) {
   });
   window.addEventListener('mousemove', e => {
     if (!dragging) return;
-    const rect = svgEl.getBoundingClientRect();
-    const vb = svgEl.getAttribute('viewBox').split(' ').map(Number);
-    const dx = (e.clientX - lastX) / rect.width * vb[2];
-    const dy = (e.clientY - lastY) / rect.height * vb[3];
-    _skyZoom.cx -= dx;
-    _skyZoom.cy -= dy;
+    _skyZoom.tx += (e.clientX - lastX) / _skyZoom.level;
+    _skyZoom.ty += (e.clientY - lastY) / _skyZoom.level;
     lastX = e.clientX; lastY = e.clientY;
+    _clampPan(svgEl);
     _applySkyZoom(svgEl);
   });
   window.addEventListener('mouseup', () => {
     if (dragging) {
       dragging = false;
-      svgEl.style.cursor = _skyZoom.level > 1.05 ? 'grab' : 'zoom-in';
+      svgEl.style.cursor = '';
     }
   });
 
   // Touch: pinch zoom + drag pan
-  let touches0 = null, touchDist0 = 0, touchZoom0 = 1;
+  let touches0 = null, touchDist0 = 0, touchZoom0 = 1, touchTx0 = 0, touchTy0 = 0;
   svgEl.addEventListener('touchstart', e => {
     if (e.touches.length === 2) {
       e.preventDefault();
@@ -555,6 +553,8 @@ function _attachSkyZoom(svgEl) {
       ];
       touchDist0 = Math.hypot(touches0[1].x - touches0[0].x, touches0[1].y - touches0[0].y);
       touchZoom0 = _skyZoom.level;
+      touchTx0 = _skyZoom.tx;
+      touchTy0 = _skyZoom.ty;
     } else if (e.touches.length === 1 && _skyZoom.level > 1.05) {
       e.preventDefault();
       lastX = e.touches[0].clientX;
@@ -569,18 +569,23 @@ function _attachSkyZoom(svgEl) {
         e.touches[1].clientX - e.touches[0].clientX,
         e.touches[1].clientY - e.touches[0].clientY
       );
-      _skyZoom.level = Math.max(1, Math.min(5, touchZoom0 * dist / touchDist0));
+      _skyZoom.level = Math.max(1, Math.min(6, touchZoom0 * dist / touchDist0));
+      // Pan: track midpoint movement
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const midX0 = (touches0[0].x + touches0[1].x) / 2;
+      const midY0 = (touches0[0].y + touches0[1].y) / 2;
+      _skyZoom.tx = touchTx0 + (midX - midX0) / _skyZoom.level;
+      _skyZoom.ty = touchTy0 + (midY - midY0) / _skyZoom.level;
+      _clampPan(svgEl);
       _applySkyZoom(svgEl);
     } else if (e.touches.length === 1 && dragging) {
       e.preventDefault();
-      const rect = svgEl.getBoundingClientRect();
-      const vb = svgEl.getAttribute('viewBox').split(' ').map(Number);
-      const dx = (e.touches[0].clientX - lastX) / rect.width * vb[2];
-      const dy = (e.touches[0].clientY - lastY) / rect.height * vb[3];
-      _skyZoom.cx -= dx;
-      _skyZoom.cy -= dy;
+      _skyZoom.tx += (e.touches[0].clientX - lastX) / _skyZoom.level;
+      _skyZoom.ty += (e.touches[0].clientY - lastY) / _skyZoom.level;
       lastX = e.touches[0].clientX;
       lastY = e.touches[0].clientY;
+      _clampPan(svgEl);
       _applySkyZoom(svgEl);
     }
   }, { passive: false });
@@ -589,16 +594,12 @@ function _attachSkyZoom(svgEl) {
     dragging = false;
   });
 
-  // Double-click to reset zoom
+  // Double-click/tap to reset zoom
   svgEl.addEventListener('dblclick', e => {
     e.preventDefault();
-    _skyZoom.level = 1;
-    _skyZoom.cx = 170;
-    _skyZoom.cy = 170;
+    _resetSkyZoom();
     _applySkyZoom(svgEl);
   });
-
-  _applySkyZoom(svgEl);
 }
 
 let _savedModal = null;
@@ -889,6 +890,7 @@ function refresh() {
 document.getElementById('prev-year').addEventListener('click', () => { state.holYear--; refresh(); });
 document.getElementById('next-year').addEventListener('click', () => { state.holYear++; refresh(); });
 document.getElementById('today-btn').addEventListener('click', () => {
+  _skyPlayStop();
   state.holYear = new Date().getFullYear() + 10000;
   _skyViewDate = localTodayStr();
   scrollToTodayAfterRender = true;
@@ -906,19 +908,56 @@ function _skySetDate(dateStr) {
   renderSky();
 }
 document.getElementById('sky-prev').addEventListener('click', () => {
+  _skyPlayStop();
   if (!_skyViewDate) _skyViewDate = localTodayStr();
   const prev = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() - 86400000);
   _skySetDate(utcDateStr(prev));
 });
 document.getElementById('sky-next').addEventListener('click', () => {
+  _skyPlayStop();
   if (!_skyViewDate) _skyViewDate = localTodayStr();
   const next = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() + 86400000);
   _skySetDate(utcDateStr(next));
 });
+// Sky timelapse play / fast-forward
+let _skyPlayTimer = null;
+let _skyPlaySpeed = 0; // 0=stopped, 1=play, 2=ff
+const _skyPlayBtn = document.getElementById('sky-play');
+const _skyFFBtn = document.getElementById('sky-ff');
+function _skyAdvance() {
+  if (!_skyViewDate) _skyViewDate = localTodayStr();
+  const next = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() + 86400000);
+  _skySetDate(utcDateStr(next));
+}
+function _skyPlayStop() {
+  if (_skyPlayTimer) { clearInterval(_skyPlayTimer); _skyPlayTimer = null; }
+  _skyPlaySpeed = 0;
+  _skyPlayBtn.textContent = '\u25B6';
+  _skyFFBtn.textContent = '\u25B6\u25B6';
+}
+function _skyPlayAt(speed) {
+  _skyPlayStop();
+  _skyPlaySpeed = speed;
+  const ms = speed === 2 ? 80 : 800;
+  _skyPlayTimer = setInterval(_skyAdvance, ms);
+  if (speed === 2) {
+    _skyFFBtn.textContent = '\u23F8';
+  } else {
+    _skyPlayBtn.textContent = '\u23F8';
+  }
+}
+_skyPlayBtn.addEventListener('click', () => {
+  if (_skyPlaySpeed === 1) _skyPlayStop(); else _skyPlayAt(1);
+});
+_skyFFBtn.addEventListener('click', () => {
+  if (_skyPlaySpeed === 2) _skyPlayStop(); else _skyPlayAt(2);
+});
+
 document.getElementById('sky-date-input').addEventListener('change', e => {
   if (e.target.value) _skySetDate(e.target.value);
 });
 document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', () => {
+  _skyPlayStop();
   if (selectedDate) {
     scrollToSelectedAfterRender = true;
   } else {

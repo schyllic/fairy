@@ -89,6 +89,7 @@ body {
   align-items: center;
   gap: 0.4rem;
 }
+.toolbar-group[hidden] { display: none !important; }
 
 .toolbar-sep {
   width: 1px;
@@ -703,13 +704,11 @@ body {
 }
 .constellation-list { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.5; }
 /* Sky chart (modal context) */
-.sky-chart-wrap { margin: -0.25rem -1rem; text-align: center; }
-.sky-chart-svg { width: 100%; border-radius: 50%; cursor: zoom-in; touch-action: none; user-select: none; }
+.sky-chart-wrap { margin: -0.25rem -1rem; text-align: center; overflow: hidden; }
+.sky-chart-svg { width: 100%; border-radius: 50%; cursor: zoom-in; touch-action: none; user-select: none; transform-origin: center center; }
 
 /* ─── Sky View (full page) ─────────────────────────────────────────── */
-#sky-nav {
-  display: flex; align-items: center; gap: 0.3rem;
-}
+#sky-nav { gap: 0.3rem; }
 #sky-date-input {
   background: var(--color-surface); color: var(--color-text-primary);
   border: 1px solid var(--color-border); border-radius: 4px;
