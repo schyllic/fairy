@@ -135,6 +135,15 @@ function utcDateStr(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
 }
 
+function localTodayStr() {
+  try {
+    const tz = OBSERVER.tz || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
+  } catch(_) {
+    return utcDateStr(new Date(Date.now() + Math.round(OBSERVER.lon / 15) * 3600000));
+  }
+}
+
 function daysBetween(a, b) {
   return Math.floor(b.getTime()/86400000) - Math.floor(a.getTime()/86400000);
 }
@@ -266,14 +275,15 @@ const CONSTELLATION_FIGURES = {
   'Perseus':     { s:[[-0.1,0.9],[0.1,0.35],[0.5,0.6],[0.8,0.85],[-0.35,0.5],[-0.7,0.65],[0.1,-0.1],[0.45,-0.5],[0.6,-0.85],[-0.3,-0.55],[-0.45,-0.85]],
                    l:[[0,1],[1,2],[2,3],[1,4],[4,5],[1,6],[6,7],[7,8],[6,9],[9,10]] },
   // Aldebaran eye, Hyades V, two horns, Pleiades cluster
-  'Taurus':      { s:[[0.05,0.0],[-0.3,0.3],[0.38,0.28],[-0.15,0.6],[-0.2,0.9],[0.68,0.78],[0.0,-0.45],[-.75,0.5],[-.9,0.3],[-.78,0.15]],
-                   l:[[0,1],[0,2],[1,3],[3,4],[2,5],[0,6],[7,8],[8,9],[9,7]] },
+  // V-shaped Hyades face (Aldebaran=eye at right), two horns left, Pleiades cluster upper-right
+  'Taurus':      { s:[[0.55,-0.05],[0.22,-0.22],[-0.05,-0.42],[0.2,0.22],[-0.08,0.4],[-0.6,0.85],[-0.72,0.15],[0.82,0.5],[0.9,0.65],[0.72,0.68]],
+                   l:[[0,1],[1,2],[0,3],[3,4],[4,5],[2,6],[7,8],[8,9],[9,7]] },
   // Belt, shoulders+crossbar, feet, raised club, bow arc
   'Orion':       { s:[[0,0.82],[-0.42,0.52],[0.42,0.56],[-0.18,0.04],[0,0.04],[0.18,0.04],[-0.48,-0.72],[0.58,-0.76],[-0.75,0.88],[0.82,0.82],[0.95,0.18],[0.82,-0.46]],
                    l:[[0,1],[0,2],[1,2],[1,3],[2,5],[3,4],[4,5],[3,6],[5,7],[1,8],[2,9],[9,10],[10,11]] },
-  // Sirius chest, head, body, hind, tail, foreleg
-  'Canis Major': { s:[[0,0.5],[-0.4,0.75],[-0.15,0.9],[0.35,0.25],[0.45,-0.1],[0.35,-0.55],[0.6,-0.8],[-0.25,-0.6],[-0.35,-0.85]],
-                   l:[[2,1],[1,0],[0,3],[3,4],[4,5],[5,6],[4,7],[7,8],[0,5]] },
+  // Dog facing right: triangle head, rectangle body, stick legs, tail up
+  'Canis Major': { s:[[0.85,0.5],[0.45,0.88],[0.45,0.22],[0.18,0.62],[-0.42,0.62],[-0.42,0.1],[0.18,0.1],[0.12,-0.72],[-0.35,-0.72],[-0.78,0.9]],
+                   l:[[0,1],[1,2],[2,0],[1,3],[2,6],[3,4],[4,5],[5,6],[6,3],[6,7],[5,8],[4,9]] },
   // Pentagon + two Kids (ζ,η) near Capella
   'Auriga':      { s:[[0,0.9],[0.68,0.3],[0.5,-0.65],[-0.5,-0.65],[-0.68,0.3],[-0.28,0.58],[-0.05,0.48]],
                    l:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[5,6]] },
@@ -284,8 +294,9 @@ const CONSTELLATION_FIGURES = {
   'Cancer':      { s:[[0.0,0.0],[-0.7,0.55],[0.62,0.62],[0.7,-0.55],[-0.62,-0.55],[-0.28,0.25],[0.28,0.3]],
                    l:[[0,1],[0,2],[0,3],[0,4],[5,6]] },
   // Sickle (reversed ?) from Regulus, then body to Denebola tail
-  'Leo':         { s:[[0.55,-0.7],[0.35,-0.28],[0.05,0.1],[-0.2,0.45],[-0.45,0.62],[-0.42,0.25],[-0.1,-0.15],[0.1,-0.45],[-0.85,-0.3]],
-                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,2],[0,7],[7,6],[6,2],[6,8]] },
+  // Sickle (6 stars: ε,μ,ζ,γ,η,Regulus) + 3 body stars (Chertan,Zosma,Denebola)
+  'Leo':         { s:[[0.45,0.88],[0.15,0.82],[-0.05,0.58],[-0.1,0.3],[0.12,0.02],[0.3,-0.38],[-0.28,-0.12],[-0.52,0.32],[-0.88,0.1]],
+                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[3,7]] },
   // Big Dipper bowl+handle, bear body/leg hints
   // Big Dipper: bowl (Dubhe, Merak, Phecda, Megrez) + handle (Alioth, Mizar, Alkaid)
   'Ursa Major':  { s:[[0.75,0.55],[0.75,-0.2],[0.2,-0.2],[0.2,0.55],[-0.28,0.62],[-0.68,0.45],[-0.95,0.1]],

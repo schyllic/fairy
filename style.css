@@ -649,16 +649,18 @@ body {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 0.5rem; margin-bottom: 0.5rem;
 }
-#modal-header-btns { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+#modal-header-left { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
 #modal-today-btn {
   background: none; border: 1px solid var(--color-border); border-radius: 4px;
   font-size: 0.75rem; cursor: pointer; padding: 0.15rem 0.5rem;
-  color: var(--color-text-secondary); line-height: 1.4;
+  color: var(--color-text-secondary); line-height: 1.4; align-self: flex-start;
 }
 #modal-today-btn:hover { color: var(--color-accent); border-color: var(--color-accent); }
 #modal-close {
-  background: none; border: none; font-size: 1.2rem; cursor: pointer;
-  color: var(--color-text-secondary); line-height: 1; padding: 0;
+  background: none; border: none; font-size: 1.5rem; cursor: pointer;
+  color: var(--color-text-secondary); line-height: 1;
+  padding: 0.25rem 0.4rem; margin: -0.25rem -0.4rem 0 0; flex-shrink: 0;
+  min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
 }
 #modal-close:hover { color: var(--color-text-primary); }
 #modal-title {
@@ -687,8 +689,8 @@ body {
   margin: 0.5rem 0 0.2rem; font-size: 0.82rem;
 }
 .constellation-list { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.5; }
-.sky-chart-wrap { margin: 0.5rem 0 0.25rem; text-align: center; }
-.sky-chart-svg { max-width: 280px; width: 100%; border-radius: 50%; }
+.sky-chart-wrap { margin: -0.25rem -1rem; text-align: center; }
+.sky-chart-svg { width: 100%; border-radius: 50%; }
 .sky-const-label { cursor: pointer; }
 .sky-const-label:hover { fill: #ffff88 !important; }
 .const-detail-wrap { text-align: center; margin: 0.75rem 0 0.25rem; }

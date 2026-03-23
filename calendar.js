@@ -176,7 +176,7 @@ function _buildFairyYear(holYear) {
   }
 
   // Build FairyMoon + FairyDay objects
-  const today = utcDateStr(new Date());
+  const today = localTodayStr();
   const dayMap = new Map();
   const msPerDay = 86400000;
 

@@ -62,11 +62,11 @@ function initModal() {
     `<div id="modal-backdrop"></div>` +
     `<div id="modal-box">` +
       `<div id="modal-header">` +
-        `<h2 id="modal-title"></h2>` +
-        `<div id="modal-header-btns">` +
+        `<div id="modal-header-left">` +
+          `<h2 id="modal-title"></h2>` +
           `<button id="modal-today-btn" title="Show events from today">Today</button>` +
-          `<button id="modal-close" aria-label="Close">✕</button>` +
         `</div>` +
+        `<button id="modal-close" aria-label="Close">✕</button>` +
       `</div>` +
       `<div id="modal-body"></div>` +
     `</div>`;
@@ -79,7 +79,7 @@ function initModal() {
   });
   document.getElementById('modal-today-btn').addEventListener('click', () => {
     if (!currentFY) return;
-    const todayStr = utcDateStr(new Date());
+    const todayStr = localTodayStr();
     const fd = currentFY.dayMap.get(todayStr);
     const label = fd
       ? `Today · ${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`
@@ -418,7 +418,7 @@ function showConstellationDetail(name) {
 
 function showModal(fromDateStr, label, fy) {
   const toStr = utcDateStr(new Date(new Date(fromDateStr).getTime() + 60 * 86400000));
-  const todayStr = utcDateStr(new Date());
+  const todayStr = localTodayStr();
   const events = fy.eventTimeline
     .filter(e => e.dateStr >= fromDateStr && e.dateStr <= toStr)
     .slice(0, 10);
