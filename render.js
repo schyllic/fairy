@@ -239,8 +239,98 @@ function renderWeek(fy) {
   tbl.appendChild(tbody); root.appendChild(tbl);
 }
 
+// ─── Sky View ────────────────────────────────────────────────────────
+
+let _skyViewDate = null;  // current date for sky view (YYYY-MM-DD string)
+
+function renderSky() {
+  const root = document.getElementById('calendar-root');
+  if (!_skyViewDate) _skyViewDate = localTodayStr();
+  const skyDate = new Date(_skyViewDate + 'T00:00:00Z');
+
+  // Compute sky data
+  const catalogData = (typeof getVisibleCatalogStars === 'function') ? getVisibleCatalogStars(skyDate) : null;
+  const constellations = catalogData ? catalogData.constellations : [];
+  const visPlans = getVisiblePlanets(skyDate);
+  const planetPositions = getPlanetAltAz(skyDate);
+  const moonIllum = moonIllumPct(skyDate);
+  const sunset   = sunsetTime(skyDate);
+  const twilight = astroTwilightEnd(skyDate);
+  const tomorrow = new Date(skyDate.getTime() + 86400000);
+  const sunrise  = sunriseTime(tomorrow);
+
+  // Info bar
+  const infoParts = [];
+  if (sunset)   infoParts.push(`Sunset ${sunset}`);
+  if (twilight) infoParts.push(`Dark ${twilight}`);
+  if (sunrise)  infoParts.push(`Sunrise ${sunrise}`);
+  infoParts.push(`Moon ${moonIllum}%`);
+
+  // Planet list
+  const planetInfo = visPlans.length > 0
+    ? `<div class="sky-view-planets">${visPlans.map(p => `${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ')}</div>`
+    : '';
+
+  // Constellation list
+  const conList = constellations.length > 0
+    ? `<div class="sky-view-constellations">${constellations.map(c => `<span class="sky-view-con" data-cname="${c.name}">${c.name}</span>`).join(' · ')}</div>`
+    : '';
+
+  // Build the chart SVG
+  const chartHTML = catalogData
+    ? renderSkyChart(catalogData, planetPositions, 180)
+    : '';
+
+  root.innerHTML =
+    `<div class="sky-view">` +
+      `<div class="sky-view-info">${infoParts.join(' · ')}</div>` +
+      planetInfo +
+      conList +
+      `<div class="sky-view-chart">${chartHTML}</div>` +
+      `<div class="sky-view-hint">Scroll to zoom · Drag to pan · Double-click to reset</div>` +
+    `</div>`;
+
+  // Attach zoom
+  _resetSkyZoom();
+  const svgEl = root.querySelector('.sky-chart-svg');
+  if (svgEl) _attachSkyZoom(svgEl);
+
+  // Constellation label click → detail modal
+  root.querySelectorAll('.sky-view-con').forEach(el => {
+    el.addEventListener('click', () => {
+      if (typeof showConstellationDetailStandalone === 'function') {
+        showConstellationDetailStandalone(el.dataset.cname);
+      }
+    });
+  });
+
+  // Delegated clicks inside the chart SVG
+  root.addEventListener('click', e => {
+    const dir = e.target.closest('.sky-dir-label');
+    if (dir && _skyChartState) {
+      const rotDeg = parseInt(dir.dataset.az);
+      const wrap = dir.closest('.sky-chart-wrap');
+      if (wrap) {
+        const { catalogData: cd, planets } = _skyChartState;
+        _resetSkyZoom();
+        wrap.outerHTML = renderSkyChart(cd, planets, rotDeg);
+        const newSvg = root.querySelector('.sky-chart-svg');
+        if (newSvg) _attachSkyZoom(newSvg);
+      }
+    }
+    const lbl = e.target.closest('.sky-const-label');
+    if (lbl && typeof showConstellationDetailStandalone === 'function') {
+      showConstellationDetailStandalone(lbl.dataset.cname);
+    }
+  });
+}
+
 function render(holYear, viewMode) {
   const root = document.getElementById('calendar-root');
+
+  // Sky view doesn't need the fairy year — render immediately
+  if (viewMode === 'sky') { renderSky(); return; }
+
   root.innerHTML = '<div class="loading">Calculating calendar…</div>';
   setTimeout(() => {
     try {

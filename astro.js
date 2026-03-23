@@ -669,6 +669,54 @@ function getVisibleConstellationPositions(gregDate) {
   return result;
 }
 
+// ─── Get visible catalog stars (real HYG catalog) ────────────────────
+function getVisibleCatalogStars(gregDate) {
+  if (typeof STAR_CATALOG === 'undefined') return { tier1: [], tier2: [], constellations: [] };
+  const { T, LST, latR } = _eveningSky(gregDate);
+  const sunRD = _sunRADecT(T);
+
+  const tier1 = [], tier2 = [];
+  // Accumulate constellation centroids
+  const conAcc = {};  // abbrev → {azSum, altSum, n}
+
+  for (const star of STAR_CATALOG) {
+    const [raH, decDeg, mag, conAbbrev, name] = star;
+    const precessed = _precessJ2000(raH, decDeg, T);
+    const pos = _altAz(precessed.ra, precessed.dec, LST, latR);
+    if (!pos || pos.alt <= 0) continue;
+
+    const entry = { alt: pos.alt, az: pos.az, mag, name: name || null, con: conAbbrev };
+
+    if (mag <= 4.5) {
+      tier1.push(entry);
+      // Track constellation centroids (only from bright stars)
+      if (conAbbrev && pos.alt > 5) {
+        if (!conAcc[conAbbrev]) conAcc[conAbbrev] = { azSum: 0, altSum: 0, n: 0 };
+        conAcc[conAbbrev].azSum += pos.az;
+        conAcc[conAbbrev].altSum += pos.alt;
+        conAcc[conAbbrev].n++;
+      }
+    } else {
+      tier2.push(entry);
+    }
+  }
+
+  // Build constellation label list from centroids
+  const constellations = [];
+  for (const [abbrev, acc] of Object.entries(conAcc)) {
+    if (acc.n < 2) continue;
+    const displayName = (typeof CON_ABBREV_TO_NAME !== 'undefined' && CON_ABBREV_TO_NAME[abbrev]) || null;
+    if (!displayName) continue;  // Only label constellations we have names for
+
+    // Filter constellations too close to sun
+    const meanAz = acc.azSum / acc.n;
+    const meanAlt = acc.altSum / acc.n;
+    constellations.push({ name: displayName, abbrev, centroidAz: meanAz, centroidAlt: meanAlt });
+  }
+
+  return { tier1, tier2, constellations };
+}
+
 // ─── Constellation lore ──────────────────────────────────────────────
 const CONSTELLATION_LORE = {
   'Cassiopeia':  "The vain queen of Ethiopia, Cassiopeia boasted that her daughter Andromeda surpassed the sea-nymphs in beauty — an arrogance that angered Poseidon. As punishment she was set in the sky forever circling the North Pole, sometimes hanging upside down in humiliation. Her distinctive W shape is one of the easiest star patterns to find on any clear night.",

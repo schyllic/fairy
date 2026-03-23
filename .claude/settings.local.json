@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "Bash(curl -sL \"https://api.github.com/repos/astronexus/HYG-Database/contents/hyg/CURRENT\")",
+      "Bash(node -e \"JSON.parse\\(require\\(''fs''\\).readFileSync\\(''hyg_cur.json'',''utf8''\\)\\).forEach\\(f=>console.log\\(f.name, f.type, f.size||''''\\)\\)\")",
+      "Bash(node build-stars.js)",
+      "Bash(node -e \":*)",
+      "Bash(node --check app.js)",
+      "Bash(node --check astro.js)",
+      "Bash(node --check stars.js)",
+      "Bash(node --check render.js)"
     ]
   }
 }

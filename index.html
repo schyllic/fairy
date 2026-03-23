@@ -10,11 +10,16 @@
 
 <header id="toolbar">
   <div id="toolbar-top">
-    <div class="toolbar-group">
+    <div class="toolbar-group" id="year-nav">
       <button class="btn nav-btn" id="prev-year" title="Previous year">&#8249;</button>
       <input type="number" id="year-input" value="12026" title="Holocene year">
       <button class="btn nav-btn" id="next-year" title="Next year">&#8250;</button>
       <button class="btn" id="today-btn" title="Go to current year">Today</button>
+    </div>
+    <div class="toolbar-group" id="sky-nav" hidden>
+      <button class="btn nav-btn" id="sky-prev" title="Previous night">&#8249;</button>
+      <input type="date" id="sky-date-input" title="Pick a date">
+      <button class="btn nav-btn" id="sky-next" title="Next night">&#8250;</button>
     </div>
     <div class="toolbar-sep"></div>
     <button class="btn" id="toolbar-toggle" title="Options">&#9662;</button>
@@ -25,6 +30,7 @@
       <button class="btn view-btn" data-view="fairy">Lunar</button>
       <button class="btn view-btn" data-view="greg">Greg</button>
       <button class="btn view-btn" data-view="week">Week</button>
+      <button class="btn view-btn" data-view="sky">Sky</button>
     </div>
     <div class="toolbar-sep"></div>
     <div class="toolbar-group">
@@ -71,6 +77,7 @@
 <script src="birthdays.js"></script>
 <script src="comets.js"></script>
 <script src="holidays.js"></script>
+<script src="stars.js"></script>
 <script src="astro.js"></script>
 <script src="calendar.js"></script>
 <script src="themes.js"></script>

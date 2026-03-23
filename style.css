@@ -702,14 +702,47 @@ body {
   margin: 0.5rem 0 0.2rem; font-size: 0.82rem;
 }
 .constellation-list { font-size: 0.82rem; color: var(--color-text-primary); line-height: 1.5; }
+/* Sky chart (modal context) */
 .sky-chart-wrap { margin: -0.25rem -1rem; text-align: center; }
-.sky-chart-svg { width: 100%; border-radius: 50%; }
+.sky-chart-svg { width: 100%; border-radius: 50%; cursor: zoom-in; touch-action: none; user-select: none; }
+
+/* ─── Sky View (full page) ─────────────────────────────────────────── */
+#sky-nav {
+  display: flex; align-items: center; gap: 0.3rem;
+}
+#sky-date-input {
+  background: var(--color-surface); color: var(--color-text-primary);
+  border: 1px solid var(--color-border); border-radius: 4px;
+  padding: 0.25rem 0.5rem; font-size: 0.9rem; text-align: center;
+  font-family: inherit; width: 9rem;
+}
+#sky-date-input::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+.sky-view { display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 60px); }
+.sky-view-info {
+  font-size: 0.82rem; color: var(--color-text-secondary);
+  padding: 0.3rem 0.5rem 0.2rem; text-align: center;
+}
+.sky-view-planets, .sky-view-constellations {
+  font-size: 0.82rem; color: var(--color-text-secondary);
+  padding: 0.1rem 0.5rem; text-align: center;
+}
+.sky-view-con { cursor: pointer; }
+.sky-view-con:hover { color: var(--color-accent); }
+.sky-view-chart {
+  flex: 1; width: 100%; max-width: 700px;
+  display: flex; align-items: center; justify-content: center;
+}
+.sky-view-chart .sky-chart-wrap { margin: 0; width: 100%; }
+.sky-view-hint {
+  font-size: 0.72rem; color: var(--color-text-secondary); opacity: 0.6;
+  padding: 0.3rem 0 0.8rem; text-align: center;
+}
 .sky-const-label { cursor: pointer; }
 .sky-const-label:hover { fill: #ffff88 !important; }
 .sky-dir-label { cursor: pointer; }
 .sky-dir-label:hover { fill: #ffdd66 !important; }
 .const-detail-wrap { text-align: center; margin: 0.25rem 0; }
-.const-detail-svg { max-width: 200px; width: 100%; border-radius: 6px; }
+.const-detail-svg { max-width: 300px; width: 100%; border-radius: 6px; }
 .const-back-btn {
   background: none; border: 1px solid var(--color-border);
   color: var(--color-text-secondary); border-radius: 4px;
