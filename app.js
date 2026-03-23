@@ -54,6 +54,26 @@ try {
 
 // ─── Info Modal ──────────────────────────────────────────────────────
 
+function _dayLabel(dateStr, fy) {
+  let fd = fy && fy.dayMap.get(dateStr);
+  if (!fd) {
+    // Today might not be in the currently viewed fairy year — try the actual year
+    const gd = new Date(dateStr + 'T00:00:00Z');
+    const holY = gd.getUTCFullYear() + 10000;
+    if (!fy || holY !== fy.holYear) {
+      const tryFY = buildFairyYear(holY);
+      fd = tryFY.dayMap.get(dateStr);
+      if (!fd) { // solstice edge: try previous holocene year
+        const tryFY2 = buildFairyYear(holY - 1);
+        fd = tryFY2.dayMap.get(dateStr);
+      }
+    }
+  }
+  if (!fd) return dateStr;
+  const gd = fd.gregDate;
+  return `${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[gd.getUTCMonth()]} ${gd.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`;
+}
+
 function initModal() {
   const modal = document.createElement('div');
   modal.id = 'cal-modal';
@@ -87,13 +107,15 @@ function initModal() {
     }
   });
   document.getElementById('modal-today-btn').addEventListener('click', () => {
-    if (!currentFY) return;
     const todayStr = localTodayStr();
-    const fd = currentFY.dayMap.get(todayStr);
-    const label = fd
-      ? `Today · ${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`
-      : 'Today';
-    showModal(todayStr, label, currentFY);
+    const todayGD = new Date(todayStr + 'T00:00:00Z');
+    const holY = todayGD.getUTCFullYear() + 10000;
+    let fy = currentFY;
+    if (!fy || !fy.dayMap.get(todayStr)) {
+      fy = buildFairyYear(holY);
+      if (!fy.dayMap.get(todayStr)) fy = buildFairyYear(holY - 1);
+    }
+    showModal(todayStr, _dayLabel(todayStr, fy), fy);
   });
 }
 
@@ -489,10 +511,23 @@ function showConstellationDetail(name) {
   const lore = CONSTELLATION_LORE[name] || '';
   const loreEl = lore ? `<p class="const-lore">${lore}</p>` : '';
   document.getElementById('modal-title').textContent = name;
-  document.getElementById('modal-body').innerHTML = `<button class="const-back-btn">← Back to sky chart</button>` + svgEl + loreEl;
-  document.querySelector('.const-back-btn').addEventListener('click', () => {
+  document.getElementById('modal-close').style.display = 'none';
+  document.getElementById('modal-header-left').style.flexDirection = 'row';
+  document.getElementById('modal-header-left').style.alignItems = 'center';
+  const existing = document.querySelector('.const-back-btn');
+  if (existing) existing.remove();
+  const backBtn = document.createElement('button');
+  backBtn.className = 'const-back-btn';
+  backBtn.textContent = '← Sky chart';
+  document.getElementById('modal-header').appendChild(backBtn);
+  document.getElementById('modal-body').innerHTML = svgEl + loreEl;
+  backBtn.addEventListener('click', () => {
     document.getElementById('modal-title').textContent = _savedModal.title;
     document.getElementById('modal-body').innerHTML = _savedModal.body;
+    document.getElementById('modal-close').style.display = '';
+    document.getElementById('modal-header-left').style.flexDirection = '';
+    document.getElementById('modal-header-left').style.alignItems = '';
+    backBtn.remove();
     _savedModal = null;
   });
 }
@@ -578,7 +613,16 @@ function showModal(fromDateStr, label, fy) {
     if (!skyPlaced) body += eveningSkyHTML;
   }
 
+  // Reset constellation detail state if active
+  const staleBack = document.querySelector('.const-back-btn');
+  if (staleBack) staleBack.remove();
+  document.getElementById('modal-close').style.display = '';
+  document.getElementById('modal-header-left').style.flexDirection = '';
+  document.getElementById('modal-header-left').style.alignItems = '';
+  _savedModal = null;
+
   document.getElementById('modal-title').textContent = label;
+  document.getElementById('modal-today-btn').style.display = (fromDateStr === todayStr) ? 'none' : '';
   document.getElementById('modal-body').innerHTML = body;
   document.getElementById('cal-modal').removeAttribute('hidden');
 }

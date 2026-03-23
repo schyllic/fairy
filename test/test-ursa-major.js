@@ -23,7 +23,7 @@ vm.runInContext(astroSrc, ctx);
 // const/let/function declarations in vm don't leak to ctx object — extract via eval
 const CONSTELLATIONS = vm.runInContext('CONSTELLATIONS', ctx);
 const _precessJ2000 = vm.runInContext('_precessJ2000', ctx);
-const _starAltAz = vm.runInContext('_starAltAz', ctx);
+const _altAz = vm.runInContext('_altAz', ctx);
 const getVisibleConstellationPositions = vm.runInContext('getVisibleConstellationPositions', ctx);
 const getEveningUTHours = vm.runInContext('getEveningUTHours', ctx);
 const OBSERVER = vm.runInContext('OBSERVER', ctx);

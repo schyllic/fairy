@@ -85,7 +85,7 @@ function renderGreg(fy) {
         const fl = el('span','fairy-label', `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`);
         if (fd.darkmoonPart) { fl.classList.add('darkmoon-label'); fl.title=`Darkmoon · ${fd.darkmoonPart}`; }
         cell.appendChild(fl);
-        { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=ds; ib.dataset.label=`${fd.isToday?'Today · ':''}${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`; ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); cell.appendChild(ib); }
+        { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=ds; ib.dataset.label=_dayLabel(ib.dataset.from, currentFY); ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); cell.appendChild(ib); }
         const ic = moonIcons(fd);
         if (ic) { const ig=el('span','icon-group'); ig.innerHTML=ic; cell.appendChild(ig); }
       }
@@ -160,7 +160,7 @@ function renderFairy(fy) {
       td.appendChild(el('span','fairy-daynum', String(fd.fairyDay)));
       if (fd.isToday) td.appendChild(el('span','today-label','Today'));
       td.appendChild(el('span','fairy-greg-date', fmtGreg(fd.gregDate)));
-      { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=`${fd.isToday?'Today · ':''}${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`; ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
+      { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=_dayLabel(ib.dataset.from, currentFY); ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
       const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
       row.appendChild(td); col++;
     }
@@ -228,7 +228,7 @@ function renderWeek(fy) {
         td.appendChild(wfd);
         td.appendChild(el('div','week-greg-date', fmtGreg(fd.gregDate)));
         if (fd.isToday) td.appendChild(el('span','today-label','Today'));
-        { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=`${fd.isToday?'Today · ':''}${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[fd.gregDate.getUTCMonth()]} ${fd.gregDate.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`; ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
+        { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=_dayLabel(ib.dataset.from, currentFY); ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
         const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
         i++;
       }
@@ -258,7 +258,11 @@ function render(holYear, viewMode) {
       if (scrollToTodayAfterRender) {
         scrollToTodayAfterRender = false;
         requestAnimationFrame(() => {
-          document.querySelector('.is-today')?.scrollIntoView({behavior:'smooth', block:'center'});
+          const todayEl = document.querySelector('.is-today');
+          if (todayEl) {
+            todayEl.scrollIntoView({behavior:'smooth', block:'center'});
+            setTimeout(() => { todayEl.classList.add('shine'); }, 400);
+          }
         });
       }
       if (scrollToSelectedAfterRender && selectedDate) {

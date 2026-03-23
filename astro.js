@@ -1,9 +1,22 @@
 // ═══ Fairy Calendar — astro.js ═══
 
-function dateToJDE(date) { return date.getTime() / 86400000 + 2440587.5; }
-function jdeToDate(jde)  { return new Date((jde - 2440587.5) * 86400000); }
-function rad(deg)        { return deg * Math.PI / 180; }
+// ─── Constants ───────────────────────────────────────────────────────
+const DEG    = Math.PI / 180;    // degrees → radians
+const HOURS  = Math.PI / 12;     // RA hours → radians
+const R2D    = 180 / Math.PI;    // radians → degrees
+const R2H    = 12 / Math.PI;     // radians → RA hours
+const J2000  = 2451545.0;        // J2000.0 epoch (Julian Date)
+const JC     = 36525;            // days per Julian century
+const MS_DAY = 86400000;         // milliseconds per day
+const JD_UNIX = 2440587.5;       // JD at Unix epoch (1970-01-01)
+
+// ─── Core utilities ──────────────────────────────────────────────────
+function dateToJDE(date) { return date.getTime() / MS_DAY + JD_UNIX; }
+function jdeToDate(jde)  { return new Date((jde - JD_UNIX) * MS_DAY); }
+function rad(deg)        { return deg * DEG; }
 function norm360(x)      { return ((x % 360) + 360) % 360; }
+function norm24(x)       { return ((x % 24) + 24) % 24; }
+function clampSin(x)     { return x < -1 ? -1 : x > 1 ? 1 : x; }
 
 function lunarPhaseJDE(k, phase) {
   const kp = k + phase;
@@ -83,17 +96,21 @@ function dateToK(date) {
   return Math.round((yr - 2000) * 12.3685);
 }
 
-function getNewMoons(gregYear) {
+function _lunarKRange(gregYear) {
   const kStart = dateToK(new Date(Date.UTC(gregYear-1,0,1))) - 2;
   const kEnd   = dateToK(new Date(Date.UTC(gregYear+2,0,1))) + 2;
+  return { kStart, kEnd };
+}
+
+function getNewMoons(gregYear) {
+  const { kStart, kEnd } = _lunarKRange(gregYear);
   const r = [];
   for (let k = kStart; k <= kEnd; k++) r.push(jdeToDate(lunarPhaseJDE(k, 0)));
   return r.sort((a,b) => a-b);
 }
 
 function getMoonPhases(gregYear) {
-  const kStart = dateToK(new Date(Date.UTC(gregYear-1,0,1))) - 2;
-  const kEnd   = dateToK(new Date(Date.UTC(gregYear+2,0,1))) + 2;
+  const { kStart, kEnd } = _lunarKRange(gregYear);
   const r = [];
   for (let k = kStart; k <= kEnd; k++) {
     r.push({date:jdeToDate(lunarPhaseJDE(k,0)),    phase:'new'});
@@ -121,7 +138,7 @@ function getSolsticesEquinoxes(gregYear) {
     [14,199.76,31557.381],[12,95.39,14577.848],[10,287.11,31555.150],
     [8,320.81,29929.931],[6,227.73,31436.921],[5,15.45,2452.950]];
   function correction(J0) {
-    const Tc=(J0-2451545.0)/36525, W=norm360(35999.373*Tc-2.47);
+    const Tc=(J0-J2000)/JC, W=norm360(35999.373*Tc-2.47);
     const dL=1+0.0334*Math.cos(rad(W))+0.0007*Math.cos(rad(2*W));
     let S=0; for(const [A,B,C] of TERMS) S+=A*Math.cos(rad(B+C*Tc));
     return (S*0.00001)/dL;
@@ -145,7 +162,7 @@ function localTodayStr() {
 }
 
 function daysBetween(a, b) {
-  return Math.floor(b.getTime()/86400000) - Math.floor(a.getTime()/86400000);
+  return Math.floor(b.getTime()/MS_DAY) - Math.floor(a.getTime()/MS_DAY);
 }
 
 // Perigee / Apogee — Meeus Ch. 50
@@ -573,53 +590,51 @@ function _precessJ2000(raH, decDeg, T) {
   const zetaA  = (0.6406161 + 0.0000839*T + 0.0000050*T*T) * T;
   const zA     = (0.6406161 + 0.0003041*T + 0.0000051*T*T) * T;
   const thetaA = (0.5567530 - 0.0001185*T - 0.0000116*T*T) * T;
-  const zetaR  = zetaA  * Math.PI / 180;
-  const zR     = zA     * Math.PI / 180;
-  const thetaR = thetaA * Math.PI / 180;
-  const ra0  = raH * Math.PI / 12;
-  const dec0 = decDeg * Math.PI / 180;
+  const zetaR  = zetaA * DEG, zR = zA * DEG, thetaR = thetaA * DEG;
+  const ra0 = raH * HOURS, dec0 = decDeg * DEG;
   const cosD = Math.cos(dec0), sinD = Math.sin(dec0);
   const cosRA_zeta = Math.cos(ra0 + zetaR);
   const sinRA_zeta = Math.sin(ra0 + zetaR);
   const A = cosD * sinRA_zeta;
   const B = Math.cos(thetaR)*cosD*cosRA_zeta - Math.sin(thetaR)*sinD;
   const C = Math.sin(thetaR)*cosD*cosRA_zeta + Math.cos(thetaR)*sinD;
-  let ra = Math.atan2(A, B) + zR;
-  ra = ((ra * 12 / Math.PI) % 24 + 24) % 24;
-  const dec = Math.asin(Math.max(-1, Math.min(1, C))) * 180 / Math.PI;
-  return { ra, dec };
+  return { ra: norm24(Math.atan2(A, B) * R2H + zA / 15), dec: Math.asin(clampSin(C)) * R2D };
 }
 
-// ─── Project a single star RA/Dec to alt/az ─────────────────────────
-function _starAltAz(raH, decDeg, LST, latR) {
-  const ha  = ((LST - raH) % 24 + 24) % 24;
-  const haR = ha * Math.PI / 12;
-  const decR = decDeg * Math.PI / 180;
+// ─── Equatorial → horizon (RA hours, Dec degrees → alt/az degrees) ──
+function _altAz(raH, decDeg, LST, latR) {
+  const haR  = norm24(LST - raH) * HOURS;
+  const decR = decDeg * DEG;
   const sinAlt = Math.sin(decR)*Math.sin(latR) + Math.cos(decR)*Math.cos(latR)*Math.cos(haR);
-  const alt = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180/Math.PI;
-  if (alt < -5) return null; // well below horizon, skip full calculation
-  const cosAlt = Math.cos(alt * Math.PI / 180);
+  const alt = Math.asin(clampSin(sinAlt)) * R2D;
+  if (alt < -5) return null;
+  const cosAlt = Math.cos(alt * DEG);
   const cosAz  = cosAlt > 0.001
     ? (Math.sin(decR) - sinAlt*Math.sin(latR)) / (cosAlt*Math.cos(latR)) : 0;
-  let az = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180/Math.PI;
+  let az = Math.acos(clampSin(cosAz)) * R2D;
   if (Math.sin(haR) > 0) az = 360 - az;
   return { alt, az };
 }
 
+// ─── GMST (Greenwich Mean Sidereal Time, hours) ─────────────────────
+function _gmst(T, UT) {
+  return norm24(6.697375 + 2400.0513368*T + 1.0027379*UT);
+}
+
+// ─── Evening sky setup (JD → T, LST, latR for ~9pm local) ──────────
+function _eveningSky(gregDate) {
+  const Y = gregDate.getUTCFullYear(), M = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
+  const UT  = getEveningUTHours(gregDate);
+  const JD  = _julianDate(Y, M, D, UT);
+  const T   = (JD - J2000) / JC;
+  const LST = norm24(_gmst(T, UT) + OBSERVER.lon / 15);
+  return { T, LST, latR: OBSERVER.lat * DEG };
+}
+
 // ─── Get visible constellation positions (per-star) ─────────────────
 function getVisibleConstellationPositions(gregDate) {
-  const Y = gregDate.getUTCFullYear(), M = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
-  const UT = getEveningUTHours(gregDate);
-  const JD = _julianDate(Y, M, D, UT);
-  const T    = (JD - 2451545.0) / 36525;
-  const GMST = ((6.697375 + 2400.0513368*T + 1.0027379*UT) % 24 + 24) % 24;
-  const LST  = (GMST + OBSERVER.lon/15 + 24) % 24;
-  const latR = OBSERVER.lat * Math.PI / 180;
-
-  // Compute sun position for twilight filtering
+  const { T, LST, latR } = _eveningSky(gregDate);
   const sunRD = _sunRADecT(T);
-  const sunRAH = ((sunRD.ra * 12 / Math.PI) % 24 + 24) % 24;
-  const sunDecDeg = sunRD.dec * 180 / Math.PI;
 
   const result = [];
   for (const [name, con] of Object.entries(CONSTELLATIONS)) {
@@ -627,7 +642,7 @@ function getVisibleConstellationPositions(gregDate) {
     let visCount = 0;
     for (const [raH, decDeg, mag, label] of con.stars) {
       const precessed = _precessJ2000(raH, decDeg, T);
-      const pos = _starAltAz(precessed.ra, precessed.dec, LST, latR);
+      const pos = _altAz(precessed.ra, precessed.dec, LST, latR);
       if (pos && pos.alt > 0) {
         projected.push({ alt: pos.alt, az: pos.az, mag, label: label || '', visible: pos.alt > 5 });
         if (pos.alt > 5) visCount++;
@@ -635,21 +650,16 @@ function getVisibleConstellationPositions(gregDate) {
         projected.push(null);
       }
     }
-    // Need at least 2 visible stars (or 1 for small constellations)
     const minStars = con.stars.length <= 3 ? 1 : 2;
     if (visCount < minStars) continue;
 
-    // Filter out constellations too close to the sun (twilight washout)
-    const meanJ2000RA = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
-    const meanJ2000Dec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
-    const meanP = _precessJ2000(meanJ2000RA, meanJ2000Dec, T);
-    const sunSep = _angSep(
-      meanP.ra * Math.PI / 12, meanP.dec * Math.PI / 180,
-      sunRD.ra, sunRD.dec
-    );
-    if (sunSep < 30) continue;
+    // Filter constellations too close to sun (twilight washout)
+    const meanRA  = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
+    const meanDec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
+    const meanP   = _precessJ2000(meanRA, meanDec, T);
+    if (_angSep(meanP.ra * HOURS, meanP.dec * DEG, sunRD.ra, sunRD.dec) < 30) continue;
 
-    // Compute centroid of visible stars
+    // Centroid of visible stars
     let cx = 0, cy = 0, n = 0;
     for (const p of projected) {
       if (p && p.visible) { cx += p.az; cy += p.alt; n++; }
@@ -745,7 +755,7 @@ function _geocentricRADec(name,T) {
   const dx=p.x-earth.x, dy=p.y-earth.y, dz=p.z-earth.z;
   const ye=dy*Math.cos(eps)-dz*Math.sin(eps), ze=dy*Math.sin(eps)+dz*Math.cos(eps);
   const dist=Math.sqrt(dx*dx+dy*dy+dz*dz);
-  return {ra:Math.atan2(ye,dx), dec:Math.asin(Math.max(-1,Math.min(1,ze/dist)))};
+  return {ra:Math.atan2(ye,dx), dec:Math.asin(clampSin(ze/dist))};
 }
 
 function _sunRADecT(T) {
@@ -772,7 +782,7 @@ function _moonRADecT(T) {
 }
 
 function moonIllumPct(date) {
-  const T = (dateToJDE(date) - 2451545.0) / 36525;
+  const T = (dateToJDE(date) - J2000) / JC;
   const sun  = _sunRADecT(T);
   const moon = _moonRADecT(T);
   const elong = _angSep(sun.ra, sun.dec, moon.ra, moon.dec); // degrees
@@ -780,9 +790,9 @@ function moonIllumPct(date) {
 }
 
 function _angSep(ra1,dec1,ra2,dec2) {
-  return Math.acos(Math.max(-1,Math.min(1,
+  return Math.acos(clampSin(
     Math.sin(dec1)*Math.sin(dec2)+Math.cos(dec1)*Math.cos(dec2)*Math.cos(ra1-ra2)
-  )))*180/Math.PI;
+  )) * R2D;
 }
 
 function _isEvening(pRA,sunRA) {
@@ -791,40 +801,25 @@ function _isEvening(pRA,sunRA) {
 
 // Returns planets visible in evening sky on gregDate (elongation > 20°, east of sun)
 function getVisiblePlanets(gregDate) {
-  const T=(dateToJDE(gregDate)-2451545.0)/36525;
-  const sun=_sunRADecT(T);
-  return PLANET_NAMES_VIS.map(name=>{
-    const p=_geocentricRADec(name,T);
-    const elong=_angSep(p.ra,p.dec,sun.ra,sun.dec);
-    return {name, elong:Math.round(elong), evening:_isEvening(p.ra,sun.ra)};
-  }).filter(p=>p.elong>20&&p.evening);
+  const T = (dateToJDE(gregDate) - J2000) / JC;
+  const sun = _sunRADecT(T);
+  return PLANET_NAMES_VIS.map(name => {
+    const p = _geocentricRADec(name, T);
+    const elong = _angSep(p.ra, p.dec, sun.ra, sun.dec);
+    return { name, elong: Math.round(elong), evening: _isEvening(p.ra, sun.ra) };
+  }).filter(p => p.elong > 20 && p.evening);
 }
 
 // Returns alt/az for all planets above horizon at ~9pm local on gregDate
 function getPlanetAltAz(gregDate) {
-  const Y = gregDate.getUTCFullYear(), Mo = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
-  const UT = getEveningUTHours(gregDate);
-  const JD = _julianDate(Y, Mo, D, UT);
-  const T    = (JD - 2451545.0) / 36525;
-  const GMST = ((6.697375 + 2400.0513368*T + 1.0027379*UT) % 24 + 24) % 24;
-  const LST  = (GMST + OBSERVER.lon/15 + 24) % 24;
-  const lat  = OBSERVER.lat * Math.PI / 180;
-  const sun  = _sunRADecT(T);
+  const { T, LST, latR } = _eveningSky(gregDate);
+  const sun = _sunRADecT(T);
   return PLANET_NAMES_VIS.map(name => {
-    const p   = _geocentricRADec(name, T); // ra/dec in radians
-    const elong = _angSep(p.ra, p.dec, sun.ra, sun.dec);
-    if (elong < 15) return null; // too close to sun
-    const raH  = ((p.ra * 12 / Math.PI) % 24 + 24) % 24;
-    const ha   = ((LST - raH) % 24 + 24) % 24;
-    const haR  = ha * Math.PI / 12;
-    const sinAlt = Math.sin(p.dec)*Math.sin(lat) + Math.cos(p.dec)*Math.cos(lat)*Math.cos(haR);
-    const alt  = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180/Math.PI;
-    if (alt < 5) return null;
-    const cosAlt = Math.cos(Math.asin(sinAlt));
-    const cosAz  = cosAlt > 0.001 ? (Math.sin(p.dec) - sinAlt*Math.sin(lat)) / (cosAlt*Math.cos(lat)) : 0;
-    let az = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180/Math.PI;
-    if (Math.sin(haR) > 0) az = 360 - az;
-    return { name, az, alt, symbol: PLANET_SYMBOLS[name] };
+    const p = _geocentricRADec(name, T);
+    if (_angSep(p.ra, p.dec, sun.ra, sun.dec) < 15) return null;
+    const pos = _altAz(norm24(p.ra * R2H), p.dec * R2D, LST, latR);
+    if (!pos || pos.alt < 5) return null;
+    return { name, az: pos.az, alt: pos.alt, symbol: PLANET_SYMBOLS[name] };
   }).filter(Boolean);
 }
 
@@ -835,16 +830,16 @@ const _PLANET_PAIRS = [
 ];
 
 function getPlanetaryEvents(gregYear) {
-  const events=[], msPerDay=86400000;
-  const startMs=Date.UTC(gregYear-1,10,1), endMs=Date.UTC(gregYear+1,1,28);
-  const prevE={}, ppE={};
-  PLANET_NAMES_VIS.forEach(n=>{prevE[n]=null;ppE[n]=null;});
-  let prevDs=null;
-  const pairCooldown={};
+  const events = [];
+  const startMs = Date.UTC(gregYear-1,10,1), endMs = Date.UTC(gregYear+1,1,28);
+  const prevE = {}, ppE = {};
+  PLANET_NAMES_VIS.forEach(n => { prevE[n] = null; ppE[n] = null; });
+  let prevDs = null;
+  const pairCooldown = {};
 
-  for (let ms=startMs; ms<=endMs; ms+=msPerDay) {
-    const date=new Date(ms), ds=utcDateStr(date);
-    const T=(dateToJDE(date)-2451545.0)/36525;
+  for (let ms = startMs; ms <= endMs; ms += MS_DAY) {
+    const date = new Date(ms), ds = utcDateStr(date);
+    const T = (dateToJDE(date) - J2000) / JC;
     const sun=_sunRADecT(T), moon=_moonRADecT(T);
     const pos={};
     for (const name of PLANET_NAMES_VIS) pos[name]=_geocentricRADec(name,T);
@@ -875,7 +870,7 @@ function getPlanetaryEvents(gregYear) {
       const sep=_angSep(pos[n1].ra,pos[n1].dec,pos[n2].ra,pos[n2].dec);
       if (sep<2.0) {
         const pk=n1+n2, last=pairCooldown[pk];
-        if (!last||ms-last>20*msPerDay) {
+        if (!last||ms-last>20*MS_DAY) {
           events.push({dateStr:ds, kind:'planetConj', planets:[n1,n2], sep:+(sep.toFixed(1))});
           pairCooldown[pk]=ms;
         }
@@ -909,10 +904,10 @@ function getMeteorShowerEvents(gregYear) {
   for (const s of METEOR_SHOWERS) {
     for (const yr of [gregYear-1, gregYear, gregYear+1]) {
       const peakMs = Date.UTC(yr, s.month-1, s.day);
-      const windowStart = utcDateStr(new Date(peakMs - before(s) * 86400000));
-      const windowEnd   = utcDateStr(new Date(peakMs + after(s)  * 86400000));
+      const windowStart = utcDateStr(new Date(peakMs - before(s) * MS_DAY));
+      const windowEnd   = utcDateStr(new Date(peakMs + after(s)  * MS_DAY));
       for (let d = -before(s); d <= after(s); d++) {
-        const ms = peakMs + d * 86400000;
+        const ms = peakMs + d * MS_DAY;
         const dt = new Date(ms);
         const ds = utcDateStr(dt);
         events.push({dateStr:ds, kind:'meteorShower', name:s.name, zhr:s.zhr, note:s.note, isPeak: d===0, isNearPeak: Math.abs(d)<=1, windowStart, windowEnd});
@@ -950,7 +945,7 @@ function _sunEventTime(date, altitude, isRise) {
   // Returns local time string for sun crossing given altitude on date.
   const lat = OBSERVER.lat, lon = OBSERVER.lon;
   const jd = Math.floor(dateToJDE(date)) + 0.5;
-  const n  = jd - 2451545.0;
+  const n  = jd - J2000;
   const L  = norm360(280.460 + 0.9856474 * n);
   const g  = rad(norm360(357.528 + 0.9856003 * n));
   const lam = rad(L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g));
@@ -959,7 +954,7 @@ function _sunEventTime(date, altitude, isRise) {
   const cosH = (Math.sin(rad(altitude)) - Math.sin(rad(lat)) * sinDec)
              / (Math.cos(rad(lat)) * cosDec);
   if (Math.abs(cosH) > 1) return null;
-  const H = Math.acos(cosH) * 180 / Math.PI / 15;
+  const H = Math.acos(cosH) * R2D / 15;
   const utH = isRise ? (12 - lon / 15 - H + 24) % 24
                      : (12 - lon / 15 + H) % 24;
   const offset = _easternOffsetHours(date);
