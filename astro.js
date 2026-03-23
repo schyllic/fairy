@@ -202,148 +202,429 @@ function detectEclipses(phaseSets) {
   return eclipses;
 }
 
-// Evening sky constellations — Ferrum, VA (37°N, 80°W), 8pm–midnight
-const EVENING_CONSTELLATIONS = [
-  {name:'Cassiopeia',  ra:1.0,  dec:62}, {name:'Andromeda',   ra:0.8,  dec:41},
-  {name:'Pisces',      ra:1.0,  dec:14}, {name:'Aries',       ra:2.6,  dec:21},
-  {name:'Perseus',     ra:3.5,  dec:45}, {name:'Taurus',      ra:4.7,  dec:17},
-  {name:'Orion',       ra:5.5,  dec: 2}, {name:'Canis Major', ra:6.8,  dec:-22},
-  {name:'Auriga',      ra:6.0,  dec:42}, {name:'Gemini',      ra:7.0,  dec:25},
-  {name:'Cancer',      ra:8.5,  dec:20}, {name:'Leo',         ra:10.7, dec:15},
-  {name:'Ursa Major',  ra:10.7, dec:56}, {name:'Virgo',       ra:13.4, dec:-4},
-  {name:'Boötes',      ra:14.7, dec:32}, {name:'Libra',       ra:15.3, dec:-15},
-  {name:'Corona Bor.', ra:15.8, dec:30}, {name:'Scorpius',    ra:16.9, dec:-26},
-  {name:'Hercules',    ra:17.4, dec:28}, {name:'Ophiuchus',   ra:17.5, dec:-8},
-  {name:'Lyra',        ra:18.9, dec:37}, {name:'Sagittarius', ra:19.1, dec:-28},
-  {name:'Aquila',      ra:19.7, dec: 3}, {name:'Cygnus',      ra:20.6, dec:42},
-  {name:'Capricornus', ra:21.0, dec:-20},{name:'Aquarius',    ra:22.3, dec:-11},
-  {name:'Pegasus',     ra:22.7, dec:20},
-];
+// ─── Constellation data — real J2000 star positions ─────────────────
+// Each star: [RA_hours, Dec_degrees, magnitude, label_or_null]
+// Lines: pairs of star indices forming the stick figure
+const CONSTELLATIONS = {
+  'Ursa Minor':  { stars: [
+      // Little Dipper: handle = Polaris→δ→ε→ζ, bowl = ζ→η→β(Kochab)→γ(Pherkad)
+      [2.530, 89.264, 1.97, 'Polaris'],  // 0 - α, handle tip (pole)
+      [14.845, 74.156, 2.07, 'Kochab'],  // 1 - β, bowl
+      [15.345, 71.834, 3.00, 'Pherkad'], // 2 - γ, bowl
+      [16.292, 75.755, 5.00, null],       // 3 - η, bowl
+      [15.734, 77.795, 4.32, null],       // 4 - ζ, bowl/handle junction
+      [16.766, 82.037, 4.21, null],       // 5 - ε, handle
+      [17.537, 86.586, 4.35, null],       // 6 - δ (Yildun), handle
+    ] },
 
-function getEveningConstellations(gregDate) {
-  const yearStart = new Date(Date.UTC(gregDate.getUTCFullYear(), 0, 1));
-  const doy = Math.floor((gregDate - yearStart) / 86400000) + 1;
-  const raSun = (((doy - 79) * 24 / 365.25) % 24 + 24) % 24; // Sun RA in hours
-  const raMid = (raSun + 10) % 24; // meridian at ~10pm
-  return EVENING_CONSTELLATIONS.filter(c => {
-    if (c.dec < -(90 - OBSERVER.lat)) return false; // below horizon all night at observer lat
-    let diff = ((c.ra - raMid + 24) % 24);
-    if (diff > 12) diff -= 24;
-    return Math.abs(diff) <= 3.5;
-  });
+  'Cassiopeia':  { stars: [
+      [0.153, 59.150, 2.24, 'Caph'],      // 0 - β
+      [0.675, 56.537, 2.24, 'Schedar'],   // 1 - α
+      [0.945, 60.717, 2.47, null],         // 2 - γ (Tsih)
+      [1.430, 60.235, 2.68, 'Ruchbah'],   // 3 - δ
+      [1.907, 63.670, 3.35, 'Segin'],     // 4 - ε
+    ] },
+
+  'Cepheus':     { stars: [
+      [21.310, 62.586, 2.45, 'Alderamin'],// 0
+      [23.656, 77.632, 3.23, null],        // 1 - α-like (Errai γ)
+      [21.478, 70.561, 3.21, 'Alfirk'],   // 2 - β
+      [22.828, 66.200, 3.52, null],        // 3 - ι
+      [22.181, 58.201, 3.43, null],        // 4 - ζ
+    ] },
+
+  'Draco':       { stars: [
+      [17.943, 51.489, 2.24, 'Eltanin'],  // 0 - γ
+      [16.400, 61.514, 2.73, null],        // 1 - η
+      [17.147, 65.715, 2.79, null],        // 2 - ζ
+      [17.507, 52.301, 2.99, 'Rastaban'], // 3 - β
+      [15.415, 58.966, 3.17, null],        // 4 - ι
+      [14.073, 64.376, 3.29, 'Thuban'],   // 5 - α
+      [12.558, 69.788, 3.83, null],        // 6 - κ
+      [11.523, 69.331, 3.84, null],        // 7 - λ
+      [19.209, 67.662, 3.07, null],        // 8 - δ (Altais)
+    ] },
+
+  'Andromeda':   { stars: [
+      [0.140, 29.091, 2.07, 'Alpheratz'], // 0
+      [1.163, 35.621, 2.07, 'Mirach'],    // 1
+      [2.065, 42.330, 2.10, 'Almach'],    // 2
+      [0.655, 30.861, 3.27, null],         // 3 - δ
+      [1.162, 47.242, 3.57, null],         // 4 - μ (near M31)
+    ] },
+
+  'Pegasus':     { stars: [
+      [23.079, 15.205, 2.49, 'Markab'],   // 0 - α
+      [23.063, 28.083, 2.44, 'Scheat'],   // 1 - β
+      [0.221, 15.183, 2.83, 'Algenib'],   // 2 - γ
+      [21.736, 9.875, 2.38, 'Enif'],       // 3 - ε
+      [22.170, 6.198, 3.48, null],         // 4 - θ
+    ],
+    // Great Square: Alpheratz(And 0)–Scheat–Markab–Algenib; Enif = nose
+    // Note: The 4th corner of the Great Square is Alpheratz in Andromeda
+  },
+
+  'Pisces':      { stars: [
+      [2.034, 2.764, 3.62, null],          // 0 - η (brightest)
+      [1.525, 15.346, 4.13, null],         // 1 - ο
+      [1.757, 9.158, 3.70, null],          // 2 - α (Alrescha)
+      [23.989, 6.863, 4.13, null],         // 3 - γ
+      [23.666, 5.626, 4.27, null],         // 4 - κ
+      [23.286, 3.282, 4.42, null],         // 5 - λ
+      [1.049, 7.890, 4.48, null],          // 6 - ε
+    ] },
+
+  'Aries':       { stars: [
+      [2.120, 23.462, 2.01, 'Hamal'],     // 0
+      [1.911, 20.808, 2.64, 'Sheratan'],  // 1
+      [1.892, 19.294, 3.88, null],         // 2 - 41 Ari
+    ] },
+
+  'Triangulum':  { stars: [
+      [1.885, 29.579, 3.00, null],         // 0 - β
+      [2.159, 34.987, 3.41, null],         // 1 - α
+      [2.289, 33.847, 4.01, null],         // 2 - γ
+    ] },
+
+  'Perseus':     { stars: [
+      [3.405, 49.861, 1.79, 'Mirfak'],    // 0
+      [3.136, 40.957, 2.09, 'Algol'],     // 1
+      [3.964, 40.010, 2.85, null],         // 2 - ζ
+      [3.715, 47.788, 2.89, null],         // 3 - δ
+      [3.083, 53.506, 2.93, null],         // 4 - ε
+      [3.902, 31.884, 3.39, null],         // 5 - ρ
+    ] },
+
+  'Taurus':      { stars: [
+      [4.598, 16.510, 0.87, 'Aldebaran'], // 0
+      [5.438, 28.608, 1.65, 'Elnath'],    // 1 - β (shared w/ Auriga)
+      [4.330, 15.628, 3.54, null],         // 2 - γ (Hyades V tip)
+      [4.476, 19.181, 3.84, null],         // 3 - δ¹ (Hyades)
+      [4.383, 17.543, 3.40, null],         // 4 - ε
+      [5.627, 21.143, 2.97, null],         // 5 - ζ (horn tip)
+      [3.792, 24.105, 2.87, 'Alcyone'],   // 6 - Pleiades η Tau
+    ] },
+
+  'Auriga':      { stars: [
+      [5.278, 45.998, 0.08, 'Capella'],   // 0
+      [5.995, 44.947, 1.90, 'Menkalinan'],// 1
+      [5.992, 37.213, 2.69, null],         // 2 - θ
+      [5.033, 43.823, 3.03, null],         // 3 - ε
+      [5.108, 41.234, 3.17, null],         // 4 - η
+      [4.950, 33.166, 2.65, 'Hassaleh'], // 5 - ι
+    ] },
+
+  'Orion':       { stars: [
+      [5.919, 7.407, 0.45, 'Betelgeuse'], // 0
+      [5.242, -8.202, 0.18, 'Rigel'],     // 1
+      [5.679, -1.943, 1.69, null],         // 2 - ζ (Alnitak)
+      [5.604, -1.202, 1.69, null],         // 3 - ε (Alnilam)
+      [5.534, -0.300, 2.25, null],         // 4 - δ (Mintaka)
+      [5.419, 6.350, 1.64, 'Bellatrix'],  // 5
+      [5.796, -9.670, 2.07, 'Saiph'],     // 6
+    ] },
+
+  'Canis Minor': { stars: [
+      [7.655, 5.225, 0.34, 'Procyon'],    // 0
+      [7.452, 8.289, 2.89, 'Gomeisa'],   // 1
+    ] },
+
+  'Canis Major': { stars: [
+      [6.752, -16.716, -1.44, 'Sirius'], // 0
+      [6.378, -17.956, 1.98, 'Mirzam'],  // 1 - β
+      [7.140, -26.393, 1.50, 'Wezen'],   // 2 - δ
+      [6.977, -28.972, 1.83, 'Adhara'],  // 3 - ε
+      [7.063, -23.833, 2.44, null],        // 4 - σ
+      [6.611, -19.256, 3.02, null],        // 5 - ν²
+    ] },
+
+  'Gemini':      { stars: [
+      [7.577, 31.888, 1.16, 'Pollux'],   // 0 - β
+      [7.577, 31.888, 1.58, 'Castor'],   // 1 - α — corrected below
+      [6.629, 16.399, 1.93, 'Alhena'],   // 2 - γ
+      [7.335, 21.982, 2.88, null],         // 3 - δ
+      [6.732, 25.131, 3.06, null],         // 4 - μ
+      [6.383, 22.507, 3.36, null],         // 5 - ε (Mebsuta)
+    ],
+    // Fix Castor RA (it's distinct from Pollux)
+  },
+
+  'Cancer':      { stars: [
+      [8.745, 18.154, 3.53, null],         // 0 - β (Tarf)
+      [8.975, 11.858, 3.94, null],         // 1 - δ
+      [8.721, 21.469, 4.02, null],         // 2 - ι
+      [8.778, 28.760, 4.66, null],         // 3 - γ
+    ] },
+
+  'Leo':         { stars: [
+      [10.140, 11.967, 1.36, 'Regulus'],  // 0 - α
+      [11.818, 14.572, 2.14, 'Denebola'],// 1 - β
+      [10.333, 19.842, 1.98, 'Algieba'], // 2 - γ
+      [11.235, 20.524, 2.56, null],        // 3 - δ (Zosma)
+      [11.238, 15.430, 3.33, null],        // 4 - θ (Chertan)
+      [10.122, 16.763, 3.48, null],        // 5 - η
+      [9.879, 26.007, 3.44, null],         // 6 - μ (Rasalas)
+      [10.278, 23.417, 2.61, null],        // 7 - ζ (Adhafera)
+      [9.764, 23.774, 2.98, null],         // 8 - ε
+    ] },
+
+  'Ursa Major':  { stars: [
+      [11.062, 61.751, 1.81, 'Dubhe'],    // 0 - α
+      [11.031, 56.382, 2.34, 'Merak'],    // 1 - β
+      [11.897, 53.695, 2.41, 'Phecda'],   // 2 - γ
+      [12.257, 57.033, 3.32, 'Megrez'],   // 3 - δ
+      [12.900, 55.960, 1.76, 'Alioth'],   // 4 - ε
+      [13.399, 54.926, 2.23, 'Mizar'],    // 5 - ζ
+      [13.792, 49.313, 1.85, 'Alkaid'],   // 6 - η
+    ] },
+
+  'Coma Berenices': { stars: [
+      [13.167, 17.529, 4.26, null],        // 0 - α (Diadem)
+      [13.198, 27.878, 4.32, null],        // 1 - β
+      [12.449, 28.269, 4.35, null],        // 2 - γ
+    ] },
+
+  'Virgo':       { stars: [
+      [13.420, -11.161, 0.98, 'Spica'],   // 0 - α
+      [13.036, 10.959, 2.83, null],        // 1 - ε (Vindemiatrix)
+      [12.694, -1.449, 2.74, null],        // 2 - γ (Porrima)
+      [12.927, 3.397, 3.38, null],         // 3 - δ
+      [11.845, 1.765, 3.89, null],         // 4 - η (Zaniah)
+      [12.332, -0.667, 3.37, null],        // 5 - β (Zavijava)
+    ] },
+
+  'Corvus':      { stars: [
+      [12.497, -23.397, 2.58, null],       // 0 - γ (Gienah)
+      [12.573, -16.516, 2.65, null],       // 1 - β (Kraz)
+      [12.169, -22.620, 2.94, null],       // 2 - δ (Algorab)
+      [12.140, -24.729, 2.59, null],       // 3 - ε
+    ] },
+
+  'Boötes':      { stars: [
+      [14.261, 19.182, -0.05, 'Arcturus'],// 0 - α
+      [15.032, 40.390, 3.49, 'Nekkar'],   // 1 - β
+      [14.535, 38.308, 3.04, null],        // 2 - γ (Seginus)
+      [14.686, 27.074, 3.47, null],        // 3 - ρ
+      [13.912, 18.398, 2.68, null],        // 4 - η (Muphrid)
+      [14.750, 29.745, 3.58, null],        // 5 - δ
+      [14.273, 46.088, 4.18, null],        // 6 - λ
+    ] },
+
+  'Corona Bor.': { stars: [
+      [15.578, 26.715, 2.22, 'Alphecca'], // 0
+      [15.464, 29.106, 3.66, null],        // 1 - β (Nusakan)
+      [15.713, 26.296, 3.81, null],        // 2 - γ
+      [15.826, 29.611, 4.15, null],        // 3 - δ
+      [16.024, 26.878, 4.14, null],        // 4 - ε
+      [15.383, 31.359, 4.63, null],        // 5 - θ
+    ] },
+
+  'Libra':       { stars: [
+      [14.848, -16.042, 2.75, null],       // 0 - α² (Zubenelgenubi)
+      [15.283, -9.383, 2.61, null],        // 1 - β (Zubeneschamali)
+      [15.592, -14.789, 3.91, null],       // 2 - γ
+      [15.068, -25.282, 3.29, null],       // 3 - σ
+    ] },
+
+  'Scorpius':    { stars: [
+      [16.490, -26.432, 1.06, 'Antares'], // 0 - α
+      [16.006, -22.622, 2.29, null],       // 1 - δ (Dschubba)
+      [16.091, -19.806, 2.56, null],       // 2 - β¹ (Acrab)
+      [16.836, -34.293, 2.29, null],       // 3 - ε
+      [16.909, -42.361, 3.62, null],       // 4 - ζ²
+      [17.203, -43.239, 3.33, null],       // 5 - η
+      [17.622, -42.998, 1.87, 'Sargas'],  // 6 - θ
+      [17.793, -40.127, 2.41, null],       // 7 - ι¹
+      [17.560, -37.104, 1.62, 'Shaula'],  // 8 - λ
+      [16.353, -28.216, 2.89, null],       // 9 - σ
+    ] },
+
+  'Hercules':    { stars: [
+      [16.688, 31.602, 2.81, null],        // 0 - ζ (Keystone)
+      [17.005, 30.926, 3.16, null],        // 1 - ε
+      [17.251, 24.839, 3.12, null],        // 2 - δ
+      [17.251, 36.809, 2.69, null],        // 3 - π
+      [17.244, 14.390, 3.48, 'Rasalgethi'],// 4 - α
+      [16.504, 21.489, 2.77, 'Kornephoros'],// 5 - β
+      [17.774, 27.721, 3.42, null],        // 6 - μ
+    ],
+    // Keystone: ζ-ε-δ-π, + extensions
+  },
+
+  'Ophiuchus':   { stars: [
+      [17.582, 12.561, 2.08, 'Rasalhague'],// 0
+      [17.725, 4.567, 2.43, null],          // 1 - η (Sabik)
+      [16.619, -10.567, 2.54, null],        // 2 - ζ (Han)
+      [16.239, -3.694, 2.73, null],         // 3 - δ (Yed Prior)
+      [16.305, -4.693, 3.23, null],         // 4 - ε (Yed Posterior)
+      [17.173, -15.725, 3.19, null],        // 5 - θ
+    ] },
+
+  'Serpens':     { stars: [
+      [15.737, 6.426, 2.63, 'Unukalhai'],// 0 - α (Serpens Caput)
+      [15.769, 15.422, 3.54, null],        // 1 - β
+      [15.847, 4.478, 3.67, null],         // 2 - δ
+      [15.580, 10.539, 3.71, null],        // 3 - ε
+      [15.942, 15.665, 3.85, null],        // 4 - γ
+    ] },
+
+  'Lyra':        { stars: [
+      [18.616, 38.784, 0.03, 'Vega'],     // 0
+      [18.834, 33.363, 3.25, null],        // 1 - ζ
+      [18.746, 37.605, 3.26, null],        // 2 - δ²
+      [18.982, 32.690, 3.24, null],        // 3 - β (Sheliak)
+      [18.978, 33.363, 3.52, null],        // 4 - γ (Sulafat)
+    ] },
+
+  'Sagittarius': { stars: [
+      // Teapot asterism
+      [18.403, -34.384, 2.05, 'Kaus Australis'],// 0 - ε
+      [18.921, -26.297, 2.05, 'Nunki'],   // 1 - σ
+      [19.044, -29.880, 2.60, null],       // 2 - ζ (Ascella)
+      [18.350, -29.828, 2.70, null],       // 3 - δ (Kaus Media)
+      [19.116, -27.670, 3.32, null],       // 4 - τ
+      [18.294, -36.762, 3.10, null],       // 5 - η
+      [18.761, -26.991, 3.17, null],       // 6 - φ
+      [18.467, -25.422, 2.82, null],       // 7 - λ (Kaus Borealis)
+    ] },
+
+  'Aquila':      { stars: [
+      [19.846, 8.868, 0.76, 'Altair'],    // 0 - α
+      [19.771, 10.613, 2.72, null],        // 1 - γ (Tarazed)
+      [19.922, 6.407, 3.36, null],         // 2 - β (Alshain)
+      [19.425, -3.115, 3.23, null],        // 3 - θ
+      [20.188, 0.822, 3.44, null],         // 4 - δ
+    ] },
+
+  'Sagitta':     { stars: [
+      [19.979, 19.492, 3.47, null],        // 0 - γ
+      [19.684, 18.014, 3.68, null],        // 1 - δ
+      [19.668, 17.476, 4.37, null],        // 2 - α
+      [20.082, 19.989, 4.37, null],        // 3 - β
+    ] },
+
+  'Delphinus':   { stars: [
+      [20.626, 14.595, 3.64, null],        // 0 - β (Rotanev)
+      [20.554, 15.912, 3.77, null],        // 1 - α (Sualocin)
+      [20.724, 15.074, 4.03, null],        // 2 - γ
+      [20.777, 14.781, 4.43, null],        // 3 - δ
+      [20.553, 11.303, 3.81, null],        // 4 - ε
+    ] },
+
+  'Cygnus':      { stars: [
+      [20.690, 45.280, 1.25, 'Deneb'],    // 0 - α
+      [20.370, 40.257, 2.23, 'Sadr'],     // 1 - γ
+      [19.512, 27.960, 3.05, 'Albireo'], // 2 - β
+      [19.749, 45.131, 2.48, null],        // 3 - δ
+      [20.770, 33.970, 2.46, null],        // 4 - ε (Gienah)
+    ] },
+
+  'Capricornus': { stars: [
+      [20.294, -12.508, 3.58, null],       // 0 - α² (Algedi)
+      [20.350, -14.782, 3.05, null],       // 1 - β (Dabih)
+      [20.768, -25.271, 3.99, null],       // 2 - ψ
+      [20.864, -26.919, 4.11, null],       // 3 - ω
+      [21.784, -16.127, 2.85, null],       // 4 - δ (Deneb Algedi)
+      [21.668, -16.662, 3.67, null],       // 5 - γ (Nashira)
+    ] },
+
+  'Aquarius':    { stars: [
+      [21.526, -5.571, 2.90, 'Sadalsuud'],// 0 - β
+      [22.096, -0.320, 2.95, 'Sadalmelik'],// 1 - α
+      [22.361, -1.387, 3.84, null],        // 2 - γ (Sadachbia)
+      [22.877, -7.580, 3.77, null],        // 3 - λ
+      [22.481, -0.020, 3.97, null],        // 4 - ζ
+      [22.911, -15.821, 3.27, null],       // 5 - δ
+    ] },
+};
+
+// Fix Gemini: Castor and Pollux have distinct positions
+CONSTELLATIONS['Gemini'].stars[0] = [7.755, 28.026, 1.16, 'Pollux'];
+CONSTELLATIONS['Gemini'].stars[1] = [7.577, 31.888, 1.58, 'Castor'];
+
+// ─── Observation time helper ────────────────────────────────────────
+function getEveningUTHours(gregDate) {
+  // Find which UTC hour corresponds to 21:00 in OBSERVER.tz
+  const y = gregDate.getUTCFullYear(), m = gregDate.getUTCMonth(), d = gregDate.getUTCDate();
+  for (let utH = 0; utH < 24; utH++) {
+    const test = new Date(Date.UTC(y, m, d, utH, 0, 0));
+    try {
+      const localH = parseInt(test.toLocaleString('en-US', {
+        timeZone: OBSERVER.tz, hour: 'numeric', hour12: false
+      }));
+      if (localH === 21) return utH;
+    } catch(_) {}
+  }
+  return 2; // fallback: EST
 }
 
-function getConstellationPositions(gregDate) {
+// ─── Project a single star RA/Dec to alt/az ─────────────────────────
+function _starAltAz(raH, decDeg, LST, latR) {
+  const ha  = ((LST - raH) % 24 + 24) % 24;
+  const haR = ha * Math.PI / 12;
+  const decR = decDeg * Math.PI / 180;
+  const sinAlt = Math.sin(decR)*Math.sin(latR) + Math.cos(decR)*Math.cos(latR)*Math.cos(haR);
+  const alt = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180/Math.PI;
+  if (alt < -5) return null; // well below horizon, skip full calculation
+  const cosAlt = Math.cos(alt * Math.PI / 180);
+  const cosAz  = cosAlt > 0.001
+    ? (Math.sin(decR) - sinAlt*Math.sin(latR)) / (cosAlt*Math.cos(latR)) : 0;
+  let az = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180/Math.PI;
+  if (Math.sin(haR) > 0) az = 360 - az;
+  return { alt, az };
+}
+
+// ─── Get visible constellation positions (per-star) ─────────────────
+function getVisibleConstellationPositions(gregDate) {
   const Y = gregDate.getUTCFullYear(), M = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
-  const UT = 2.0; // ~9pm US Eastern
+  const UT = getEveningUTHours(gregDate);
   const JD = 367*Y - Math.trunc(7*(Y+Math.trunc((M+9)/12))/4)
            + Math.trunc(275*M/9) + D + 1721013.5 + UT/24;
   const T    = (JD - 2451545.0) / 36525;
   const GMST = ((6.697375 + 2400.0513368*T + 1.0027379*UT) % 24 + 24) % 24;
   const LST  = (GMST + OBSERVER.lon/15 + 24) % 24;
-  const lat  = OBSERVER.lat * Math.PI / 180;
-  return EVENING_CONSTELLATIONS.map(c => {
-    const ha   = ((LST - c.ra) % 24 + 24) % 24;
-    const haR  = ha * Math.PI / 12;
-    const decR = c.dec * Math.PI / 180;
-    const sinAlt = Math.sin(decR)*Math.sin(lat) + Math.cos(decR)*Math.cos(lat)*Math.cos(haR);
-    const alt = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180/Math.PI;
-    if (alt < 5) return null;
-    const cosAlt = Math.cos(Math.asin(sinAlt));
-    const cosAz  = cosAlt > 0.001 ? (Math.sin(decR) - sinAlt*Math.sin(lat)) / (cosAlt*Math.cos(lat)) : 0;
-    let az = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180/Math.PI;
-    if (Math.sin(haR) > 0) az = 360 - az;
-    return { name: c.name, az, alt };
-  }).filter(Boolean);
-}
+  const latR = OBSERVER.lat * Math.PI / 180;
 
-// ─── Constellation stick figure data (normalized ±1 coords) ─────────
-const CONSTELLATION_FIGURES = {
-  // W shape: Caph, Schedar, γ, Ruchbah, Segin
-  'Cassiopeia':  { s:[[-0.85,0.15],[-0.42,-0.6],[0,0.35],[0.42,-0.6],[0.85,0.15]],
-                   l:[[0,1],[1,2],[2,3],[3,4]] },
-  // Chain Alpheratz→Mirach→Almach, branches from Mirach
-  'Andromeda':   { s:[[0.85,-0.15],[0.4,0.05],[-0.1,0.25],[-0.7,0.45],[0.55,-0.6],[0.15,-0.75],[-0.45,0.0],[-0.8,-0.2]],
-                   l:[[0,4],[4,1],[1,5],[1,2],[2,3],[1,6],[6,7]] },
-  // Two fish loops connected at Alrescha
-  'Pisces':      { s:[[0.0,-0.1],[-.25,0.3],[-.6,0.55],[-.8,0.3],[-.6,0.0],[-.3,-0.15],[0.3,-0.35],[0.6,-0.6],[0.75,-0.85],[0.55,-0.9],[0.25,-0.75]],
-                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,6],[6,7],[7,8],[8,9],[9,10],[10,6]] },
-  // Hamal, Sheratan, Mesarthim, Botein — gentle arc
-  'Aries':       { s:[[-0.75,0.25],[-0.2,0.6],[0.35,0.55],[0.8,-0.1]],
-                   l:[[0,1],[1,2],[2,3]] },
-  // Hero: Algol head, Mirfak center, raised arm+club, extended arm, waist, legs
-  'Perseus':     { s:[[-0.1,0.9],[0.1,0.35],[0.5,0.6],[0.8,0.85],[-0.35,0.5],[-0.7,0.65],[0.1,-0.1],[0.45,-0.5],[0.6,-0.85],[-0.3,-0.55],[-0.45,-0.85]],
-                   l:[[0,1],[1,2],[2,3],[1,4],[4,5],[1,6],[6,7],[7,8],[6,9],[9,10]] },
-  // Aldebaran eye, Hyades V, two horns, Pleiades cluster
-  // V-shaped Hyades face (Aldebaran=eye at right), two horns left, Pleiades cluster upper-right
-  'Taurus':      { s:[[0.55,-0.05],[0.22,-0.22],[-0.05,-0.42],[0.2,0.22],[-0.08,0.4],[-0.6,0.85],[-0.72,0.15],[0.82,0.5],[0.9,0.65],[0.72,0.68]],
-                   l:[[0,1],[1,2],[0,3],[3,4],[4,5],[2,6],[7,8],[8,9],[9,7]] },
-  // Belt, shoulders+crossbar, feet, raised club, bow arc
-  'Orion':       { s:[[0,0.82],[-0.42,0.52],[0.42,0.56],[-0.18,0.04],[0,0.04],[0.18,0.04],[-0.48,-0.72],[0.58,-0.76],[-0.75,0.88],[0.82,0.82],[0.95,0.18],[0.82,-0.46]],
-                   l:[[0,1],[0,2],[1,2],[1,3],[2,5],[3,4],[4,5],[3,6],[5,7],[1,8],[2,9],[9,10],[10,11]] },
-  // Dog facing right: triangle head, rectangle body, stick legs, tail up
-  'Canis Major': { s:[[0.85,0.5],[0.45,0.88],[0.45,0.22],[0.18,0.62],[-0.42,0.62],[-0.42,0.1],[0.18,0.1],[0.12,-0.72],[-0.35,-0.72],[-0.78,0.9]],
-                   l:[[0,1],[1,2],[2,0],[1,3],[2,6],[3,4],[4,5],[5,6],[6,3],[6,7],[5,8],[4,9]] },
-  // Pentagon + two Kids (ζ,η) near Capella
-  'Auriga':      { s:[[0,0.9],[0.68,0.3],[0.5,-0.65],[-0.5,-0.65],[-0.68,0.3],[-0.28,0.58],[-0.05,0.48]],
-                   l:[[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[5,6]] },
-  // Castor and Pollux heads, twin bodies, feet meeting
-  'Gemini':      { s:[[-0.55,0.85],[0.28,0.85],[-0.52,0.38],[0.28,0.42],[-0.48,-0.08],[0.3,-0.05],[-0.42,-0.55],[0.32,-0.52],[-0.38,-0.88],[0.35,-0.88]],
-                   l:[[0,2],[2,4],[4,6],[6,8],[1,3],[3,5],[5,7],[7,9],[8,9]] },
-  // X-shape: four limbs from center, Beehive implied
-  'Cancer':      { s:[[0.0,0.0],[-0.7,0.55],[0.62,0.62],[0.7,-0.55],[-0.62,-0.55],[-0.28,0.25],[0.28,0.3]],
-                   l:[[0,1],[0,2],[0,3],[0,4],[5,6]] },
-  // Sickle (reversed ?) from Regulus, then body to Denebola tail
-  // Sickle (6 stars: ε,μ,ζ,γ,η,Regulus) + 3 body stars (Chertan,Zosma,Denebola)
-  'Leo':         { s:[[0.45,0.88],[0.15,0.82],[-0.05,0.58],[-0.1,0.3],[0.12,0.02],[0.3,-0.38],[-0.28,-0.12],[-0.52,0.32],[-0.88,0.1]],
-                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[3,7]] },
-  // Big Dipper bowl+handle, bear body/leg hints
-  // Big Dipper: bowl (Dubhe, Merak, Phecda, Megrez) + handle (Alioth, Mizar, Alkaid)
-  'Ursa Major':  { s:[[0.75,0.55],[0.75,-0.2],[0.2,-0.2],[0.2,0.55],[-0.28,0.62],[-0.68,0.45],[-0.95,0.1]],
-                   l:[[0,1],[1,2],[2,3],[3,0],[3,4],[4,5],[5,6]] },
-  // Spica in outstretched hand, arms, body, legs
-  'Virgo':       { s:[[0,0.88],[0.52,0.5],[0.88,0.1],[0.0,0.1],[-0.5,0.52],[-0.72,0.05],[-0.82,-0.48],[0.0,-0.2],[-0.28,-0.65],[0.28,-0.68]],
-                   l:[[0,1],[1,2],[0,4],[4,5],[5,6],[0,3],[3,7],[7,8],[7,9]] },
-  // Kite: Arcturus at bottom, Nekkar top, sides, arms
-  'Boötes':      { s:[[0,-0.88],[0.48,-0.22],[0.42,0.38],[0.18,0.78],[-0.38,0.65],[-0.48,0.12],[-0.38,-0.32],[0.58,0.62]],
-                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,0],[2,7]] },
-  // Balance beam with two pans hanging down
-  'Libra':       { s:[[0,0.52],[-0.75,-0.05],[0.72,-0.05],[-0.52,-0.88],[0.48,-0.88],[-0.2,-0.3]],
-                   l:[[1,0],[0,2],[1,5],[5,3],[2,4],[0,5]] },
-  // Semicircle of 7 stars, opens south, Alphecca brightest
-  'Corona Bor.': { s:[[-0.88,-0.05],[-0.62,0.55],[-0.18,0.85],[0.22,0.88],[0.58,0.68],[0.82,0.28],[0.88,-0.15]],
-                   l:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6]] },
-  // Head/claws, Antares heart, curved S-tail with stinger
-  'Scorpius':    { s:[[-0.1,0.88],[-0.35,0.72],[-0.08,0.75],[0.28,0.85],[0.0,0.5],[-0.15,0.12],[-0.45,-0.18],[-0.2,-0.55],[0.18,-0.6],[0.5,-0.85],[0.45,-0.65],[0.2,-0.45]],
-                   l:[[0,1],[0,2],[2,3],[0,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11]] },
-  // Keystone quadrilateral, head, club arm, legs
-  'Hercules':    { s:[[0,0.9],[-0.3,0.5],[0.3,0.5],[-0.35,-0.02],[0.35,-0.02],[0.65,0.75],[0.88,0.88],[-0.65,0.3],[-0.88,0.12],[0.5,-0.5],[0.6,-0.88],[-0.45,-0.55],[-0.55,-0.88]],
-                   l:[[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[2,5],[5,6],[1,7],[7,8],[4,9],[9,10],[3,11],[11,12]] },
-  // Large figure: Rasalhague head, body, Yed hands holding serpent, legs
-  'Ophiuchus':   { s:[[0,0.9],[0.45,0.55],[-0.45,0.6],[0.5,0.0],[-0.5,0.05],[0.18,-0.28],[0.58,-0.55],[0.65,-0.88],[-0.38,-0.6],[-0.45,-0.88],[0.82,0.3],[-0.82,0.2]],
-                   l:[[0,1],[0,2],[1,3],[2,4],[3,5],[4,5],[5,6],[6,7],[5,8],[8,9],[1,10],[2,11]] },
-  // Vega top, then parallelogram of ζ,δ,γ,β,ε
-  'Lyra':        { s:[[0,0.88],[0.38,0.28],[-0.32,0.22],[0.42,-0.32],[-0.38,-0.38],[0.02,-0.62]],
-                   l:[[0,1],[0,2],[1,2],[1,3],[2,4],[3,5],[4,5]] },
-  // The Teapot: spout (γ,δ), base (ε), body (ζ), lid (λ), handle (σ,τ,φ)
-  'Sagittarius': { s:[[-0.82,-0.1],[-0.42,0.12],[-0.08,-0.58],[0.18,0.22],[0.08,0.82],[0.62,0.38],[0.85,-0.08],[0.72,-0.52],[-0.12,-0.88]],
-                   l:[[0,1],[1,3],[3,4],[4,5],[5,6],[6,7],[7,2],[2,8],[8,0],[1,2],[0,2]] },
-  // Altair center (Summer Triangle), wings spread, tail
-  'Aquila':      { s:[[0,0.1],[-0.15,0.5],[0.15,-0.3],[-0.75,0.65],[-0.5,0.12],[0.35,-0.6],[0.28,-0.88],[-0.35,-0.65],[0.55,0.35],[0.85,0.6]],
-                   l:[[3,4],[4,1],[1,0],[0,2],[2,5],[5,6],[2,7],[1,8],[8,9],[4,3]] },
-  // Northern Cross: Deneb top, Sadr center, Albireo bottom, wings
-  'Cygnus':      { s:[[0,0.88],[0,0.05],[0,-0.88],[-0.78,0.15],[0.45,0.25],[0.8,0.35],[-0.45,-0.3],[0.0,0.52]],
-                   l:[[0,1],[1,2],[3,1],[1,4],[4,5],[3,6],[0,7],[7,1]] },
-  // Sea-goat: horn tips, head, body loop, fish tail
-  'Capricornus': { s:[[-0.88,0.62],[-0.68,0.82],[-0.68,0.35],[-0.3,-0.08],[0.0,0.08],[0.38,0.0],[0.72,-0.18],[0.55,0.15],[0.48,-0.6],[0.0,-0.72],[-0.35,-0.55]],
-                   l:[[0,2],[1,2],[2,3],[3,4],[4,5],[5,7],[7,6],[6,8],[8,9],[9,10],[10,3],[5,6]] },
-  // Water bearer: shoulders, urn, water stream flowing down
-  'Aquarius':    { s:[[0.3,0.85],[-0.3,0.72],[0.0,0.2],[0.32,0.1],[-0.28,0.08],[0.0,-0.18],[0.15,-0.42],[-0.18,-0.62],[0.1,-0.82],[0.68,0.42],[-.55,-0.5],[-.68,-0.82]],
-                   l:[[0,1],[0,9],[0,2],[1,4],[4,3],[3,2],[2,5],[5,6],[6,7],[7,8],[1,10],[10,11]] },
-  // Great Square, neck/head left, wing extensions
-  'Pegasus':     { s:[[-0.65,0.5],[0.65,0.5],[0.65,-0.45],[-0.65,-0.45],[-0.65,0.9],[-0.3,1.0],[0.0,0.82],[0.5,0.88]],
-                   l:[[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[0,6],[1,7]] },
-};
+  // Compute sun position for twilight filtering
+  const sunRD = _sunRADecT(T);
+  const sunRAH = ((sunRD.ra * 12 / Math.PI) % 24 + 24) % 24;
+  const sunDecDeg = sunRD.dec * 180 / Math.PI;
+
+  const result = [];
+  for (const [name, con] of Object.entries(CONSTELLATIONS)) {
+    const projected = [];
+    let visCount = 0;
+    for (const [raH, decDeg, mag, label] of con.stars) {
+      const pos = _starAltAz(raH, decDeg, LST, latR);
+      if (pos && pos.alt > 0) {
+        projected.push({ alt: pos.alt, az: pos.az, mag, label: label || '', visible: pos.alt > 5 });
+        if (pos.alt > 5) visCount++;
+      } else {
+        projected.push(null);
+      }
+    }
+    // Need at least 2 visible stars (or 1 for small constellations)
+    const minStars = con.stars.length <= 3 ? 1 : 2;
+    if (visCount < minStars) continue;
+
+    // Filter out constellations too close to the sun (twilight washout)
+    const meanRA = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
+    const meanDec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
+    const sunSep = _angSep(
+      meanRA * Math.PI / 12, meanDec * Math.PI / 180,
+      sunRD.ra, sunRD.dec
+    );
+    if (sunSep < 30) continue;
+
+    // Compute centroid of visible stars
+    let cx = 0, cy = 0, n = 0;
+    for (const p of projected) {
+      if (p && p.visible) { cx += p.az; cy += p.alt; n++; }
+    }
+    result.push({ name, stars: projected, centroidAz: cx/n, centroidAlt: cy/n });
+  }
+  return result;
+}
 
 // ─── Constellation lore ──────────────────────────────────────────────
 const CONSTELLATION_LORE = {
@@ -374,6 +655,16 @@ const CONSTELLATION_LORE = {
   'Capricornus': "Capricornus, the sea-goat, is one of the oldest zodiac constellations, recognized by the Sumerians over 4,000 years ago as the god Enki who had the body of a goat and the tail of a fish. In Greek myth, the goat-god Pan leapt into the Nile to escape the monster Typhon and transformed himself into a creature half-goat, half-fish. The faint stars form a triangle or arrowhead pointing westward.",
   'Aquarius':    "Aquarius is the water-bearer, most often identified with Ganymede, the beautiful youth seized by Zeus's eagle to be cupbearer of the gods on Olympus. In earlier traditions he was the god who caused the great floods, tipping his celestial urn to send rain to the world below. The Aquarius stream of shooting stars — the Eta Aquariids and Delta Aquariids — originates from this part of the sky.",
   'Pegasus':     "Pegasus is the winged horse born from the blood of Medusa when Perseus slew her — springing fully formed from the sea foam at the spot where her head fell. The hero Bellerophon later tamed Pegasus with a golden bridle given by Athena, riding him to slay the fire-breathing Chimera. The Great Square of Pegasus, formed by four bright stars, is one of the most useful navigation landmarks in the autumn sky.",
+  'Ursa Minor':  "Ursa Minor, the Little Bear, holds the North Star Polaris at the tip of its tail — the star around which the entire sky appears to rotate. In Greek myth the Little Bear is Arcas, son of the nymph Callisto, placed in the sky by Zeus alongside his mother (Ursa Major) to save him from accidentally killing her. For thousands of years sailors have relied on Polaris to find true north; it currently sits less than a degree from the celestial pole.",
+  'Draco':       "Draco the Dragon winds between the two Bears, never setting below the horizon at northern latitudes. In one myth it is Ladon, the hundred-headed dragon that guarded the golden apples in the Garden of the Hesperides until Hercules slew it as one of his twelve labors. The star Thuban in Draco's tail was the pole star when the Egyptian pyramids were built, around 2700 BC.",
+  'Cepheus':     "King Cepheus of Ethiopia stands near his wife Cassiopeia and daughter Andromeda in the circumpolar sky. He is often overshadowed by the dramatic stories of his family, but his constellation contains several remarkable variable stars, including the prototype Cepheid variable Delta Cephei, whose pulsations became the key to measuring distances across the universe.",
+  'Canis Minor': "Canis Minor, the Little Dog, is one of Orion's two hunting companions. Its brilliant star Procyon — meaning 'before the dog' because it rises just before Sirius — is one of the closest stars to Earth at only 11 light-years away. Together with Sirius and Betelgeuse, Procyon forms the Winter Triangle, one of the sky's most striking asterisms.",
+  'Triangulum':  "Triangulum is a small but ancient constellation, known to the Greeks as Deltoton for its resemblance to the letter delta. Despite its modest size, it contains the Triangulum Galaxy (M33), the third-largest member of our Local Group of galaxies and one of the most distant objects visible to the unaided eye on exceptionally clear nights.",
+  'Corvus':      "Corvus the Crow was once a beautiful white bird, sacred to Apollo, who sent it to fetch water in a cup (the neighboring constellation Crater). The crow dallied, then lied about the delay, blaming a water-snake. Apollo saw through the deception and cursed the bird with black feathers and a harsh voice. The four main stars form a distinctive lopsided rectangle, easy to spot south of Virgo in spring.",
+  'Coma Berenices': "Coma Berenices — Berenice's Hair — commemorates the Egyptian queen Berenice II, who cut off her beautiful amber locks and offered them to Aphrodite in thanks for her husband's safe return from war. The hair was placed among the stars as a faint, shimmering cluster. The constellation lies near the north galactic pole, offering a window into deep space with thousands of distant galaxies visible through telescopes.",
+  'Serpens':     "Serpens is unique among the 88 constellations — it is split into two halves, Serpens Caput (the head) and Serpens Cauda (the tail), separated by Ophiuchus who grasps the serpent. The bright star Unukalhai marks the serpent's heart. In myth this is the snake of Asclepius, whose ability to shed its skin symbolized renewal and the healing arts.",
+  'Sagitta':     "Sagitta the Arrow is the third-smallest constellation in the sky, yet one of the oldest recognized, known since antiquity. Various myths identify it as the arrow Hercules used to kill the eagle (Aquila) that tormented Prometheus, or as one of Cupid's arrows. It flies through the rich star fields of the summer Milky Way between Aquila and Cygnus.",
+  'Delphinus':   "Delphinus the Dolphin leaps gracefully through the stars near the celestial equator. In one myth, Poseidon sent a dolphin to find the sea-nymph Amphitrite and persuade her to marry him; in gratitude, the god placed the dolphin among the stars. Its four main stars form a charming diamond called Job's Coffin. The star names Sualocin and Rotanev are 'Nicolaus Venator' spelled backwards — a nineteenth-century astronomer's clever prank.",
 };
 
 // ─── Planetary positions (JPL Keplerian elements, ~1° accuracy) ─────
@@ -479,7 +770,7 @@ function getVisiblePlanets(gregDate) {
 // Returns alt/az for all planets above horizon at ~9pm local on gregDate
 function getPlanetAltAz(gregDate) {
   const Y = gregDate.getUTCFullYear(), Mo = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
-  const UT = 2.0; // ~9pm US Eastern
+  const UT = getEveningUTHours(gregDate);
   const JD = 367*Y - Math.trunc(7*(Y+Math.trunc((Mo+9)/12))/4)
            + Math.trunc(275*Mo/9) + D + 1721013.5 + UT/24;
   const T    = (JD - 2451545.0) / 36525;

@@ -75,7 +75,16 @@ function initModal() {
   document.getElementById('modal-close').addEventListener('click', closeModal);
   document.getElementById('modal-body').addEventListener('click', e => {
     const lbl = e.target.closest('.sky-const-label');
-    if (lbl) showConstellationDetail(lbl.dataset.cname);
+    if (lbl) { showConstellationDetail(lbl.dataset.cname); return; }
+    const dir = e.target.closest('.sky-dir-label');
+    if (dir && _skyChartState) {
+      const rotDeg = parseInt(dir.dataset.az);
+      const wrap = dir.closest('.sky-chart-wrap');
+      if (wrap) {
+        const { constellationData, planets } = _skyChartState;
+        wrap.outerHTML = renderSkyChart(constellationData, planets, rotDeg);
+      }
+    }
   });
   document.getElementById('modal-today-btn').addEventListener('click', () => {
     if (!currentFY) return;
@@ -336,51 +345,68 @@ function _formatEvent(ev) {
   return {icon:'•', text:ev.kind};
 }
 
-function renderSkyChart(positions, planets = []) {
+function _projectAltAz(az, alt, cx, cy, R, rotDeg) {
+  const azR = (az - rotDeg + 180) * Math.PI / 180;
+  const r = R * (90 - alt) / 90;
+  return { x: cx - r * Math.sin(azR), y: cy - r * Math.cos(azR) };
+}
+
+// Store last chart data for re-rendering on rotation
+let _skyChartState = null;
+
+function renderSkyChart(constellationData, planets = [], rotDeg = 0) {
+  // Save state for re-rendering when direction is clicked
+  _skyChartState = { constellationData, planets, rotDeg };
+
   const cx = 110, cy = 110, R = 100;
   let svg = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0a0a1a"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="${(R*30/90).toFixed(1)}" fill="none" stroke="#334" stroke-width="0.8"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="${(R*60/90).toFixed(1)}" fill="none" stroke="#334" stroke-width="0.8"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#446" stroke-width="1"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="2" fill="#fff" opacity="0.5"/>`;
-  const lStyle = `font-size="8" fill="#88aacc" font-family="sans-serif" text-anchor="middle"`;
-  svg += `<text ${lStyle} x="${cx}" y="7">N</text>`;
-  svg += `<text ${lStyle} x="${cx}" y="218">S</text>`;
-  svg += `<text ${lStyle} x="6" y="${cy+3}">E</text>`;
-  svg += `<text ${lStyle} x="214" y="${cy+3}">W</text>`;
-  for (const c of positions) {
-    const azR = c.az * Math.PI / 180;
-    const r   = R * (90 - c.alt) / 90;
-    const x = cx - r * Math.sin(azR);
-    const y = cy - r * Math.cos(azR);
-    const fig = CONSTELLATION_FIGURES[c.name];
-    if (fig) {
-      for (const [i,j] of fig.l) {
-        const sx = x + fig.s[i][0]*12, sy = y - fig.s[i][1]*12;
-        const ex = x + fig.s[j][0]*12, ey = y - fig.s[j][1]*12;
-        svg += `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="#6688aa" stroke-width="0.7" opacity="0.7"/>`;
-      }
-      for (const [nx,ny] of fig.s) {
-        svg += `<circle cx="${(x+nx*12).toFixed(1)}" cy="${(y-ny*12).toFixed(1)}" r="1.2" fill="#ffe8a0" opacity="0.9"/>`;
-      }
-    } else {
-      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="#ffe080" opacity="0.9"/>`;
-    }
-    const anchor = x >= cx ? 'start' : 'end';
-    const dx = x >= cx ? 15 : -15;
-    svg += `<text class="sky-const-label" data-cname="${c.name}" x="${(x+dx).toFixed(1)}" y="${(y+2.5).toFixed(1)}" font-size="7" fill="#ccd8ee" font-family="sans-serif" text-anchor="${anchor}" cursor="pointer" opacity="0.9">${c.name}</text>`;
+
+  // Cardinal directions — rotated and clickable
+  // rotDeg puts that azimuth at the bottom (facing that direction)
+  const dirs = [{label:'N',az:0},{label:'E',az:90},{label:'S',az:180},{label:'W',az:270}];
+  for (const d of dirs) {
+    const a = (d.az - rotDeg + 180) * Math.PI / 180;
+    const dr = R + 10;
+    const dx = cx - dr * Math.sin(a);
+    const dy = cy - dr * Math.cos(a);
+    const active = (d.az === rotDeg);
+    const fill = active ? '#ffdd66' : '#88aacc';
+    const weight = active ? 'bold' : 'normal';
+    svg += `<text class="sky-dir-label" data-az="${d.az}" x="${dx.toFixed(1)}" y="${(dy+3).toFixed(1)}" font-size="9" fill="${fill}" font-weight="${weight}" font-family="sans-serif" text-anchor="middle" cursor="pointer">${d.label}</text>`;
   }
-  // Render planets
+
+  for (const c of constellationData) {
+    const pts = c.stars.map(s => {
+      if (!s || !s.visible) return null;
+      return _projectAltAz(s.az, s.alt, cx, cy, R, rotDeg);
+    });
+
+    for (let k = 0; k < c.stars.length; k++) {
+      if (!pts[k] || !c.stars[k]) continue;
+      const mag = c.stars[k].mag;
+      const r = Math.max(0.8, 2.0 - 0.25 * mag);
+      const bright = Math.min(1, Math.max(0.3, 1.0 - 0.12 * mag));
+      const grey = Math.round(200 + 55 * bright);
+      svg += `<circle cx="${pts[k].x.toFixed(1)}" cy="${pts[k].y.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${grey},${grey-15},${Math.round(grey*0.7)})" opacity="${bright.toFixed(2)}"/>`;
+    }
+
+    const cpt = _projectAltAz(c.centroidAz, c.centroidAlt, cx, cy, R, rotDeg);
+    const anchor = cpt.x >= cx ? 'start' : 'end';
+    const dx = cpt.x >= cx ? 14 : -14;
+    svg += `<text class="sky-const-label" data-cname="${c.name}" x="${(cpt.x+dx).toFixed(1)}" y="${(cpt.y+2.5).toFixed(1)}" font-size="7" fill="#ccd8ee" font-family="sans-serif" text-anchor="${anchor}" cursor="pointer" opacity="0.9">${c.name}</text>`;
+  }
+
   for (const p of planets) {
-    const azR = p.az * Math.PI / 180;
-    const r   = R * (90 - p.alt) / 90;
-    const x = cx - r * Math.sin(azR);
-    const y = cy - r * Math.cos(azR);
-    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="none" stroke="#ffaa22" stroke-width="1.2" opacity="0.9"/>`;
-    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.8" fill="#ffcc44" opacity="0.95"/>`;
-    const anchor = x >= cx ? 'start' : 'end';
-    const dx = x >= cx ? 7 : -7;
-    svg += `<text x="${(x+dx).toFixed(1)}" y="${(y-5).toFixed(1)}" font-size="8" fill="#ffcc44" font-family="sans-serif" text-anchor="${anchor}" opacity="0.95">${p.symbol} ${p.name}</text>`;
+    const pp = _projectAltAz(p.az, p.alt, cx, cy, R, rotDeg);
+    svg += `<circle cx="${pp.x.toFixed(1)}" cy="${pp.y.toFixed(1)}" r="4.5" fill="none" stroke="#ffaa22" stroke-width="1.2" opacity="0.9"/>`;
+    svg += `<circle cx="${pp.x.toFixed(1)}" cy="${pp.y.toFixed(1)}" r="2.8" fill="#ffcc44" opacity="0.95"/>`;
+    const anchor = pp.x >= cx ? 'start' : 'end';
+    const dx = pp.x >= cx ? 7 : -7;
+    svg += `<text x="${(pp.x+dx).toFixed(1)}" y="${(pp.y-5).toFixed(1)}" font-size="8" fill="#ffcc44" font-family="sans-serif" text-anchor="${anchor}" opacity="0.95">${p.symbol} ${p.name}</text>`;
   }
   return `<div class="sky-chart-wrap"><svg viewBox="-60 -22 340 264" xmlns="http://www.w3.org/2000/svg" class="sky-chart-svg" aria-label="Sky chart">${svg}</svg></div>`;
 }
@@ -388,22 +414,77 @@ function renderSkyChart(positions, planets = []) {
 let _savedModal = null;
 
 function showConstellationDetail(name) {
-  const fig = CONSTELLATION_FIGURES[name];
-  if (!fig) return;
+  const con = CONSTELLATIONS[name];
+  if (!con) return;
   _savedModal = {
     title: document.getElementById('modal-title').textContent,
     body:  document.getElementById('modal-body').innerHTML,
   };
-  const cx = 100, cy = 100, sc = 80;
+  const rotDeg = (_skyChartState && _skyChartState.rotDeg) || 0;
+
+  // Use alt/az data from the sky chart state if available (matches orientation)
+  const chartCon = _skyChartState && _skyChartState.constellationData.find(c => c.name === name);
+  const cx = 100, cy = 100;
+
   let svg = `<rect width="200" height="200" fill="#0a0a1a" rx="6"/>`;
-  for (const [i,j] of fig.l) {
-    const x1 = cx + fig.s[i][0]*sc, y1 = cy - fig.s[i][1]*sc;
-    const x2 = cx + fig.s[j][0]*sc, y2 = cy - fig.s[j][1]*sc;
-    svg += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#88aacc" stroke-width="1.5"/>`;
+
+  if (chartCon) {
+    // Project using same alt/az as sky chart, zoomed to fit
+    const visible = [];
+    for (let k = 0; k < chartCon.stars.length; k++) {
+      const s = chartCon.stars[k];
+      if (!s) continue;
+      const azR = (s.az - rotDeg + 180) * Math.PI / 180;
+      const r = 90 - s.alt;  // match sky chart: higher alt = closer to center
+      const px = -r * Math.sin(azR);
+      const py = -r * Math.cos(azR);
+      visible.push({ px, py, mag: s.mag, label: s.label });
+    }
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of visible) { minX = Math.min(minX, p.px); maxX = Math.max(maxX, p.px); minY = Math.min(minY, p.py); maxY = Math.max(maxY, p.py); }
+    const rangeX = maxX - minX || 1, rangeY = maxY - minY || 1;
+    const sc = 150 / Math.max(rangeX, rangeY);
+    const midX = (minX + maxX) / 2, midY = (minY + maxY) / 2;
+    for (const p of visible) {
+      const x = cx + (p.px - midX) * sc;
+      const y = cy + (p.py - midY) * sc;
+      const r = Math.max(2, 4 - 0.4 * p.mag);
+      const bright = Math.min(1, Math.max(0.35, 1.0 - 0.12 * p.mag));
+      const grey = Math.round(200 + 55 * bright);
+      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${grey},${grey-15},${Math.round(grey*0.7)})" opacity="${bright.toFixed(2)}"/>`;
+      if (p.label) {
+        svg += `<text x="${(x + r + 3).toFixed(1)}" y="${(y + 3).toFixed(1)}" font-size="9" fill="#ccd8ee" font-family="sans-serif">${p.label}</text>`;
+      }
+    }
+  } else {
+    // Fallback: gnomonic projection from RA/Dec
+    const meanRA = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
+    const meanDec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
+    const cRA = meanRA * Math.PI / 12, cDec = meanDec * Math.PI / 180;
+    const flat = con.stars.map(([ra, dec]) => {
+      const raR = ra * Math.PI / 12, decR = dec * Math.PI / 180;
+      const cosc = Math.sin(cDec)*Math.sin(decR) + Math.cos(cDec)*Math.cos(decR)*Math.cos(raR - cRA);
+      return { x: (Math.cos(decR)*Math.sin(raR - cRA)) / cosc, y: (Math.cos(cDec)*Math.sin(decR) - Math.sin(cDec)*Math.cos(decR)*Math.cos(raR - cRA)) / cosc };
+    });
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of flat) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
+    const sc = 150 / Math.max(maxX - minX || 0.01, maxY - minY || 0.01);
+    const midX = (minX + maxX) / 2, midY = (minY + maxY) / 2;
+    for (let k = 0; k < con.stars.length; k++) {
+      const x = cx - (flat[k].x - midX) * sc;  // negate x: east=left on sky
+      const y = cy - (flat[k].y - midY) * sc;
+      const mag = con.stars[k][2];
+      const r = Math.max(2, 4 - 0.4 * mag);
+      const bright = Math.min(1, Math.max(0.35, 1.0 - 0.12 * mag));
+      const grey = Math.round(200 + 55 * bright);
+      svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${grey},${grey-15},${Math.round(grey*0.7)})" opacity="${bright.toFixed(2)}"/>`;
+      const label = con.stars[k][3];
+      if (label) {
+        svg += `<text x="${(x + r + 3).toFixed(1)}" y="${(y + 3).toFixed(1)}" font-size="9" fill="#ccd8ee" font-family="sans-serif">${label}</text>`;
+      }
+    }
   }
-  for (const [nx,ny] of fig.s) {
-    svg += `<circle cx="${(cx+nx*sc).toFixed(1)}" cy="${(cy-ny*sc).toFixed(1)}" r="3" fill="#ffe8a0"/>`;
-  }
+
   const svgEl = `<div class="const-detail-wrap"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="const-detail-svg">${svg}</svg></div>`;
   const lore = CONSTELLATION_LORE[name] || '';
   const loreEl = lore ? `<p class="const-lore">${lore}</p>` : '';
@@ -431,7 +512,7 @@ function showModal(fromDateStr, label, fy) {
     e.kind === 'phase' && (e.phase === 'new' || e.phase === 'first') &&
     e.dateStr >= fromDateStr && e.dateStr <= toStr
   );
-  const consts = getEveningConstellations(skyDate);
+  const constellationData = getVisibleConstellationPositions(skyDate);
   const visPlans = getVisiblePlanets(skyDate);
   const activeMeteors = fy.eventTimeline.filter(e =>
     e.kind === 'meteorShower' && e.dateStr >= fromDateStr && e.dateStr <= toStr
@@ -439,7 +520,7 @@ function showModal(fromDateStr, label, fy) {
   const moonIllum = moonIllumPct(skyDate);
 
   let eveningSkyHTML = '';
-  if (consts.length > 0 || visPlans.length > 0 || activeMeteors.length > 0) {
+  if (constellationData.length > 0 || visPlans.length > 0 || activeMeteors.length > 0) {
     const sunset   = sunsetTime(skyDate);
     const twilight = astroTwilightEnd(skyDate);
     const tomorrow = new Date(skyDate.getTime() + 86400000);
@@ -454,11 +535,10 @@ function showModal(fromDateStr, label, fy) {
       eveningSkyHTML += `<div class="constellation-list"><b>Planets:</b> ${visPlans.map(p=>`${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ')}</div>`;
     if (activeMeteors.length > 0)
       eveningSkyHTML += `<div class="constellation-list"><b>Meteor peaks:</b> ${activeMeteors.map(e=>`🌠 ${e.name} (~${e.zhr}/hr)`).join(' · ')}</div>`;
-    if (consts.length > 0) {
-      eveningSkyHTML += `<div class="constellation-list">${consts.map(c=>c.name).join(' · ')}</div>`;
-      const positions = getConstellationPositions(skyDate);
+    if (constellationData.length > 0) {
+      eveningSkyHTML += `<div class="constellation-list">${constellationData.map(c=>c.name).join(' · ')}</div>`;
       const planetPositions = getPlanetAltAz(skyDate);
-      if (positions.length > 0 || planetPositions.length > 0) eveningSkyHTML += renderSkyChart(positions, planetPositions);
+      eveningSkyHTML += renderSkyChart(constellationData, planetPositions, 180);
     }
   }
 
