@@ -558,6 +558,38 @@ function getEveningUTHours(gregDate) {
   return 2; // fallback: EST
 }
 
+// ─── Julian Date (Meeus Ch. 7, valid for all Gregorian dates) ───────
+function _julianDate(Y, M, D, UT) {
+  let y = Y, m = M;
+  if (m <= 2) { y--; m += 12; }
+  const A = Math.trunc(y / 100);
+  const B = 2 - A + Math.trunc(A / 4);
+  return Math.trunc(365.25 * (y + 4716)) + Math.trunc(30.6001 * (m + 1)) + D + UT/24 + B - 1524.5;
+}
+
+// ─── Precess J2000 RA/Dec to date (Meeus Ch. 21 rigorous method) ────
+function _precessJ2000(raH, decDeg, T) {
+  if (Math.abs(T) < 0.001) return { ra: raH, dec: decDeg };
+  const zetaA  = (0.6406161 + 0.0000839*T + 0.0000050*T*T) * T;
+  const zA     = (0.6406161 + 0.0003041*T + 0.0000051*T*T) * T;
+  const thetaA = (0.5567530 - 0.0001185*T - 0.0000116*T*T) * T;
+  const zetaR  = zetaA  * Math.PI / 180;
+  const zR     = zA     * Math.PI / 180;
+  const thetaR = thetaA * Math.PI / 180;
+  const ra0  = raH * Math.PI / 12;
+  const dec0 = decDeg * Math.PI / 180;
+  const cosD = Math.cos(dec0), sinD = Math.sin(dec0);
+  const cosRA_zeta = Math.cos(ra0 + zetaR);
+  const sinRA_zeta = Math.sin(ra0 + zetaR);
+  const A = cosD * sinRA_zeta;
+  const B = Math.cos(thetaR)*cosD*cosRA_zeta - Math.sin(thetaR)*sinD;
+  const C = Math.sin(thetaR)*cosD*cosRA_zeta + Math.cos(thetaR)*sinD;
+  let ra = Math.atan2(A, B) + zR;
+  ra = ((ra * 12 / Math.PI) % 24 + 24) % 24;
+  const dec = Math.asin(Math.max(-1, Math.min(1, C))) * 180 / Math.PI;
+  return { ra, dec };
+}
+
 // ─── Project a single star RA/Dec to alt/az ─────────────────────────
 function _starAltAz(raH, decDeg, LST, latR) {
   const ha  = ((LST - raH) % 24 + 24) % 24;
@@ -578,8 +610,7 @@ function _starAltAz(raH, decDeg, LST, latR) {
 function getVisibleConstellationPositions(gregDate) {
   const Y = gregDate.getUTCFullYear(), M = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
   const UT = getEveningUTHours(gregDate);
-  const JD = 367*Y - Math.trunc(7*(Y+Math.trunc((M+9)/12))/4)
-           + Math.trunc(275*M/9) + D + 1721013.5 + UT/24;
+  const JD = _julianDate(Y, M, D, UT);
   const T    = (JD - 2451545.0) / 36525;
   const GMST = ((6.697375 + 2400.0513368*T + 1.0027379*UT) % 24 + 24) % 24;
   const LST  = (GMST + OBSERVER.lon/15 + 24) % 24;
@@ -595,7 +626,8 @@ function getVisibleConstellationPositions(gregDate) {
     const projected = [];
     let visCount = 0;
     for (const [raH, decDeg, mag, label] of con.stars) {
-      const pos = _starAltAz(raH, decDeg, LST, latR);
+      const precessed = _precessJ2000(raH, decDeg, T);
+      const pos = _starAltAz(precessed.ra, precessed.dec, LST, latR);
       if (pos && pos.alt > 0) {
         projected.push({ alt: pos.alt, az: pos.az, mag, label: label || '', visible: pos.alt > 5 });
         if (pos.alt > 5) visCount++;
@@ -608,10 +640,11 @@ function getVisibleConstellationPositions(gregDate) {
     if (visCount < minStars) continue;
 
     // Filter out constellations too close to the sun (twilight washout)
-    const meanRA = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
-    const meanDec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
+    const meanJ2000RA = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
+    const meanJ2000Dec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
+    const meanP = _precessJ2000(meanJ2000RA, meanJ2000Dec, T);
     const sunSep = _angSep(
-      meanRA * Math.PI / 12, meanDec * Math.PI / 180,
+      meanP.ra * Math.PI / 12, meanP.dec * Math.PI / 180,
       sunRD.ra, sunRD.dec
     );
     if (sunSep < 30) continue;
@@ -771,8 +804,7 @@ function getVisiblePlanets(gregDate) {
 function getPlanetAltAz(gregDate) {
   const Y = gregDate.getUTCFullYear(), Mo = gregDate.getUTCMonth()+1, D = gregDate.getUTCDate();
   const UT = getEveningUTHours(gregDate);
-  const JD = 367*Y - Math.trunc(7*(Y+Math.trunc((Mo+9)/12))/4)
-           + Math.trunc(275*Mo/9) + D + 1721013.5 + UT/24;
+  const JD = _julianDate(Y, Mo, D, UT);
   const T    = (JD - 2451545.0) / 36525;
   const GMST = ((6.697375 + 2400.0513368*T + 1.0027379*UT) % 24 + 24) % 24;
   const LST  = (GMST + OBSERVER.lon/15 + 24) % 24;
