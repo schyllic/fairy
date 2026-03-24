@@ -256,10 +256,8 @@ function initSettingsModal() {
           `<button id="bday-add-btn" class="btn">Add</button>` +
         `</div>` +
         `<div class="settings-row bday-share-row">` +
-          `<button id="bday-share-btn" class="btn">Share…</button>` +
-          `<button id="bday-import-btn" class="btn">Import…</button>` +
+          `<button id="bday-share-btn" class="btn">Share link…</button>` +
         `</div>` +
-        `<textarea id="bday-share-code" class="bday-share-code" placeholder="Paste a share code here, then click Import…" rows="2"></textarea>` +
       `</div>` +
     `</div>`;
   document.body.appendChild(modal);
@@ -282,27 +280,11 @@ function initSettingsModal() {
   modal.querySelector('#bday-share-btn').addEventListener('click', () => {
     if (runtimeBirthdays.length === 0) { showToast('No birthdays to share'); return; }
     const code = _encodeBirthdays(runtimeBirthdays);
-    const ta = modal.querySelector('#bday-share-code');
-    ta.value = code;
-    ta.style.display = 'block';
-    ta.select();
+    const url = location.href.split('#')[0] + '#' + code;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(code).then(() => showToast('Copied! Share this code with family.')).catch(() => showToast('Code shown below — copy it manually'));
+      navigator.clipboard.writeText(url).then(() => showToast('Link copied! Send it to family.')).catch(() => showToast('Could not copy — try again'));
     } else {
-      showToast('Code shown below — copy it manually');
-    }
-  });
-  modal.querySelector('#bday-import-btn').addEventListener('click', () => {
-    const ta = modal.querySelector('#bday-share-code');
-    ta.style.display = 'block';
-    const code = ta.value.trim();
-    if (!code) { ta.focus(); showToast('Paste a share code first'); return; }
-    try {
-      const incoming = _decodeBirthdays(code);
-      if (incoming.length === 0) { showToast('No valid birthdays in that code'); return; }
-      _showBirthdayImportReview(incoming);
-    } catch(_) {
-      showToast('Could not read that code — check for typos');
+      showToast('Could not copy — try again');
     }
   });
 }
@@ -1433,3 +1415,15 @@ _toolbarToggle.addEventListener('click', () => {
 });
 
 refresh();
+
+// Check for birthday share link in URL hash
+(function() {
+  const hash = decodeURIComponent(location.hash.slice(1));
+  if (hash.startsWith('bday1:')) {
+    history.replaceState(null, '', location.pathname + location.search);
+    try {
+      const incoming = _decodeBirthdays(hash);
+      if (incoming.length > 0) _showBirthdayImportReview(incoming);
+    } catch(_) {}
+  }
+})();
