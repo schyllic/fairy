@@ -354,7 +354,9 @@ function renderSky() {
         if (newSvg) _attachSkyZoom(newSvg);
       }
     }
-    const lbl = e.target.closest('.sky-const-label');
+    const lbl = e.target.closest
+      ? e.target.closest('.sky-const-label')
+      : (e.target.classList && e.target.classList.contains('sky-const-label') ? e.target : null);
     if (lbl && typeof showConstellationDetailStandalone === 'function') {
       showConstellationDetailStandalone(lbl.dataset.cname);
     }

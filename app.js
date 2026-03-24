@@ -230,22 +230,17 @@ function initSettingsModal() {
       `</div>` +
       `<div id="modal-body">` +
         `<h3 class="settings-section-head">Location</h3>` +
-        `<p class="settings-hint">Used for sunset, twilight, and constellation calculations.</p>` +
-        `<div class="settings-row">` +
-          `<label for="settings-lat">Latitude</label>` +
-          `<input type="number" id="settings-lat" min="-90" max="90" step="0.1" placeholder="e.g. 37.0">` +
+        `<div class="settings-row location-row">` +
+          `<label for="settings-lat">Lat</label>` +
+          `<input type="number" id="settings-lat" min="-90" max="90" step="0.1" placeholder="37.0">` +
           `<span class="settings-unit">° N</span>` +
-        `</div>` +
-        `<div class="settings-row">` +
-          `<label for="settings-lon">Longitude</label>` +
-          `<input type="number" id="settings-lon" min="-180" max="180" step="0.1" placeholder="e.g. -80.0">` +
+          `<label for="settings-lon">Lon</label>` +
+          `<input type="number" id="settings-lon" min="-180" max="180" step="0.1" placeholder="-80.0">` +
           `<span class="settings-unit">° E</span>` +
-        `</div>` +
-        `<p class="settings-hint">Negative longitude = West. Times display in US Eastern timezone.</p>` +
-        `<div class="settings-actions">` +
           `<button id="settings-save" class="btn">Save</button>` +
           `<button id="settings-cancel" class="btn">Cancel</button>` +
         `</div>` +
+        `<p class="settings-hint">Used for sky calculations. Negative lon = West.</p>` +
         `<hr class="settings-divider">` +
         `<h3 class="settings-section-head">Birthdays</h3>` +
         `<div id="birthday-list"></div>` +
@@ -260,6 +255,11 @@ function initSettingsModal() {
           `<input type="number" id="bday-day" class="bday-input bday-day-input" min="1" max="31" placeholder="Day">` +
           `<button id="bday-add-btn" class="btn">Add</button>` +
         `</div>` +
+        `<div class="settings-row bday-share-row">` +
+          `<button id="bday-share-btn" class="btn">Share…</button>` +
+          `<button id="bday-import-btn" class="btn">Import…</button>` +
+        `</div>` +
+        `<textarea id="bday-share-code" class="bday-share-code" placeholder="Paste a share code here, then click Import…" rows="2"></textarea>` +
       `</div>` +
     `</div>`;
   document.body.appendChild(modal);
@@ -279,6 +279,32 @@ function initSettingsModal() {
     _renderBirthdayList();
     refresh();
   });
+  modal.querySelector('#bday-share-btn').addEventListener('click', () => {
+    if (runtimeBirthdays.length === 0) { showToast('No birthdays to share'); return; }
+    const code = _encodeBirthdays(runtimeBirthdays);
+    const ta = modal.querySelector('#bday-share-code');
+    ta.value = code;
+    ta.style.display = 'block';
+    ta.select();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(() => showToast('Copied! Share this code with family.')).catch(() => showToast('Code shown below — copy it manually'));
+    } else {
+      showToast('Code shown below — copy it manually');
+    }
+  });
+  modal.querySelector('#bday-import-btn').addEventListener('click', () => {
+    const ta = modal.querySelector('#bday-share-code');
+    ta.style.display = 'block';
+    const code = ta.value.trim();
+    if (!code) { ta.focus(); showToast('Paste a share code first'); return; }
+    try {
+      const incoming = _decodeBirthdays(code);
+      if (incoming.length === 0) { showToast('No valid birthdays in that code'); return; }
+      _showBirthdayImportReview(incoming);
+    } catch(_) {
+      showToast('Could not read that code — check for typos');
+    }
+  });
 }
 
 function showSettings() {
@@ -290,6 +316,88 @@ function showSettings() {
 
 function _saveBirthdays() {
   try { localStorage.setItem(STORAGE.BIRTHDAYS, JSON.stringify(runtimeBirthdays)); } catch(_) {}
+}
+
+function _encodeBirthdays(list) {
+  return 'bday1:' + btoa(unescape(encodeURIComponent(JSON.stringify(list))));
+}
+
+function _decodeBirthdays(code) {
+  const trimmed = code.trim();
+  if (!trimmed.startsWith('bday1:')) throw new Error('Invalid code');
+  const parsed = JSON.parse(decodeURIComponent(escape(atob(trimmed.slice(6)))));
+  if (!Array.isArray(parsed)) throw new Error('Invalid data');
+  return parsed.filter(b =>
+    b && typeof b.name === 'string' && b.name.trim() &&
+    Number.isInteger(b.month) && b.month >= 1 && b.month <= 12 &&
+    Number.isInteger(b.day) && b.day >= 1 && b.day <= 31
+  ).map(b => ({ name: b.name.trim(), month: b.month, day: b.day }));
+}
+
+function _showBirthdayImportReview(incoming) {
+  const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Classify each incoming birthday
+  const items = incoming.map(b => {
+    const exactDup = runtimeBirthdays.some(e => e.name === b.name && e.month === b.month && e.day === b.day);
+    const nameDup  = !exactDup && runtimeBirthdays.some(e => e.name === b.name);
+    return { ...b, exactDup, nameDup };
+  });
+
+  // Build review overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'bday-import-overlay';
+  overlay.className = 'bday-import-overlay';
+
+  let html = `<div class="bday-import-box">` +
+    `<h3 class="bday-import-title">Review ${incoming.length} birthday${incoming.length !== 1 ? 's' : ''}</h3>` +
+    `<div class="bday-import-list">`;
+
+  items.forEach((b, i) => {
+    const disabled = b.exactDup ? ' disabled' : '';
+    const checked  = b.exactDup ? '' : ' checked';
+    let badge = '';
+    if (b.exactDup) badge = `<span class="bday-collision-badge bday-dup-badge">already have this</span>`;
+    else if (b.nameDup) badge = `<span class="bday-collision-badge bday-warn-badge">⚠ name exists</span>`;
+    html += `<div class="bday-import-item${b.exactDup ? ' bday-import-dup' : ''}">` +
+      `<input type="checkbox" class="bday-import-chk" data-idx="${i}"${checked}${disabled}>` +
+      `<input type="text" class="bday-import-name" data-idx="${i}" value="${b.name.replace(/"/g, '&quot;')}" maxlength="40"${b.exactDup ? ' disabled' : ''}>` +
+      `<span class="bday-import-date">${MONTH_ABBR[b.month-1]} ${b.day}</span>` +
+      badge +
+    `</div>`;
+  });
+
+  html += `</div>` +
+    `<div class="bday-import-actions">` +
+      `<button id="bday-import-confirm" class="btn">Add selected</button>` +
+      `<button id="bday-import-cancel" class="btn">Cancel</button>` +
+    `</div>` +
+  `</div>`;
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#bday-import-cancel').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#bday-import-confirm').addEventListener('click', () => {
+    const checks = overlay.querySelectorAll('.bday-import-chk');
+    const names  = overlay.querySelectorAll('.bday-import-name');
+    let added = 0;
+    checks.forEach((chk, i) => {
+      if (chk.checked && !chk.disabled) {
+        const name = names[i].value.trim();
+        if (name) {
+          runtimeBirthdays.push({ name, month: items[i].month, day: items[i].day });
+          added++;
+        }
+      }
+    });
+    if (added > 0) {
+      _saveBirthdays();
+      _renderBirthdayList();
+      refresh();
+      showToast(`Added ${added} birthday${added !== 1 ? 's' : ''}`);
+    }
+    overlay.remove();
+  });
 }
 
 function _renderBirthdayList() {
@@ -424,8 +532,11 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
       const pt = _projectAltAz(s.az, s.alt, cx, cy, R, rotDeg);
       const r = Math.max(0.3, 1.0 - 0.12 * s.mag);
       const bright = Math.min(0.6, Math.max(0.1, 0.75 - 0.1 * s.mag));
-      const grey = Math.round(170 + 50 * bright);
-      svg += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${r.toFixed(2)}" fill="rgb(${grey},${grey-8},${Math.round(grey*0.8)})" opacity="${bright.toFixed(2)}"/>`;
+      const warmth = 1.0 - bright;
+      const rr = Math.round(160 + 60 * bright + 20 * warmth);
+      const gg = Math.round(150 + 55 * bright - 5 * warmth);
+      const bb = Math.round(120 + 60 * bright - 30 * warmth);
+      svg += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${r.toFixed(2)}" fill="rgb(${rr},${gg},${bb})" opacity="${bright.toFixed(2)}"/>`;
     }
     svg += `</g>`;
   }
@@ -436,10 +547,13 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
       if (s.alt <= 0) continue;
       const pt = _projectAltAz(s.az, s.alt, cx, cy, R, rotDeg);
       const mag = s.mag;
-      const r = Math.max(0.6, 2.4 - 0.4 * mag);
+      const r = Math.max(0.5, 1.6 - 0.3 * mag);
       const bright = Math.min(1, Math.max(0.35, 1.0 - 0.1 * mag));
-      const g = Math.round(230 + 25 * bright);
-      svg += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${g},${g-4},${g-10})" opacity="${bright.toFixed(2)}"/>`;
+      const warmth = Math.max(0, 0.6 - bright);
+      const rr = Math.round(230 + 25 * bright);
+      const gg = Math.round(226 + 25 * bright - 8 * warmth);
+      const bb = Math.round(218 + 22 * bright - 25 * warmth);
+      svg += `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${rr},${gg},${bb})" opacity="${bright.toFixed(2)}"/>`;
     }
   }
 
@@ -673,6 +787,41 @@ function _buildConstellationSVG(name) {
   const sc = 240 / Math.max(maxX - minX, maxY - minY);
   const midX = (minX + maxX) / 2, midY = (minY + maxY) / 2;
 
+  // Stellarium illustration overlay (rendered before field stars, behind everything)
+  const showDrawing = localStorage.getItem('constShowDrawing') === 'true';
+  const imgData = typeof CONSTELLATION_IMAGES !== 'undefined' ? CONSTELLATION_IMAGES[name] : null;
+  if (imgData && imgData.anchors.length >= 3) {
+    // Project anchor RA/Dec to SVG coordinates
+    const aSvg = imgData.anchors.map(a => {
+      const pt = gnomonic(a.ra, a.dec);
+      if (!pt) return null;
+      return { sx: cx - (pt.x - midX) * sc, sy: cy - (pt.y - midY) * sc };
+    });
+    if (aSvg.every(Boolean)) {
+      // Compute affine transform: from PNG pixel coords to SVG coords
+      // We have 3 pairs: (px[i] -> svgXY[i])
+      // Solve: [a b tx; c d ty] * [px; py; 1] = [sx; sy; 1]
+      const [p0, p1, p2] = imgData.anchors.map(a => a.px);
+      const [s0, s1, s2] = aSvg;
+      // Set up 2x3 affine from 3 point pairs
+      // [p0[0] p0[1] 1] [a] [s0.sx]
+      // [p1[0] p1[1] 1] [b] [s1.sx]
+      // [p2[0] p2[1] 1] [tx] [s2.sx]
+      const det = p0[0]*(p1[1]-p2[1]) + p1[0]*(p2[1]-p0[1]) + p2[0]*(p0[1]-p1[1]);
+      if (Math.abs(det) > 0.001) {
+        const a  = ((s0.sx*(p1[1]-p2[1]) + s1.sx*(p2[1]-p0[1]) + s2.sx*(p0[1]-p1[1])) / det);
+        const b  = ((s0.sx*(p2[0]-p1[0]) + s1.sx*(p0[0]-p2[0]) + s2.sx*(p1[0]-p0[0])) / det);
+        const tx = ((s0.sx*(p1[0]*p2[1]-p2[0]*p1[1]) + s1.sx*(p2[0]*p0[1]-p0[0]*p2[1]) + s2.sx*(p0[0]*p1[1]-p1[0]*p0[1])) / det);
+        const c  = ((s0.sy*(p1[1]-p2[1]) + s1.sy*(p2[1]-p0[1]) + s2.sy*(p0[1]-p1[1])) / det);
+        const d  = ((s0.sy*(p2[0]-p1[0]) + s1.sy*(p0[0]-p2[0]) + s2.sy*(p1[0]-p0[0])) / det);
+        const ty = ((s0.sy*(p1[0]*p2[1]-p2[0]*p1[1]) + s1.sy*(p2[0]*p0[1]-p0[0]*p2[1]) + s2.sy*(p0[0]*p1[1]-p1[0]*p0[1])) / det);
+        const tf = [a, c, b, d, tx, ty].map(v => v.toFixed(4)).join(',');
+        const display = showDrawing ? '' : ' style="display:none"';
+        svg += `<image href="constellations/${imgData.img}" width="512" height="512" transform="matrix(${tf})" opacity="0.22" class="const-drawing"${display}/>`;
+      }
+    }
+  }
+
   // Catalog field stars (faint background)
   if (typeof STAR_CATALOG !== 'undefined' && typeof CON_ABBREV_TO_NAME !== 'undefined') {
     const nameToAbbrev = {};
@@ -689,30 +838,89 @@ function _buildConstellationSVG(name) {
         const mag = star[2];
         const r = Math.max(0.5, 1.8 - 0.2 * mag);
         const bright = Math.min(0.6, Math.max(0.1, 0.7 - 0.08 * mag));
-        const grey = Math.round(160 + 50 * bright);
-        svg += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${grey},${grey-8},${Math.round(grey*0.8)})" opacity="${bright.toFixed(2)}"/>`;
+        const warmth = 1.0 - bright;
+        const rr = Math.round(150 + 60 * bright + 20 * warmth);
+        const gg = Math.round(140 + 55 * bright - 5 * warmth);
+        const bb = Math.round(110 + 60 * bright - 30 * warmth);
+        svg += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${rr},${gg},${bb})" opacity="${bright.toFixed(2)}"/>`;
       }
     }
   }
 
-  // Curated stars (bright, labeled — smaller but whiter)
+  // Pre-compute curated star positions for lines + stars
+  const starPositions = [];
   for (let k = 0; k < con.stars.length; k++) {
     const pt = gnomonic(con.stars[k][0], con.stars[k][1]);
-    if (!pt) continue;
-    const x = cx - (pt.x - midX) * sc;
-    const y = cy - (pt.y - midY) * sc;
+    if (!pt) { starPositions.push(null); continue; }
+    starPositions.push({
+      x: cx - (pt.x - midX) * sc,
+      y: cy - (pt.y - midY) * sc
+    });
+  }
+
+  // Constellation stick-figure lines (drawn before stars so stars sit on top)
+  if (con.lines) {
+    svg += `<g class="const-lines">`;
+    for (let i = 0; i < con.lines.length; i += 2) {
+      const a = starPositions[con.lines[i]];
+      const b = starPositions[con.lines[i + 1]];
+      if (!a || !b) continue;
+      svg += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="#334466" stroke-width="0.8" opacity="0.45"/>`;
+    }
+    svg += `</g>`;
+  }
+
+  // Curated stars (bright, labeled — smaller but whiter)
+  for (let k = 0; k < con.stars.length; k++) {
+    const pos = starPositions[k];
+    if (!pos) continue;
+    const x = pos.x, y = pos.y;
     const mag = con.stars[k][2];
-    const r = Math.max(2, 4 - 0.4 * mag);
+    const r = Math.max(1.5, 2.8 - 0.3 * mag);
     const bright = Math.min(1, Math.max(0.45, 1.0 - 0.1 * mag));
-    const g = Math.round(235 + 20 * bright);
-    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${g},${g-3},${g-8})" opacity="${bright.toFixed(2)}"/>`;
+    const warmth = Math.max(0, 0.6 - bright);
+    const rr = Math.round(235 + 20 * bright);
+    const gg = Math.round(232 + 20 * bright - 8 * warmth);
+    const bb = Math.round(225 + 18 * bright - 25 * warmth);
+    svg += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="rgb(${rr},${gg},${bb})" opacity="${bright.toFixed(2)}"/>`;
     const label = con.stars[k][3];
     if (label) {
       svg += `<text x="${(x + r + 4).toFixed(1)}" y="${(y + 3).toFixed(1)}" font-size="10" fill="#ccd8ee" font-family="sans-serif">${label}</text>`;
     }
   }
 
-  return `<div class="const-detail-wrap"><svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" class="const-detail-svg">${svg}</svg></div>`;
+  const showLines = localStorage.getItem('constShowLines') !== 'false';
+  const showDrawingPref = localStorage.getItem('constShowDrawing') === 'true';
+  const linesHide = showLines ? '' : ' style="display:none"';
+  const svgContent = svg.replace('<g class="const-lines">', `<g class="const-lines"${linesHide}>`);
+  const hasDrawing = typeof CONSTELLATION_IMAGES !== 'undefined' && !!CONSTELLATION_IMAGES[name];
+  const drawingChk = hasDrawing
+    ? `<label class="const-ctrl-lbl"><input type="checkbox" id="const-chk-drawing"${showDrawingPref ? ' checked' : ''}> Drawing</label>`
+    : '';
+  const ctrlBar = `<div class="const-controls">` +
+    `<label class="const-ctrl-lbl"><input type="checkbox" id="const-chk-lines"${showLines ? ' checked' : ''}> Lines</label>` +
+    drawingChk +
+    `</div>`;
+  return `${ctrlBar}<div class="const-detail-wrap"><svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" class="const-detail-svg">${svgContent}</svg></div>`;
+}
+
+function _attachConstellationControls() {
+  const linesChk = document.getElementById('const-chk-lines');
+  if (linesChk) {
+    linesChk.addEventListener('change', () => {
+      localStorage.setItem('constShowLines', linesChk.checked);
+      const linesEl = document.querySelector('.const-lines');
+      if (linesEl) linesEl.style.display = linesChk.checked ? '' : 'none';
+    });
+  }
+  const drawingChk = document.getElementById('const-chk-drawing');
+  if (drawingChk) {
+    drawingChk.addEventListener('change', () => {
+      localStorage.setItem('constShowDrawing', drawingChk.checked);
+      const imgEl = document.querySelector('.const-drawing');
+      if (imgEl) imgEl.style.display = drawingChk.checked ? '' : 'none';
+    });
+  }
 }
 
 function showConstellationDetail(name) {
@@ -736,6 +944,7 @@ function showConstellationDetail(name) {
   backBtn.textContent = '← Sky chart';
   document.getElementById('modal-header').appendChild(backBtn);
   document.getElementById('modal-body').innerHTML = svgEl + loreEl;
+  _attachConstellationControls();
   backBtn.addEventListener('click', () => {
     document.getElementById('modal-title').textContent = _savedModal.title;
     document.getElementById('modal-body').innerHTML = _savedModal.body;
@@ -763,6 +972,7 @@ function showConstellationDetailStandalone(name) {
   document.getElementById('modal-title').textContent = name;
 
   document.getElementById('modal-body').innerHTML = svgEl + loreEl;
+  _attachConstellationControls();
   document.getElementById('cal-modal').removeAttribute('hidden');
 }
 
@@ -956,6 +1166,7 @@ document.getElementById('today-btn').addEventListener('click', () => {
   _skyPlayStop();
   state.holYear = new Date().getFullYear() + 10000;
   _skyViewDate = localTodayStr();
+  selectedDate = _skyViewDate;
   scrollToTodayAfterRender = true;
   refresh();
 });
@@ -1006,12 +1217,14 @@ function _skyPlayStop() {
   _skyPlaySpeed = 0;
   _skyPlayBtn.textContent = '\u25B6';
   _skyFFBtn.textContent = '\u25B6\u25B6';
+  _skyFFBtn.classList.add('sky-ff-hidden');
 }
 function _skyPlayAt(speed) {
   _skyPlayStop();
   _skyPlaySpeed = speed;
   const ms = speed === 2 ? 80 : 800;
   _skyPlayTimer = setInterval(_skyAdvance, ms);
+  _skyFFBtn.classList.remove('sky-ff-hidden');
   if (speed === 2) {
     _skyFFBtn.textContent = '\u23F8';
   } else {

@@ -11,13 +11,13 @@
 <header id="toolbar">
   <div id="toolbar-top">
     <div class="toolbar-group" id="date-nav">
-      <button class="btn nav-btn" id="prev-year" title="Previous year">&#8249;</button>
+      <button class="btn nav-btn cal-only" id="prev-year" title="Previous year">&#8249;</button>
+      <button class="btn nav-btn sky-only" id="sky-prev" title="Previous night">&#8249;&#9790;</button>
       <input type="date" id="date-input" title="Pick a date">
-      <button class="btn nav-btn" id="next-year" title="Next year">&#8250;</button>
-      <button class="btn sky-only" id="sky-prev" title="Previous night">&#8249;&#9790;</button>
-      <button class="btn sky-only" id="sky-next" title="Next night">&#9790;&#8250;</button>
+      <button class="btn nav-btn sky-only" id="sky-next" title="Next night">&#9790;&#8250;</button>
+      <button class="btn nav-btn cal-only" id="next-year" title="Next year">&#8250;</button>
       <button class="btn sky-only" id="sky-play" title="Play">&#9654;</button>
-      <button class="btn sky-only" id="sky-ff" title="Fast forward">&#9654;&#9654;</button>
+      <button class="btn sky-only sky-ff-hidden" id="sky-ff" title="Fast forward">&#9654;&#9654;</button>
     </div>
     <button class="btn" id="today-btn" title="Today">Today</button>
     <span id="toolbar-moon"></span>
@@ -77,6 +77,7 @@
 <script src="comets.js"></script>
 <script src="holidays.js"></script>
 <script src="stars.js"></script>
+<script src="constellations.js"></script>
 <script src="astro.js"></script>
 <script src="calendar.js"></script>
 <script src="themes.js"></script>

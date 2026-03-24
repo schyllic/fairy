@@ -9,7 +9,8 @@
       "Bash(node --check app.js)",
       "Bash(node --check astro.js)",
       "Bash(node --check stars.js)",
-      "Bash(node --check render.js)"
+      "Bash(node --check render.js)",
+      "Bash(curl -s \"https://simbad.cds.unistra.fr/simbad/sim-tap/tables\")"
     ]
   }
 }

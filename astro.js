@@ -230,7 +230,7 @@ function detectEclipses(phaseSets) {
 // Each star: [RA_hours, Dec_degrees, magnitude, label_or_null]
 // Lines: pairs of star indices forming the stick figure
 const CONSTELLATIONS = {
-  'Ursa Minor':  { stars: [
+  'Ursa Minor':  { lines: [0,6, 6,5, 5,4, 4,3, 3,1, 1,2, 2,4], stars: [
       // Little Dipper: handle = Polaris→δ→ε→ζ, bowl = ζ→η→β(Kochab)→γ(Pherkad)
       [2.530, 89.264, 1.97, 'Polaris'],  // 0 - α, handle tip (pole)
       [14.845, 74.156, 2.07, 'Kochab'],  // 1 - β, bowl
@@ -241,7 +241,7 @@ const CONSTELLATIONS = {
       [17.537, 86.586, 4.35, null],       // 6 - δ (Yildun), handle
     ] },
 
-  'Cassiopeia':  { stars: [
+  'Cassiopeia':  { lines: [0,1, 1,2, 2,3, 3,4], stars: [
       [0.153, 59.150, 2.24, 'Caph'],      // 0 - β
       [0.675, 56.537, 2.24, 'Schedar'],   // 1 - α
       [0.945, 60.717, 2.47, null],         // 2 - γ (Tsih)
@@ -249,7 +249,7 @@ const CONSTELLATIONS = {
       [1.907, 63.670, 3.35, 'Segin'],     // 4 - ε
     ] },
 
-  'Cepheus':     { stars: [
+  'Cepheus':     { lines: [0,4, 4,3, 3,1, 1,2, 2,0], stars: [
       [21.310, 62.586, 2.45, 'Alderamin'],// 0
       [23.656, 77.632, 3.23, null],        // 1 - α-like (Errai γ)
       [21.478, 70.561, 3.21, 'Alfirk'],   // 2 - β
@@ -257,7 +257,7 @@ const CONSTELLATIONS = {
       [22.181, 58.201, 3.43, null],        // 4 - ζ
     ] },
 
-  'Draco':       { stars: [
+  'Draco':       { lines: [0,3, 3,2, 2,1, 1,4, 4,5, 5,6, 6,7, 2,8], stars: [
       [17.943, 51.489, 2.24, 'Eltanin'],  // 0 - γ
       [16.400, 61.514, 2.73, null],        // 1 - η
       [17.147, 65.715, 2.79, null],        // 2 - ζ
@@ -269,7 +269,7 @@ const CONSTELLATIONS = {
       [19.209, 67.662, 3.07, null],        // 8 - δ (Altais)
     ] },
 
-  'Andromeda':   { stars: [
+  'Andromeda':   { lines: [0,3, 3,1, 1,2, 1,4], stars: [
       [0.140, 29.091, 2.07, 'Alpheratz'], // 0
       [1.163, 35.621, 2.07, 'Mirach'],    // 1
       [2.065, 42.330, 2.10, 'Almach'],    // 2
@@ -277,7 +277,7 @@ const CONSTELLATIONS = {
       [1.162, 47.242, 3.57, null],         // 4 - μ (near M31)
     ] },
 
-  'Pegasus':     { stars: [
+  'Pegasus':     { lines: [0,1, 1,2, 2,0, 0,3, 3,4], stars: [
       [23.079, 15.205, 2.49, 'Markab'],   // 0 - α
       [23.063, 28.083, 2.44, 'Scheat'],   // 1 - β
       [0.221, 15.183, 2.83, 'Algenib'],   // 2 - γ
@@ -288,7 +288,7 @@ const CONSTELLATIONS = {
     // Note: The 4th corner of the Great Square is Alpheratz in Andromeda
   },
 
-  'Pisces':      { stars: [
+  'Pisces':      { lines: [0,2, 2,6, 6,1, 2,3, 3,4, 4,5], stars: [
       [2.034, 2.764, 3.62, null],          // 0 - η (brightest)
       [1.525, 15.346, 4.13, null],         // 1 - ο
       [1.757, 9.158, 3.70, null],          // 2 - α (Alrescha)
@@ -298,19 +298,19 @@ const CONSTELLATIONS = {
       [1.049, 7.890, 4.48, null],          // 6 - ε
     ] },
 
-  'Aries':       { stars: [
+  'Aries':       { lines: [0,1, 1,2], stars: [
       [2.120, 23.462, 2.01, 'Hamal'],     // 0
       [1.911, 20.808, 2.64, 'Sheratan'],  // 1
       [1.892, 19.294, 3.88, null],         // 2 - 41 Ari
     ] },
 
-  'Triangulum':  { stars: [
+  'Triangulum':  { lines: [0,1, 1,2, 2,0], stars: [
       [1.885, 29.579, 3.00, null],         // 0 - β
       [2.159, 34.987, 3.41, null],         // 1 - α
       [2.289, 33.847, 4.01, null],         // 2 - γ
     ] },
 
-  'Perseus':     { stars: [
+  'Perseus':     { lines: [4,0, 0,3, 3,2, 2,5, 0,1], stars: [
       [3.405, 49.861, 1.79, 'Mirfak'],    // 0
       [3.136, 40.957, 2.09, 'Algol'],     // 1
       [3.964, 40.010, 2.85, null],         // 2 - ζ
@@ -319,7 +319,7 @@ const CONSTELLATIONS = {
       [3.902, 31.884, 3.39, null],         // 5 - ρ
     ] },
 
-  'Taurus':      { stars: [
+  'Taurus':      { lines: [0,4, 4,3, 3,2, 0,5, 1,5], stars: [
       [4.598, 16.510, 0.87, 'Aldebaran'], // 0
       [5.438, 28.608, 1.65, 'Elnath'],    // 1 - β (shared w/ Auriga)
       [4.330, 15.628, 3.54, null],         // 2 - γ (Hyades V tip)
@@ -329,7 +329,7 @@ const CONSTELLATIONS = {
       [3.792, 24.105, 2.87, 'Alcyone'],   // 6 - Pleiades η Tau
     ] },
 
-  'Auriga':      { stars: [
+  'Auriga':      { lines: [0,1, 1,2, 2,5, 5,4, 4,3, 3,0], stars: [
       [5.278, 45.998, 0.08, 'Capella'],   // 0
       [5.995, 44.947, 1.90, 'Menkalinan'],// 1
       [5.992, 37.213, 2.69, null],         // 2 - θ
@@ -338,7 +338,7 @@ const CONSTELLATIONS = {
       [4.950, 33.166, 2.65, 'Hassaleh'], // 5 - ι
     ] },
 
-  'Orion':       { stars: [
+  'Orion':       { lines: [0,5, 5,4, 4,3, 3,2, 2,6, 6,1, 1,2, 0,4], stars: [
       [5.919, 7.407, 0.45, 'Betelgeuse'], // 0
       [5.242, -8.202, 0.18, 'Rigel'],     // 1
       [5.679, -1.943, 1.69, null],         // 2 - ζ (Alnitak)
@@ -348,12 +348,12 @@ const CONSTELLATIONS = {
       [5.796, -9.670, 2.07, 'Saiph'],     // 6
     ] },
 
-  'Canis Minor': { stars: [
+  'Canis Minor': { lines: [0,1], stars: [
       [7.655, 5.225, 0.34, 'Procyon'],    // 0
       [7.452, 8.289, 2.89, 'Gomeisa'],   // 1
     ] },
 
-  'Canis Major': { stars: [
+  'Canis Major': { lines: [0,5, 5,1, 0,4, 4,2, 2,3, 4,3], stars: [
       [6.752, -16.716, -1.44, 'Sirius'], // 0
       [6.378, -17.956, 1.98, 'Mirzam'],  // 1 - β
       [7.140, -26.393, 1.50, 'Wezen'],   // 2 - δ
@@ -362,7 +362,7 @@ const CONSTELLATIONS = {
       [6.611, -19.256, 3.02, null],        // 5 - ν²
     ] },
 
-  'Gemini':      { stars: [
+  'Gemini':      { lines: [0,3, 3,2, 1,4, 4,5, 0,1], stars: [
       [7.577, 31.888, 1.16, 'Pollux'],   // 0 - β
       [7.577, 31.888, 1.58, 'Castor'],   // 1 - α — corrected below
       [6.629, 16.399, 1.93, 'Alhena'],   // 2 - γ
@@ -373,14 +373,14 @@ const CONSTELLATIONS = {
     // Fix Castor RA (it's distinct from Pollux)
   },
 
-  'Cancer':      { stars: [
+  'Cancer':      { lines: [0,1, 1,2, 1,3], stars: [
       [8.745, 18.154, 3.53, null],         // 0 - β (Tarf)
       [8.975, 11.858, 3.94, null],         // 1 - δ
       [8.721, 21.469, 4.02, null],         // 2 - ι
       [8.778, 28.760, 4.66, null],         // 3 - γ
     ] },
 
-  'Leo':         { stars: [
+  'Leo':         { lines: [8,6, 6,7, 7,2, 2,5, 5,0, 0,4, 4,3, 3,1, 2,3], stars: [
       [10.140, 11.967, 1.36, 'Regulus'],  // 0 - α
       [11.818, 14.572, 2.14, 'Denebola'],// 1 - β
       [10.333, 19.842, 1.98, 'Algieba'], // 2 - γ
@@ -392,7 +392,7 @@ const CONSTELLATIONS = {
       [9.764, 23.774, 2.98, null],         // 8 - ε
     ] },
 
-  'Ursa Major':  { stars: [
+  'Ursa Major':  { lines: [0,1, 1,2, 2,3, 3,0, 3,4, 4,5, 5,6], stars: [
       [11.062, 61.751, 1.81, 'Dubhe'],    // 0 - α
       [11.031, 56.382, 2.34, 'Merak'],    // 1 - β
       [11.897, 53.695, 2.41, 'Phecda'],   // 2 - γ
@@ -402,13 +402,13 @@ const CONSTELLATIONS = {
       [13.792, 49.313, 1.85, 'Alkaid'],   // 6 - η
     ] },
 
-  'Coma Berenices': { stars: [
+  'Coma Berenices': { lines: [0,1, 1,2], stars: [
       [13.167, 17.529, 4.26, null],        // 0 - α (Diadem)
       [13.198, 27.878, 4.32, null],        // 1 - β
       [12.449, 28.269, 4.35, null],        // 2 - γ
     ] },
 
-  'Virgo':       { stars: [
+  'Virgo':       { lines: [1,3, 3,2, 2,5, 5,4, 2,0, 3,4], stars: [
       [13.420, -11.161, 0.98, 'Spica'],   // 0 - α
       [13.036, 10.959, 2.83, null],        // 1 - ε (Vindemiatrix)
       [12.694, -1.449, 2.74, null],        // 2 - γ (Porrima)
@@ -417,14 +417,14 @@ const CONSTELLATIONS = {
       [12.332, -0.667, 3.37, null],        // 5 - β (Zavijava)
     ] },
 
-  'Corvus':      { stars: [
+  'Corvus':      { lines: [0,1, 1,3, 3,2, 2,0], stars: [
       [12.497, -23.397, 2.58, null],       // 0 - γ (Gienah)
       [12.573, -16.516, 2.65, null],       // 1 - β (Kraz)
       [12.169, -22.620, 2.94, null],       // 2 - δ (Algorab)
       [12.140, -24.729, 2.59, null],       // 3 - ε
     ] },
 
-  'Boötes':      { stars: [
+  'Boötes':      { lines: [0,4, 0,3, 3,5, 5,2, 2,1, 1,6, 0,5], stars: [
       [14.261, 19.182, -0.05, 'Arcturus'],// 0 - α
       [15.032, 40.390, 3.49, 'Nekkar'],   // 1 - β
       [14.535, 38.308, 3.04, null],        // 2 - γ (Seginus)
@@ -434,7 +434,7 @@ const CONSTELLATIONS = {
       [14.273, 46.088, 4.18, null],        // 6 - λ
     ] },
 
-  'Corona Bor.': { stars: [
+  'Corona Bor.': { lines: [5,1, 1,0, 0,2, 2,4, 4,3], stars: [
       [15.578, 26.715, 2.22, 'Alphecca'], // 0
       [15.464, 29.106, 3.66, null],        // 1 - β (Nusakan)
       [15.713, 26.296, 3.81, null],        // 2 - γ
@@ -443,14 +443,14 @@ const CONSTELLATIONS = {
       [15.383, 31.359, 4.63, null],        // 5 - θ
     ] },
 
-  'Libra':       { stars: [
+  'Libra':       { lines: [0,1, 1,2, 0,3], stars: [
       [14.848, -16.042, 2.75, null],       // 0 - α² (Zubenelgenubi)
       [15.283, -9.383, 2.61, null],        // 1 - β (Zubeneschamali)
       [15.592, -14.789, 3.91, null],       // 2 - γ
       [15.068, -25.282, 3.29, null],       // 3 - σ
     ] },
 
-  'Scorpius':    { stars: [
+  'Scorpius':    { lines: [2,1, 1,9, 9,0, 0,3, 3,4, 4,5, 5,6, 6,7, 7,8], stars: [
       [16.490, -26.432, 1.06, 'Antares'], // 0 - α
       [16.006, -22.622, 2.29, null],       // 1 - δ (Dschubba)
       [16.091, -19.806, 2.56, null],       // 2 - β¹ (Acrab)
@@ -463,7 +463,7 @@ const CONSTELLATIONS = {
       [16.353, -28.216, 2.89, null],       // 9 - σ
     ] },
 
-  'Hercules':    { stars: [
+  'Hercules':    { lines: [0,1, 1,2, 2,6, 0,3, 3,5, 0,5, 2,4], stars: [
       [16.688, 31.602, 2.81, null],        // 0 - ζ (Keystone)
       [17.005, 30.926, 3.16, null],        // 1 - ε
       [17.251, 24.839, 3.12, null],        // 2 - δ
@@ -475,7 +475,7 @@ const CONSTELLATIONS = {
     // Keystone: ζ-ε-δ-π, + extensions
   },
 
-  'Ophiuchus':   { stars: [
+  'Ophiuchus':   { lines: [0,1, 1,5, 5,2, 2,3, 3,4, 0,3], stars: [
       [17.582, 12.561, 2.08, 'Rasalhague'],// 0
       [17.725, 4.567, 2.43, null],          // 1 - η (Sabik)
       [16.619, -10.567, 2.54, null],        // 2 - ζ (Han)
@@ -484,7 +484,7 @@ const CONSTELLATIONS = {
       [17.173, -15.725, 3.19, null],        // 5 - θ
     ] },
 
-  'Serpens':     { stars: [
+  'Serpens':     { lines: [4,1, 1,3, 3,0, 0,2], stars: [
       [15.737, 6.426, 2.63, 'Unukalhai'],// 0 - α (Serpens Caput)
       [15.769, 15.422, 3.54, null],        // 1 - β
       [15.847, 4.478, 3.67, null],         // 2 - δ
@@ -492,7 +492,7 @@ const CONSTELLATIONS = {
       [15.942, 15.665, 3.85, null],        // 4 - γ
     ] },
 
-  'Lyra':        { stars: [
+  'Lyra':        { lines: [0,2, 2,1, 1,3, 3,4, 4,2], stars: [
       [18.616, 38.784, 0.03, 'Vega'],     // 0
       [18.834, 33.363, 3.25, null],        // 1 - ζ
       [18.746, 37.605, 3.26, null],        // 2 - δ²
@@ -500,7 +500,7 @@ const CONSTELLATIONS = {
       [18.978, 33.363, 3.52, null],        // 4 - γ (Sulafat)
     ] },
 
-  'Sagittarius': { stars: [
+  'Sagittarius': { lines: [7,3, 3,0, 0,5, 3,6, 6,1, 1,4, 4,2, 2,1], stars: [
       // Teapot asterism
       [18.403, -34.384, 2.05, 'Kaus Australis'],// 0 - ε
       [18.921, -26.297, 2.05, 'Nunki'],   // 1 - σ
@@ -512,7 +512,7 @@ const CONSTELLATIONS = {
       [18.467, -25.422, 2.82, null],       // 7 - λ (Kaus Borealis)
     ] },
 
-  'Aquila':      { stars: [
+  'Aquila':      { lines: [1,0, 0,2, 0,3, 3,4], stars: [
       [19.846, 8.868, 0.76, 'Altair'],    // 0 - α
       [19.771, 10.613, 2.72, null],        // 1 - γ (Tarazed)
       [19.922, 6.407, 3.36, null],         // 2 - β (Alshain)
@@ -520,14 +520,14 @@ const CONSTELLATIONS = {
       [20.188, 0.822, 3.44, null],         // 4 - δ
     ] },
 
-  'Sagitta':     { stars: [
+  'Sagitta':     { lines: [2,1, 1,0, 0,3], stars: [
       [19.979, 19.492, 3.47, null],        // 0 - γ
       [19.684, 18.014, 3.68, null],        // 1 - δ
       [19.668, 17.476, 4.37, null],        // 2 - α
       [20.082, 19.989, 4.37, null],        // 3 - β
     ] },
 
-  'Delphinus':   { stars: [
+  'Delphinus':   { lines: [1,0, 0,2, 2,3, 3,1, 1,4], stars: [
       [20.626, 14.595, 3.64, null],        // 0 - β (Rotanev)
       [20.554, 15.912, 3.77, null],        // 1 - α (Sualocin)
       [20.724, 15.074, 4.03, null],        // 2 - γ
@@ -535,7 +535,7 @@ const CONSTELLATIONS = {
       [20.553, 11.303, 3.81, null],        // 4 - ε
     ] },
 
-  'Cygnus':      { stars: [
+  'Cygnus':      { lines: [0,1, 1,2, 3,1, 1,4], stars: [
       [20.690, 45.280, 1.25, 'Deneb'],    // 0 - α
       [20.370, 40.257, 2.23, 'Sadr'],     // 1 - γ
       [19.512, 27.960, 3.05, 'Albireo'], // 2 - β
@@ -543,7 +543,7 @@ const CONSTELLATIONS = {
       [20.770, 33.970, 2.46, null],        // 4 - ε (Gienah)
     ] },
 
-  'Capricornus': { stars: [
+  'Capricornus': { lines: [0,1, 1,2, 2,3, 3,5, 5,4, 4,0], stars: [
       [20.294, -12.508, 3.58, null],       // 0 - α² (Algedi)
       [20.350, -14.782, 3.05, null],       // 1 - β (Dabih)
       [20.768, -25.271, 3.99, null],       // 2 - ψ
@@ -552,7 +552,7 @@ const CONSTELLATIONS = {
       [21.668, -16.662, 3.67, null],       // 5 - γ (Nashira)
     ] },
 
-  'Aquarius':    { stars: [
+  'Aquarius':    { lines: [0,1, 1,2, 2,4, 4,3, 3,5], stars: [
       [21.526, -5.571, 2.90, 'Sadalsuud'],// 0 - β
       [22.096, -0.320, 2.95, 'Sadalmelik'],// 1 - α
       [22.361, -1.387, 3.84, null],        // 2 - γ (Sadachbia)
