@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="90" fill="#180b2e"/>
+
+  <!-- Moon glow halo -->
+  <circle cx="236" cy="268" r="168" fill="#f0c000" opacity="0.10"/>
+
+  <!-- Crescent moon: full circle minus offset shadow -->
+  <circle cx="236" cy="268" r="150" fill="#f0c000"/>
+  <circle cx="306" cy="234" r="138" fill="#180b2e"/>
+
+  <!-- Stars -->
+  <circle cx="372" cy="108" r="7"   fill="white" opacity="0.90"/>
+  <circle cx="420" cy="196" r="4.5" fill="white" opacity="0.70"/>
+  <circle cx="108" cy="148" r="5.5" fill="white" opacity="0.80"/>
+  <circle cx="398" cy="360" r="4"   fill="white" opacity="0.55"/>
+  <circle cx="96"  cy="340" r="3.5" fill="white" opacity="0.50"/>
+  <circle cx="440" cy="290" r="3"   fill="white" opacity="0.45"/>
+  <circle cx="136" cy="420" r="3"   fill="white" opacity="0.40"/>
+
+  <!-- 4-pointed sparkle top-right -->
+  <path d="M408 76 L413 97 L434 102 L413 107 L408 128 L403 107 L382 102 L403 97 Z"
+        fill="#f0c000" opacity="0.95"/>
+
+  <!-- Small sparkle mid-right -->
+  <path d="M446 232 L449 243 L460 246 L449 249 L446 260 L443 249 L432 246 L443 243 Z"
+        fill="white" opacity="0.60"/>
+</svg>
