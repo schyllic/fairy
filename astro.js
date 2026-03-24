@@ -152,6 +152,13 @@ function utcDateStr(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
 }
 
+// Convert a UTC instant to a local (observer timezone) date string
+function localDateStr(date) {
+  const offset = _easternOffsetHours(date);
+  const local = new Date(date.getTime() + offset * 3600000);
+  return utcDateStr(local);
+}
+
 function localTodayStr() {
   try {
     const tz = OBSERVER.tz || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -829,12 +836,32 @@ function _moonRADecT(T) {
   return {ra:Math.atan2(ye,xe), dec:Math.atan2(ze,Math.sqrt(xe*xe+ye*ye))};
 }
 
+// Compute moon phase at noon UTC on the given date — aligned with phase markers
+function _moonPhaseT(date) {
+  const Y = date.getUTCFullYear(), M = date.getUTCMonth()+1, D = date.getUTCDate();
+  const JD = _julianDate(Y, M, D, 12); // noon UTC
+  return (JD - J2000) / JC;
+}
+
 function moonIllumPct(date) {
-  const T = (dateToJDE(date) - J2000) / JC;
+  const T = _moonPhaseT(date);
   const sun  = _sunRADecT(T);
   const moon = _moonRADecT(T);
-  const elong = _angSep(sun.ra, sun.dec, moon.ra, moon.dec); // degrees
+  const elong = _angSep(sun.ra, sun.dec, moon.ra, moon.dec);
   return Math.round((1 - Math.cos(rad(elong))) / 2 * 100);
+}
+
+// Returns { illum: 0-1, waxing: bool } for drawing a phase-accurate moon
+function moonPhaseInfo(date) {
+  const T = _moonPhaseT(date);
+  const sun  = _sunRADecT(T);
+  const moon = _moonRADecT(T);
+  const elong = _angSep(sun.ra, sun.dec, moon.ra, moon.dec);
+  const illum = (1 - Math.cos(rad(elong))) / 2;
+  let diff = moon.ra - sun.ra;
+  if (diff < -180) diff += 360;
+  if (diff > 180) diff -= 360;
+  return { illum, waxing: diff > 0 };
 }
 
 function _angSep(ra1,dec1,ra2,dec2) {
@@ -859,6 +886,12 @@ function getVisiblePlanets(gregDate) {
 }
 
 // Returns alt/az for all planets above horizon at ~9pm local on gregDate
+function getMoonAltAz(gregDate) {
+  const { T, LST, latR } = _eveningSky(gregDate);
+  const moon = _moonRADecT(T);
+  return _altAz(norm24(moon.ra * R2H), moon.dec * R2D, LST, latR);
+}
+
 function getPlanetAltAz(gregDate) {
   const { T, LST, latR } = _eveningSky(gregDate);
   const sun = _sunRADecT(T);
@@ -1018,3 +1051,51 @@ function _sunEventTime(date, altitude, isRise) {
 function astroTwilightEnd(date)  { return _sunEventTime(date, -18,    false); }
 function sunsetTime(date)        { return _sunEventTime(date, -0.833, false); }
 function sunriseTime(date)       { return _sunEventTime(date, -0.833, true);  }
+
+// Moon rise/set — iterative search (moon moves ~13°/day, too fast for hour-angle shortcut)
+function _moonEventTime(date, isRise) {
+  const lat = OBSERVER.lat, lon = OBSERVER.lon;
+  const latR = lat * DEG;
+  const offset = _easternOffsetHours(date);
+  // Scan from noon UTC on date to noon+24h in 10-minute steps
+  const Y = date.getUTCFullYear(), M = date.getUTCMonth()+1, D = date.getUTCDate();
+  const jdNoon = _julianDate(Y, M, D, 12);
+
+  function moonAlt(jd) {
+    const T = (jd - J2000) / JC;
+    const UT = (jd - Math.floor(jd) - 0.5) * 24 + 12;
+    const LST = norm24(_gmst(T, (UT + 24) % 24) + lon / 15);
+    const moon = _moonRADecT(T);
+    const pos = _altAz(norm24(moon.ra * R2H), moon.dec * R2D, LST, latR);
+    return pos ? pos.alt : -90;
+  }
+
+  const step = 10 / 1440; // 10 minutes in days
+  let prevAlt = moonAlt(jdNoon);
+  for (let i = 1; i <= 144; i++) { // 144 steps × 10min = 24h
+    const jd = jdNoon + i * step;
+    const alt = moonAlt(jd);
+    const crossing = isRise ? (prevAlt <= 0 && alt > 0) : (prevAlt > 0 && alt <= 0);
+    if (crossing) {
+      // Bisect to refine
+      let lo = jd - step, hi = jd;
+      for (let b = 0; b < 8; b++) {
+        const mid = (lo + hi) / 2;
+        if ((moonAlt(mid) > 0) === isRise) hi = mid; else lo = mid;
+      }
+      const utH = ((lo + hi) / 2 - jdNoon) * 24 + 12; // UT hours
+      let local = ((utH + offset) % 24 + 24) % 24;
+      const h = Math.floor(local);
+      let m = Math.round((local - h) * 60);
+      const hh = m === 60 ? h + 1 : h;
+      const mm = m === 60 ? 0 : m;
+      const ampm = hh < 12 ? 'am' : 'pm';
+      return `${hh % 12 || 12}:${String(mm).padStart(2, '0')}${ampm}`;
+    }
+    prevAlt = alt;
+  }
+  return null;
+}
+
+function moonriseTime(date) { return _moonEventTime(date, true); }
+function moonsetTime(date)  { return _moonEventTime(date, false); }

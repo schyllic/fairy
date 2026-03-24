@@ -10,20 +10,17 @@
 
 <header id="toolbar">
   <div id="toolbar-top">
-    <div class="toolbar-group" id="year-nav">
+    <div class="toolbar-group" id="date-nav">
       <button class="btn nav-btn" id="prev-year" title="Previous year">&#8249;</button>
-      <input type="number" id="year-input" value="12026" title="Holocene year">
+      <input type="date" id="date-input" title="Pick a date">
       <button class="btn nav-btn" id="next-year" title="Next year">&#8250;</button>
-    </div>
-    <div class="toolbar-group" id="sky-nav" hidden>
-      <button class="btn nav-btn" id="sky-prev" title="Previous night">&#8249;</button>
-      <input type="date" id="sky-date-input" title="Pick a date">
-      <button class="btn nav-btn" id="sky-next" title="Next night">&#8250;</button>
-      <button class="btn" id="sky-play" title="Play">&#9654;</button>
-      <button class="btn" id="sky-ff" title="Fast forward">&#9654;&#9654;</button>
+      <button class="btn sky-only" id="sky-prev" title="Previous night">&#8249;&#9790;</button>
+      <button class="btn sky-only" id="sky-next" title="Next night">&#9790;&#8250;</button>
+      <button class="btn sky-only" id="sky-play" title="Play">&#9654;</button>
+      <button class="btn sky-only" id="sky-ff" title="Fast forward">&#9654;&#9654;</button>
     </div>
     <button class="btn" id="today-btn" title="Today">Today</button>
-    <div class="toolbar-sep"></div>
+    <span id="toolbar-moon"></span>
     <button class="btn" id="toolbar-toggle" title="Options">&#9662;</button>
   </div>
   <div id="toolbar-collapsible" hidden>

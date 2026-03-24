@@ -98,11 +98,11 @@ body {
   opacity: 0.5;
 }
 
-/* Year navigation */
-#year-input {
-  width: 6.5rem;
+/* Date navigation */
+#date-input {
+  width: 7.5rem;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 0.82rem;
   font-family: var(--font-family-header);
   font-weight: bold;
   color: var(--color-text-primary);
@@ -111,7 +111,10 @@ body {
   border-radius: 4px;
   padding: 0.2rem 0.4rem;
 }
-#year-input:focus { outline: 2px solid var(--color-accent); }
+#date-input:focus { outline: 2px solid var(--color-accent); }
+.moon-phase-icon { vertical-align: middle; margin: 0 0.3rem; }
+.sky-only { display: none; }
+.view-sky-active .sky-only { display: inline-flex; }
 
 /* Buttons base */
 .btn {
@@ -137,7 +140,7 @@ body {
 
 /* Theme buttons */
 .theme-btn { font-size: 0.8rem; }
-.theme-btn.active[data-theme="fairy"]::before  { content: "🧚 "; }
+.theme-btn.active[data-theme="fairy"]::before  { content: "🧚‍♀️ "; }
 .theme-btn.active[data-theme="wizard"]::before { content: "🔮 "; }
 .theme-btn.active[data-theme="celtic"]::before { content: "☘️ "; }
 .theme-btn.active[data-theme="animal"]::before { content: "🐾 "; }
@@ -256,16 +259,21 @@ body {
   position: relative;
   overflow: hidden;
 }
-.is-today.shine::after {
+.is-today.shine::after,
+.is-selected.shine::after {
   content: '';
   position: absolute;
   top: 0; left: -100%; width: 60%; height: 100%;
   background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
-  animation: today-shine 0.6s ease-out forwards;
+  animation: today-shine 1s ease-out forwards;
   pointer-events: none;
 }
 @keyframes today-shine {
-  to { left: 150%; }
+  0%   { left: 150%; }
+  40%  { left: -100%; }
+  41%  { left: -100%; }
+  80%  { left: 150%; }
+  100% { left: 150%; }
 }
 .today-label {
   display: block;
@@ -334,6 +342,16 @@ body {
   padding: 0.4rem;
   background: var(--color-header, var(--color-accent));
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.month-plant-svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  opacity: 0.92;
 }
 
 .greg-weekrow {
@@ -641,6 +659,9 @@ body {
   color: inherit; line-height: 1; vertical-align: middle;
 }
 .info-btn:hover { opacity: 1; }
+[data-theme="wizard"] .info-btn { font-size: 0; }
+[data-theme="wizard"] .info-btn::after { content: "🔮"; font-size: 0.9rem; }
+[data-theme="wizard"] .today-info-btn::after { font-size: 0.75rem; }
 .today-info-btn { position: absolute; top: 2px; right: 2px; padding: 0; font-size: 0.75rem; }
 .view-week .today-info-btn { top: auto; bottom: 2px; }
 .greg-cell, .fairy-cell { position: relative; }
@@ -656,7 +677,7 @@ body {
 #modal-box {
   position: relative; z-index: 1; background: var(--color-surface);
   border: 1px solid var(--color-border); border-radius: 10px;
-  padding: 1rem; max-width: min(480px, 99vw); max-height: 99vh;
+  padding: 1rem; max-width: min(560px, 99vw); max-height: 99vh;
   overflow-y: auto; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
 #modal-header {
@@ -664,12 +685,6 @@ body {
   gap: 0.5rem; margin-bottom: 0.5rem;
 }
 #modal-header-left { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
-#modal-today-btn {
-  background: none; border: 1px solid var(--color-border); border-radius: 4px;
-  font-size: 0.75rem; cursor: pointer; padding: 0.15rem 0.5rem;
-  color: var(--color-text-secondary); line-height: 1.4; align-self: flex-start;
-}
-#modal-today-btn:hover { color: var(--color-accent); border-color: var(--color-accent); }
 #modal-close {
   background: none; border: none; font-size: 1.5rem; cursor: pointer;
   color: var(--color-text-secondary); line-height: 1;
@@ -708,15 +723,10 @@ body {
 .sky-chart-svg { width: 100%; border-radius: 50%; cursor: zoom-in; touch-action: none; user-select: none; transform-origin: center center; }
 
 /* ─── Sky View (full page) ─────────────────────────────────────────── */
-#sky-nav { gap: 0.3rem; }
-#sky-date-input {
-  background: var(--color-surface); color: var(--color-text-primary);
-  border: 1px solid var(--color-border); border-radius: 4px;
-  padding: 0.25rem 0.5rem; font-size: 0.9rem; text-align: center;
-  font-family: inherit; width: 9rem;
-}
-#sky-date-input::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+#date-input::-webkit-calendar-picker-indicator { filter: invert(0.7); }
 .sky-view { display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 60px); }
+.sky-back-btn { font-size: 0.82rem; margin-right: 0.3rem; }
+.modal-sky-btn { margin: 0.5rem 0; font-size: 0.85rem; }
 .sky-view-info {
   font-size: 0.82rem; color: var(--color-text-secondary);
   padding: 0.3rem 0.5rem 0.2rem; text-align: center;

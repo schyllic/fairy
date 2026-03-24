@@ -63,7 +63,8 @@ function renderGreg(fy) {
     const mon = el('div','greg-month');
     const mhdr = el('div','greg-month-header');
     const mFromStr = `${fy.gregYear}-${String(m+1).padStart(2,'0')}-01`;
-    mhdr.innerHTML = `<span>${GREG_MONTH_NAMES[m]}</span><button class="info-btn" data-from="${mFromStr}" data-label="${GREG_MONTH_NAMES[m]} ${fy.gregYear}">ⓘ</button>`;
+    const plantIcon = state.theme === 'flower' ? getGregMonthPlantSVG(m) : '';
+    mhdr.innerHTML = plantIcon + `<span>${GREG_MONTH_NAMES[m]}</span><button class="info-btn" data-from="${mFromStr}" data-label="${GREG_MONTH_NAMES[m]} ${fy.gregYear}">ⓘ</button>`;
     mon.appendChild(mhdr);
     const wr = el('div','greg-weekrow');
     for (const wd of getWeekdays()) wr.appendChild(el('div','greg-wday', wd.slice(0,3)));
@@ -245,6 +246,7 @@ let _skyViewDate = null;  // current date for sky view (YYYY-MM-DD string)
 
 function renderSky() {
   const root = document.getElementById('calendar-root');
+  root.className = 'view-sky';
   if (!_skyViewDate) _skyViewDate = localTodayStr();
   const skyDate = new Date(_skyViewDate + 'T00:00:00Z');
 
@@ -253,18 +255,23 @@ function renderSky() {
   const constellations = catalogData ? catalogData.constellations : [];
   const visPlans = getVisiblePlanets(skyDate);
   const planetPositions = getPlanetAltAz(skyDate);
-  const moonIllum = moonIllumPct(skyDate);
+  const phase = moonPhaseInfo(skyDate);
+  const moonIllum = Math.round(phase.illum * 100);
   const sunset   = sunsetTime(skyDate);
   const twilight = astroTwilightEnd(skyDate);
+  const mrise    = moonriseTime(skyDate);
+  const mset     = moonsetTime(skyDate);
   const tomorrow = new Date(skyDate.getTime() + 86400000);
   const sunrise  = sunriseTime(tomorrow);
 
   // Info bar
   const infoParts = [];
-  if (sunset)   infoParts.push(`Sunset ${sunset}`);
-  if (twilight) infoParts.push(`Dark ${twilight}`);
-  if (sunrise)  infoParts.push(`Sunrise ${sunrise}`);
-  infoParts.push(`Moon ${moonIllum}%`);
+  if (sunset)   infoParts.push(`☀↓${sunset}`);
+  if (twilight) infoParts.push(`✦${twilight}`);
+  if (mrise)    infoParts.push(`🌙↑${mrise}`);
+  if (mset)     infoParts.push(`🌙↓${mset}`);
+  infoParts.push(`${moonIllum}%`);
+  if (sunrise)  infoParts.push(`☀↑${sunrise}`);
 
   // Planet list
   const planetInfo = visPlans.length > 0
@@ -276,10 +283,25 @@ function renderSky() {
     ? `<div class="sky-view-constellations">${constellations.map(c => `<span class="sky-view-con" data-cname="${c.name}">${c.name}</span>`).join(' · ')}</div>`
     : '';
 
+  // Moon position + phase
+  const moonPos = getMoonAltAz(skyDate);
+  const moonChart = moonPos ? { alt: moonPos.alt, az: moonPos.az, illum: phase.illum, waxing: phase.waxing } : null;
+
   // Build the chart SVG
   const chartHTML = catalogData
-    ? renderSkyChart(catalogData, planetPositions, 180)
+    ? renderSkyChart(catalogData, planetPositions, 180, moonChart)
     : '';
+
+  // Back button in toolbar header
+  const oldBack = document.getElementById('sky-back-btn');
+  if (oldBack) oldBack.remove();
+  if (_skyReturnState) {
+    const backBtn = document.createElement('button');
+    backBtn.className = 'btn sky-back-btn';
+    backBtn.id = 'sky-back-btn';
+    backBtn.textContent = '← Back';
+    document.getElementById('toolbar-top').prepend(backBtn);
+  }
 
   root.innerHTML =
     `<div class="sky-view">` +
@@ -294,6 +316,20 @@ function renderSky() {
   _resetSkyZoom();
   const svgEl = root.querySelector('.sky-chart-svg');
   if (svgEl) _attachSkyZoom(svgEl);
+
+  // Back button → return to previous calendar view
+  const backEl = document.getElementById('sky-back-btn');
+  if (backEl) {
+    backEl.addEventListener('click', () => {
+      const ret = _skyReturnState;
+      _skyReturnState = null;
+      backEl.remove();
+      selectedDate = ret.selectedDate;
+      scrollToSelectedAfterRender = true;
+      state.viewMode = ret.view;
+      refresh();
+    });
+  }
 
   // Constellation label click → detail modal
   root.querySelectorAll('.sky-view-con').forEach(el => {
@@ -311,9 +347,9 @@ function renderSky() {
       const rotDeg = parseInt(dir.dataset.az);
       const wrap = dir.closest('.sky-chart-wrap');
       if (wrap) {
-        const { catalogData: cd, planets } = _skyChartState;
+        const { catalogData: cd, planets, moonData } = _skyChartState;
         _resetSkyZoom();
-        wrap.outerHTML = renderSkyChart(cd, planets, rotDeg);
+        wrap.outerHTML = renderSkyChart(cd, planets, rotDeg, moonData);
         const newSvg = root.querySelector('.sky-chart-svg');
         if (newSvg) _attachSkyZoom(newSvg);
       }
@@ -351,6 +387,8 @@ function render(holYear, viewMode) {
           const todayEl = document.querySelector('.is-today');
           if (todayEl) {
             todayEl.scrollIntoView({behavior:'smooth', block:'center'});
+            todayEl.classList.remove('shine');
+            void todayEl.offsetWidth;
             setTimeout(() => { todayEl.classList.add('shine'); }, 400);
           }
         });
@@ -358,7 +396,13 @@ function render(holYear, viewMode) {
       if (scrollToSelectedAfterRender && selectedDate) {
         scrollToSelectedAfterRender = false;
         requestAnimationFrame(() => {
-          document.querySelector('.is-selected')?.scrollIntoView({behavior:'smooth', block:'center'});
+          const el = document.querySelector('.is-selected');
+          if (el) {
+            el.scrollIntoView({behavior:'smooth', block:'center'});
+            el.classList.remove('shine');
+            void el.offsetWidth;
+            setTimeout(() => { el.classList.add('shine'); }, 400);
+          }
         });
       }
       if (restoreScrollFracAfterRender !== null) {

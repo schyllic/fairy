@@ -343,11 +343,70 @@ const MOON_PLANTS = {
   'Bluemoon':    _plantIris,
 };
 
+const GREG_MONTH_PLANTS = [
+  _plantSnowdrop,     // Jan
+  _plantCrocus,       // Feb
+  _plantDaffodil,     // Mar
+  _plantCherryBlossom,// Apr
+  _plantRose,         // May
+  _plantStrawberry,   // Jun
+  _plantSunflower,    // Jul
+  _plantWheat,        // Aug
+  _plantApple,        // Sep
+  _plantMapleLeaf,    // Oct
+  _plantHolly,        // Nov
+  _plantPine,         // Dec
+];
+
 function getMoonPlantSVG(moonName) {
   const p = HERO_PALETTE.flower;
   const drawFn = MOON_PLANTS[moonName];
   if (!drawFn) return '';
   return `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" class="moon-plant-svg" aria-hidden="true">${drawFn(p)}</svg>`;
+}
+
+function getGregMonthPlantSVG(monthIndex) {
+  const p = HERO_PALETTE.flower;
+  const drawFn = GREG_MONTH_PLANTS[monthIndex];
+  if (!drawFn) return '';
+  return `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" class="month-plant-svg" aria-hidden="true">${drawFn(p)}</svg>`;
+}
+
+// Phase-accurate moon SVG for toolbar
+function getMoonPhaseSVG(illum, waxing, size) {
+  size = size || 22;
+  const r = size / 2;
+  const cx = r, cy = r;
+  const k = (1 - 2 * illum) * r;
+  const dark = '#1a1a2e';
+  const light = '#e8e0c8';
+  const edge = `M ${cx} ${cy - r} A ${r} ${r} 0 0 ${waxing ? 1 : 0} ${cx} ${cy + r}`;
+  const terminator = `A ${Math.abs(k)} ${r} 0 0 ${k > 0 ? 1 : 0} ${cx} ${cy - r}`;
+  const id = `mt${Date.now()}`;
+  // Mare (dark patches) approximating real lunar features
+  const maria =
+    // Mare Imbrium (upper left)
+    `<ellipse cx="${cx-r*0.18}" cy="${cy-r*0.22}" rx="${r*0.22}" ry="${r*0.18}" fill="#b8b0a0" opacity="0.5" transform="rotate(-15 ${cx-r*0.18} ${cy-r*0.22})"/>`
+    // Mare Serenitatis (upper right of center)
+    + `<ellipse cx="${cx+r*0.12}" cy="${cy-r*0.18}" rx="${r*0.13}" ry="${r*0.10}" fill="#b0a898" opacity="0.45"/>`
+    // Mare Tranquillitatis (right of center)
+    + `<ellipse cx="${cx+r*0.22}" cy="${cy+r*0.05}" rx="${r*0.16}" ry="${r*0.12}" fill="#b0a898" opacity="0.4" transform="rotate(20 ${cx+r*0.22} ${cy+r*0.05})"/>`
+    // Oceanus Procellarum (left, large)
+    + `<ellipse cx="${cx-r*0.28}" cy="${cy+r*0.08}" rx="${r*0.20}" ry="${r*0.28}" fill="#b8b0a0" opacity="0.35" transform="rotate(-10 ${cx-r*0.28} ${cy+r*0.08})"/>`
+    // Mare Nubium (lower center)
+    + `<ellipse cx="${cx-r*0.05}" cy="${cy+r*0.30}" rx="${r*0.18}" ry="${r*0.12}" fill="#b0a898" opacity="0.4"/>`
+    // Mare Crisium (small, far right)
+    + `<ellipse cx="${cx+r*0.42}" cy="${cy-r*0.12}" rx="${r*0.10}" ry="${r*0.08}" fill="#a8a090" opacity="0.45"/>`
+    // A few small craters
+    + `<circle cx="${cx-r*0.08}" cy="${cy-r*0.45}" r="${r*0.06}" fill="#c8c0b0" opacity="0.3"/>`
+    + `<circle cx="${cx+r*0.30}" cy="${cy+r*0.30}" r="${r*0.07}" fill="#c0b8a8" opacity="0.35"/>`
+    + `<circle cx="${cx-r*0.35}" cy="${cy-r*0.35}" r="${r*0.05}" fill="#c0b8a8" opacity="0.3"/>`;
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" class="moon-phase-icon" aria-label="Moon phase">`
+    + `<defs><clipPath id="${id}"><path d="${edge} ${terminator}"/></clipPath></defs>`
+    + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${dark}"/>`
+    + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${light}" clip-path="url(#${id})"/>`
+    + `<g clip-path="url(#${id})">${maria}</g>`
+    + `</svg>`;
 }
 
 const FAIRY_MOON_COLORS = {

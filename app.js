@@ -12,6 +12,7 @@ let selectedDate = null;
 let scrollToTodayAfterRender     = false;
 let scrollToSelectedAfterRender  = false;
 let restoreScrollFracAfterRender = null;
+let _skyReturnState = null; // {view, scrollY} — set when jumping to sky from modal
 let runtimeBirthdays = (typeof BIRTHDAYS !== 'undefined') ? [...BIRTHDAYS] : [];
 
 try {
@@ -84,7 +85,6 @@ function initModal() {
       `<div id="modal-header">` +
         `<div id="modal-header-left">` +
           `<h2 id="modal-title"></h2>` +
-          `<button id="modal-today-btn" title="Show events from today">Today</button>` +
         `</div>` +
         `<button id="modal-close" aria-label="Close">✕</button>` +
       `</div>` +
@@ -101,24 +101,13 @@ function initModal() {
       const rotDeg = parseInt(dir.dataset.az);
       const wrap = dir.closest('.sky-chart-wrap');
       if (wrap) {
-        const { catalogData, planets } = _skyChartState;
+        const { catalogData, planets, moonData } = _skyChartState;
         _resetSkyZoom();
-        wrap.outerHTML = renderSkyChart(catalogData, planets, rotDeg);
+        wrap.outerHTML = renderSkyChart(catalogData, planets, rotDeg, moonData);
         const newSvg = document.querySelector('.sky-chart-svg');
         if (newSvg) _attachSkyZoom(newSvg);
       }
     }
-  });
-  document.getElementById('modal-today-btn').addEventListener('click', () => {
-    const todayStr = localTodayStr();
-    const todayGD = new Date(todayStr + 'T00:00:00Z');
-    const holY = todayGD.getUTCFullYear() + 10000;
-    let fy = currentFY;
-    if (!fy || !fy.dayMap.get(todayStr)) {
-      fy = buildFairyYear(holY);
-      if (!fy.dayMap.get(todayStr)) fy = buildFairyYear(holY - 1);
-    }
-    showModal(todayStr, _dayLabel(todayStr, fy), fy);
   });
 }
 
@@ -316,6 +305,7 @@ function _renderBirthdayList() {
     const row = document.createElement('div');
     row.className = 'bday-list-item';
     row.innerHTML =
+      `<button class="info-btn bday-go-btn" data-month="${b.month}" data-day="${b.day}" title="Go to date">ⓘ</button>` +
       `<span class="bday-list-name">${b.name}</span>` +
       `<span class="bday-list-date">${MONTH_ABBR[b.month-1]} ${b.day}</span>` +
       `<button class="bday-delete-btn" data-name="${b.name}" data-month="${b.month}" data-day="${b.day}" aria-label="Remove">✕</button>`;
@@ -328,6 +318,19 @@ function _renderBirthdayList() {
         !(b.name === name && b.month === Number(month) && b.day === Number(day)));
       _saveBirthdays();
       _renderBirthdayList();
+      refresh();
+    });
+  });
+  list.querySelectorAll('.bday-go-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const gregYear = state.holYear - 10000;
+      const m = String(btn.dataset.month).padStart(2, '0');
+      const d = String(btn.dataset.day).padStart(2, '0');
+      const dateStr = `${gregYear}-${m}-${d}`;
+      _syncFromDate(dateStr);
+      selectedDate = dateStr;
+      scrollToSelectedAfterRender = true;
+      closeSettings();
       refresh();
     });
   });
@@ -379,10 +382,10 @@ function _projectAltAz(az, alt, cx, cy, R, rotDeg) {
 // Store last chart data for re-rendering on rotation
 let _skyChartState = null;
 
-function renderSkyChart(catalogData, planets = [], rotDeg = 0) {
-  // catalogData: { tier1: [{alt,az,mag,name,con}], tier2: [...], constellations: [{name,centroidAz,centroidAlt}] }
-  // Also supports legacy format for backwards compat (array of constellation objects)
-  _skyChartState = { catalogData, planets, rotDeg };
+function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) {
+  // catalogData: { tier1, tier2, constellations }
+  // moonData: { alt, az, illum, waxing } or null
+  _skyChartState = { catalogData, planets, rotDeg, moonData };
 
   const cx = 170, cy = 170, R = 160;
   let svg = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0a0a1a"/>`;
@@ -460,12 +463,46 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0) {
     svg += `<text x="${(pp.x+dx).toFixed(1)}" y="${(pp.y-7).toFixed(1)}" font-size="10" fill="#ffcc44" font-family="sans-serif" text-anchor="${anchor}" opacity="0.95">${p.symbol} ${p.name}</text>`;
   }
 
+  // Moon
+  let moonDefs = '';
+  if (moonData && moonData.alt > 0) {
+    const mp = _projectAltAz(moonData.az, moonData.alt, cx, cy, R, rotDeg);
+    const mr = 7; // moon radius on chart
+    const illum = moonData.illum, wax = moonData.waxing;
+    const mk = (1 - 2 * illum) * mr;
+    const clipId = 'moonclip';
+    const edgePath = `M ${mp.x.toFixed(1)} ${(mp.y - mr).toFixed(1)} A ${mr} ${mr} 0 0 ${wax ? 1 : 0} ${mp.x.toFixed(1)} ${(mp.y + mr).toFixed(1)}`;
+    const termPath = `A ${Math.abs(mk).toFixed(1)} ${mr} 0 0 ${mk > 0 ? 1 : 0} ${mp.x.toFixed(1)} ${(mp.y - mr).toFixed(1)}`;
+    moonDefs = `<defs><clipPath id="${clipId}"><path d="${edgePath} ${termPath}"/></clipPath></defs>`;
+    // Dark disc + lit surface + maria texture
+    svg += `<circle cx="${mp.x.toFixed(1)}" cy="${mp.y.toFixed(1)}" r="${mr+1}" fill="#0a0a1a" opacity="0.5"/>`;
+    svg += `<circle cx="${mp.x.toFixed(1)}" cy="${mp.y.toFixed(1)}" r="${mr}" fill="#1a1a2e"/>`;
+    svg += `<circle cx="${mp.x.toFixed(1)}" cy="${mp.y.toFixed(1)}" r="${mr}" fill="#e8e0c8" clip-path="url(#${clipId})"/>`;
+    // Maria (dark patches) clipped to lit area
+    svg += `<g clip-path="url(#${clipId})">`;
+    svg += `<ellipse cx="${(mp.x-mr*0.18).toFixed(1)}" cy="${(mp.y-mr*0.22).toFixed(1)}" rx="${(mr*0.22).toFixed(1)}" ry="${(mr*0.18).toFixed(1)}" fill="#b8b0a0" opacity="0.5"/>`;
+    svg += `<ellipse cx="${(mp.x+mr*0.12).toFixed(1)}" cy="${(mp.y-mr*0.18).toFixed(1)}" rx="${(mr*0.13).toFixed(1)}" ry="${(mr*0.10).toFixed(1)}" fill="#b0a898" opacity="0.45"/>`;
+    svg += `<ellipse cx="${(mp.x+mr*0.22).toFixed(1)}" cy="${(mp.y+mr*0.05).toFixed(1)}" rx="${(mr*0.16).toFixed(1)}" ry="${(mr*0.12).toFixed(1)}" fill="#b0a898" opacity="0.4"/>`;
+    svg += `<ellipse cx="${(mp.x-mr*0.28).toFixed(1)}" cy="${(mp.y+mr*0.08).toFixed(1)}" rx="${(mr*0.20).toFixed(1)}" ry="${(mr*0.28).toFixed(1)}" fill="#b8b0a0" opacity="0.35"/>`;
+    svg += `<ellipse cx="${(mp.x-mr*0.05).toFixed(1)}" cy="${(mp.y+mr*0.30).toFixed(1)}" rx="${(mr*0.18).toFixed(1)}" ry="${(mr*0.12).toFixed(1)}" fill="#b0a898" opacity="0.4"/>`;
+    svg += `<ellipse cx="${(mp.x+mr*0.42).toFixed(1)}" cy="${(mp.y-mr*0.12).toFixed(1)}" rx="${(mr*0.10).toFixed(1)}" ry="${(mr*0.08).toFixed(1)}" fill="#a8a090" opacity="0.45"/>`;
+    svg += `</g>`;
+    // Glow
+    svg += `<circle cx="${mp.x.toFixed(1)}" cy="${mp.y.toFixed(1)}" r="${mr+2}" fill="none" stroke="#e8e0c8" stroke-width="0.5" opacity="${(0.15 + 0.35 * illum).toFixed(2)}"/>`;
+    // Label
+    const anchor = mp.x >= cx ? 'start' : 'end';
+    const dx = mp.x >= cx ? mr + 4 : -(mr + 4);
+    svg += `<text x="${(mp.x + dx).toFixed(1)}" y="${(mp.y + 3).toFixed(1)}" font-size="8" fill="#e8e0c8" font-family="sans-serif" text-anchor="${anchor}" opacity="0.8">Moon</text>`;
+  }
+
   const vb = '-20 -20 380 380';
-  return `<div class="sky-chart-wrap"><svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" class="sky-chart-svg" data-base-vb="${vb}" aria-label="Sky chart">${svg}</svg></div>`;
+  return `<div class="sky-chart-wrap"><svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" class="sky-chart-svg" data-base-vb="${vb}" aria-label="Sky chart">${moonDefs}${svg}</svg></div>`;
 }
 
 // ─── Sky chart zoom (CSS transform-based) ───────────────────────────
+// tx/ty are in screen pixels. Transform order: translate first, then scale.
 let _skyZoom = { level: 1, tx: 0, ty: 0 };
+let _skyZoomBaseW = 0; // original width of the wrap container
 
 function _resetSkyZoom() {
   _skyZoom = { level: 1, tx: 0, ty: 0 };
@@ -473,7 +510,9 @@ function _resetSkyZoom() {
 
 function _applySkyZoom(svgEl) {
   const z = _skyZoom.level;
-  svgEl.style.transform = `scale(${z}) translate(${_skyZoom.tx}px, ${_skyZoom.ty}px)`;
+  // translate(screen px) then scale — translate is in screen space
+  svgEl.style.transform = z <= 1
+    ? '' : `translate(${_skyZoom.tx}px, ${_skyZoom.ty}px) scale(${z})`;
 
   // Fade in background stars at zoom >= 1.5
   const bgGroup = svgEl.querySelector('.sky-bg-stars');
@@ -483,42 +522,46 @@ function _applySkyZoom(svgEl) {
   }
 }
 
-function _clampPan(svgEl) {
+function _clampPan() {
   const z = _skyZoom.level;
   if (z <= 1) { _skyZoom.tx = 0; _skyZoom.ty = 0; return; }
-  const rect = svgEl.parentElement.getBoundingClientRect();
-  const w = rect.width, h = rect.height;
-  // Max pan: half the overflow on each side
-  const maxTx = (w * (z - 1)) / (2 * z);
-  const maxTy = (h * (z - 1)) / (2 * z);
-  _skyZoom.tx = Math.max(-maxTx, Math.min(maxTx, _skyZoom.tx));
-  _skyZoom.ty = Math.max(-maxTy, Math.min(maxTy, _skyZoom.ty));
+  // Max screen-pixel offset: half the overflow
+  const max = _skyZoomBaseW * (z - 1) / 2;
+  _skyZoom.tx = Math.max(-max, Math.min(max, _skyZoom.tx));
+  _skyZoom.ty = Math.max(-max, Math.min(max, _skyZoom.ty));
 }
 
 function _attachSkyZoom(svgEl) {
   if (!svgEl) return;
+  const wrap = svgEl.parentElement;
+  _skyZoomBaseW = wrap.getBoundingClientRect().width;
 
-  // Mouse wheel zoom
+  // Mouse wheel zoom toward cursor
   svgEl.addEventListener('wheel', e => {
     e.preventDefault();
     const oldZ = _skyZoom.level;
     const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2;
     const newZ = Math.max(1, Math.min(6, oldZ * factor));
+
+    // Cursor position relative to wrap center (screen px)
+    const rect = wrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left - rect.width / 2;
+    const my = e.clientY - rect.top - rect.height / 2;
+
+    // Adjust pan so the point under the cursor stays fixed
+    // Before: screen_pos = (content_pos * oldZ) + old_tx
+    // After:  screen_pos = (content_pos * newZ) + new_tx
+    // => new_tx = old_tx + (mx - old_tx) * (1 - newZ/oldZ)
+    const r = 1 - newZ / oldZ;
+    _skyZoom.tx += (mx - _skyZoom.tx) * r;
+    _skyZoom.ty += (my - _skyZoom.ty) * r;
     _skyZoom.level = newZ;
 
-    // Zoom toward cursor: adjust pan so point under cursor stays fixed
-    const rect = svgEl.parentElement.getBoundingClientRect();
-    const cx = (e.clientX - rect.left - rect.width / 2) / oldZ;
-    const cy = (e.clientY - rect.top - rect.height / 2) / oldZ;
-    const ratio = 1 - newZ / oldZ;
-    _skyZoom.tx += cx * ratio;
-    _skyZoom.ty += cy * ratio;
-
-    _clampPan(svgEl);
+    _clampPan();
     _applySkyZoom(svgEl);
   }, { passive: false });
 
-  // Mouse drag for panning
+  // Mouse drag for panning (1:1 screen pixels)
   let dragging = false, lastX = 0, lastY = 0;
   svgEl.addEventListener('mousedown', e => {
     if (_skyZoom.level <= 1.05) return;
@@ -529,17 +572,14 @@ function _attachSkyZoom(svgEl) {
   });
   window.addEventListener('mousemove', e => {
     if (!dragging) return;
-    _skyZoom.tx += (e.clientX - lastX) / _skyZoom.level;
-    _skyZoom.ty += (e.clientY - lastY) / _skyZoom.level;
+    _skyZoom.tx += e.clientX - lastX;
+    _skyZoom.ty += e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
-    _clampPan(svgEl);
+    _clampPan();
     _applySkyZoom(svgEl);
   });
   window.addEventListener('mouseup', () => {
-    if (dragging) {
-      dragging = false;
-      svgEl.style.cursor = '';
-    }
+    if (dragging) { dragging = false; svgEl.style.cursor = ''; }
   });
 
   // Touch: pinch zoom + drag pan
@@ -553,12 +593,10 @@ function _attachSkyZoom(svgEl) {
       ];
       touchDist0 = Math.hypot(touches0[1].x - touches0[0].x, touches0[1].y - touches0[0].y);
       touchZoom0 = _skyZoom.level;
-      touchTx0 = _skyZoom.tx;
-      touchTy0 = _skyZoom.ty;
+      touchTx0 = _skyZoom.tx; touchTy0 = _skyZoom.ty;
     } else if (e.touches.length === 1 && _skyZoom.level > 1.05) {
       e.preventDefault();
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
+      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
       dragging = true;
     }
   }, { passive: false });
@@ -570,31 +608,26 @@ function _attachSkyZoom(svgEl) {
         e.touches[1].clientY - e.touches[0].clientY
       );
       _skyZoom.level = Math.max(1, Math.min(6, touchZoom0 * dist / touchDist0));
-      // Pan: track midpoint movement
       const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
       const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       const midX0 = (touches0[0].x + touches0[1].x) / 2;
       const midY0 = (touches0[0].y + touches0[1].y) / 2;
-      _skyZoom.tx = touchTx0 + (midX - midX0) / _skyZoom.level;
-      _skyZoom.ty = touchTy0 + (midY - midY0) / _skyZoom.level;
-      _clampPan(svgEl);
+      _skyZoom.tx = touchTx0 + (midX - midX0);
+      _skyZoom.ty = touchTy0 + (midY - midY0);
+      _clampPan();
       _applySkyZoom(svgEl);
     } else if (e.touches.length === 1 && dragging) {
       e.preventDefault();
-      _skyZoom.tx += (e.touches[0].clientX - lastX) / _skyZoom.level;
-      _skyZoom.ty += (e.touches[0].clientY - lastY) / _skyZoom.level;
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
-      _clampPan(svgEl);
+      _skyZoom.tx += e.touches[0].clientX - lastX;
+      _skyZoom.ty += e.touches[0].clientY - lastY;
+      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+      _clampPan();
       _applySkyZoom(svgEl);
     }
   }, { passive: false });
-  svgEl.addEventListener('touchend', () => {
-    touches0 = null;
-    dragging = false;
-  });
+  svgEl.addEventListener('touchend', () => { touches0 = null; dragging = false; });
 
-  // Double-click/tap to reset zoom
+  // Double-click to reset
   svgEl.addEventListener('dblclick', e => {
     e.preventDefault();
     _resetSkyZoom();
@@ -728,7 +761,7 @@ function showConstellationDetailStandalone(name) {
 
   // Use the existing modal
   document.getElementById('modal-title').textContent = name;
-  document.getElementById('modal-today-btn').style.display = 'none';
+
   document.getElementById('modal-body').innerHTML = svgEl + loreEl;
   document.getElementById('cal-modal').removeAttribute('hidden');
 }
@@ -761,12 +794,17 @@ function showModal(fromDateStr, label, fy) {
   if (hasSky || visPlans.length > 0 || activeMeteors.length > 0) {
     const sunset   = sunsetTime(skyDate);
     const twilight = astroTwilightEnd(skyDate);
+    const mrise    = moonriseTime(skyDate);
+    const mset     = moonsetTime(skyDate);
     const tomorrow = new Date(skyDate.getTime() + 86400000);
     const sunrise  = sunriseTime(tomorrow);
-    const parts = [`🌙 ${moonIllum}%`];
-    if (sunset)   parts.push(`↓${sunset}`);
-    if (twilight) parts.push(`✦ ${twilight}`);
-    if (sunrise)  parts.push(`↑${sunrise}`);
+    const parts = [];
+    if (sunset)   parts.push(`☀↓${sunset}`);
+    if (twilight) parts.push(`✦${twilight}`);
+    if (mrise)    parts.push(`🌙↑${mrise}`);
+    if (mset)     parts.push(`🌙↓${mset}`);
+    parts.push(`${moonIllum}%`);
+    if (sunrise)  parts.push(`☀↑${sunrise}`);
     const skyLabel = fromDateStr === todayStr ? 'Tonight' : 'Night Sky';
     eveningSkyHTML += `<div class="modal-section-head">${skyLabel} (${parts.join(', ')})</div>`;
     if (visPlans.length > 0)
@@ -775,14 +813,7 @@ function showModal(fromDateStr, label, fy) {
       eveningSkyHTML += `<div class="constellation-list"><b>Meteor peaks:</b> ${activeMeteors.map(e=>`🌠 ${e.name} (~${e.zhr}/hr)`).join(' · ')}</div>`;
     if (hasSky) {
       eveningSkyHTML += `<div class="constellation-list">${constellationData.map(c=>c.name).join(' · ')}</div>`;
-      const planetPositions = getPlanetAltAz(skyDate);
-      if (catalogData) {
-        eveningSkyHTML += renderSkyChart(catalogData, planetPositions, 180);
-      } else {
-        // Fallback: legacy constellation-only mode
-        const legacyData = getVisibleConstellationPositions(skyDate);
-        eveningSkyHTML += renderSkyChart({ tier1: [], tier2: [], constellations: legacyData }, planetPositions, 180);
-      }
+      eveningSkyHTML += `<button class="btn modal-sky-btn" data-sky-date="${fromDateStr}">View Sky</button>`;
     }
   }
 
@@ -831,14 +862,21 @@ function showModal(fromDateStr, label, fy) {
   _savedModal = null;
 
   document.getElementById('modal-title').textContent = label;
-  document.getElementById('modal-today-btn').style.display = (fromDateStr === todayStr) ? 'none' : '';
   document.getElementById('modal-body').innerHTML = body;
   document.getElementById('cal-modal').removeAttribute('hidden');
 
-  // Attach sky chart zoom
-  _resetSkyZoom();
-  const skyChartSvg = document.querySelector('.sky-chart-svg');
-  if (skyChartSvg) _attachSkyZoom(skyChartSvg);
+  // "View Sky" button inside the modal
+  const skyBtn = document.querySelector('.modal-sky-btn');
+  if (skyBtn) {
+    skyBtn.addEventListener('click', () => {
+      const date = skyBtn.dataset.skyDate;
+      closeModal();
+      _skyReturnState = { view: state.viewMode, scrollY: window.scrollY, selectedDate: date };
+      _skyViewDate = date;
+      state.viewMode = 'sky';
+      refresh();
+    });
+  }
 }
 
 // ─── App wiring ─────────────────────────────────────────────────────
@@ -868,27 +906,52 @@ function buildSwatches() {
   });
 }
 
+function _currentDateStr() {
+  // Derive current date from holYear + stored sky date, or default to Jan 1
+  if (_skyViewDate) return _skyViewDate;
+  return `${state.holYear - 10000}-01-01`;
+}
+
+function _syncFromDate(dateStr) {
+  _skyViewDate = dateStr;
+  const gregYear = new Date(dateStr + 'T00:00:00Z').getUTCFullYear();
+  state.holYear = gregYear + 10000;
+}
+
 function refresh() {
-  document.getElementById('year-input').value = state.holYear;
+  const isSky = state.viewMode === 'sky';
+  if (!_skyViewDate) _skyViewDate = localTodayStr();
+  document.getElementById('date-input').value = _skyViewDate;
   document.title = `Fairy Calendar — Year ${state.holYear}`;
   document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view===state.viewMode));
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme===state.theme));
   applyTheme(state.theme, state.variant);
   buildSwatches();
-  // Swap toolbar nav: year controls vs sky date controls
-  const isSky = state.viewMode === 'sky';
-  document.getElementById('year-nav').hidden = isSky;
-  document.getElementById('sky-nav').hidden = !isSky;
-  if (isSky) {
-    if (!_skyViewDate) _skyViewDate = localTodayStr();
-    document.getElementById('sky-date-input').value = _skyViewDate;
+  // Toggle sky-only controls
+  document.body.classList.toggle('view-sky-active', isSky);
+  // Moon phase in toolbar
+  const moonDate = new Date(_skyViewDate + 'T00:00:00Z');
+  const phase = moonPhaseInfo(moonDate);
+  document.getElementById('toolbar-moon').innerHTML = getMoonPhaseSVG(phase.illum, phase.waxing);
+  // Clean up back button when not in sky-from-modal mode
+  if (!isSky || !_skyReturnState) {
+    const oldBack = document.getElementById('sky-back-btn');
+    if (oldBack) oldBack.remove();
   }
   render(state.holYear, state.viewMode);
   _saveState();
 }
 
-document.getElementById('prev-year').addEventListener('click', () => { state.holYear--; refresh(); });
-document.getElementById('next-year').addEventListener('click', () => { state.holYear++; refresh(); });
+document.getElementById('prev-year').addEventListener('click', () => {
+  state.holYear--;
+  if (_skyViewDate) _skyViewDate = _skyViewDate.replace(/^\d{4}/, String(state.holYear - 10000));
+  refresh();
+});
+document.getElementById('next-year').addEventListener('click', () => {
+  state.holYear++;
+  if (_skyViewDate) _skyViewDate = _skyViewDate.replace(/^\d{4}/, String(state.holYear - 10000));
+  refresh();
+});
 document.getElementById('today-btn').addEventListener('click', () => {
   _skyPlayStop();
   state.holYear = new Date().getFullYear() + 10000;
@@ -896,16 +959,25 @@ document.getElementById('today-btn').addEventListener('click', () => {
   scrollToTodayAfterRender = true;
   refresh();
 });
-document.getElementById('year-input').addEventListener('change', e => {
-  const v = parseInt(e.target.value, 10);
-  if (!isNaN(v)) { state.holYear=v; refresh(); }
+document.getElementById('date-input').addEventListener('change', e => {
+  if (!e.target.value) return;
+  _syncFromDate(e.target.value);
+  selectedDate = e.target.value;
+  scrollToSelectedAfterRender = true;
+  refresh();
 });
 
 // Sky view date nav (toolbar)
 function _skySetDate(dateStr) {
-  _skyViewDate = dateStr;
-  document.getElementById('sky-date-input').value = dateStr;
-  renderSky();
+  _syncFromDate(dateStr);
+  document.getElementById('date-input').value = dateStr;
+  // Update toolbar moon phase
+  const moonDate = new Date(dateStr + 'T00:00:00Z');
+  const phase = moonPhaseInfo(moonDate);
+  document.getElementById('toolbar-moon').innerHTML = getMoonPhaseSVG(phase.illum, phase.waxing);
+  _saveState();
+  if (state.viewMode === 'sky') renderSky();
+  else render(state.holYear, state.viewMode);
 }
 document.getElementById('sky-prev').addEventListener('click', () => {
   _skyPlayStop();
@@ -953,9 +1025,7 @@ _skyFFBtn.addEventListener('click', () => {
   if (_skyPlaySpeed === 2) _skyPlayStop(); else _skyPlayAt(2);
 });
 
-document.getElementById('sky-date-input').addEventListener('change', e => {
-  if (e.target.value) _skySetDate(e.target.value);
-});
+// (date-input change handler is above)
 document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', () => {
   _skyPlayStop();
   if (selectedDate) {
@@ -965,6 +1035,7 @@ document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', 
     restoreScrollFracAfterRender = sh > 0 ? window.scrollY / sh : 0;
   }
   state.viewMode = b.dataset.view;
+  _skyReturnState = null; // clear back state when switching views directly
   refresh();
 }));
 document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => {
@@ -974,6 +1045,17 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
   buildSwatches(); // swatch colors change per theme
   if (currentFY) document.querySelectorAll('.year-hero-wrap').forEach(w => {
     w.innerHTML = getHeaderSVG(currentFY.yearAnimal, state.theme);
+  });
+  document.querySelectorAll('.greg-month-header').forEach((hdr, i) => {
+    const existing = hdr.querySelector('.month-plant-svg');
+    if (state.theme === 'flower') {
+      if (!existing) {
+        const svg = getGregMonthPlantSVG(i);
+        if (svg) hdr.insertAdjacentHTML('afterbegin', svg);
+      }
+    } else {
+      if (existing) existing.remove();
+    }
   });
   document.querySelectorAll('.fairy-moon-header').forEach(hdr => {
     const existing = hdr.querySelector('.moon-plant-svg');
@@ -1063,14 +1145,14 @@ _wireToggle('toggle-birthdays',  'showBirthdays',  'Birthdays on',  'Birthdays o
 }
 document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT') return;
-  if (e.key==='ArrowLeft')  { state.holYear--; refresh(); }
-  if (e.key==='ArrowRight') { state.holYear++; refresh(); }
+  if (e.key==='ArrowLeft')  { state.holYear--; if (_skyViewDate) _skyViewDate = _skyViewDate.replace(/^\d{4}/, String(state.holYear - 10000)); refresh(); }
+  if (e.key==='ArrowRight') { state.holYear++; if (_skyViewDate) _skyViewDate = _skyViewDate.replace(/^\d{4}/, String(state.holYear - 10000)); refresh(); }
   if (e.key==='Escape')     { closeModal(); closeHelp(); closeSettings(); }
 });
 
 document.body.addEventListener('click', e => {
   const btn = e.target.closest('.info-btn');
-  if (btn && currentFY) { showModal(btn.dataset.from, btn.dataset.label, currentFY); return; }
+  if (btn && btn.dataset.from && currentFY) { showModal(btn.dataset.from, btn.dataset.label, currentFY); return; }
 
   const cell = e.target.closest('[data-date]');
   if (cell) {
@@ -1080,8 +1162,14 @@ document.body.addEventListener('click', e => {
       document.querySelectorAll('[data-date].is-selected').forEach(c => c.classList.remove('is-selected'));
     } else {
       selectedDate = ds;
+      _skyViewDate = ds;
+      document.getElementById('date-input').value = ds;
       document.querySelectorAll('[data-date].is-selected').forEach(c => c.classList.remove('is-selected'));
       document.querySelectorAll(`[data-date="${selectedDate}"]`).forEach(c => c.classList.add('is-selected'));
+      // Update moon phase
+      const moonDate = new Date(ds + 'T00:00:00Z');
+      const phase = moonPhaseInfo(moonDate);
+      document.getElementById('toolbar-moon').innerHTML = getMoonPhaseSVG(phase.illum, phase.waxing);
     }
   }
 });
