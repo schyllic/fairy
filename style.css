@@ -91,12 +91,6 @@ body {
 }
 .toolbar-group[hidden] { display: none !important; }
 
-.toolbar-sep {
-  width: 1px;
-  height: 1.5rem;
-  background: var(--color-border);
-  opacity: 0.5;
-}
 
 /* Date navigation */
 #date-input {
