@@ -1356,6 +1356,7 @@ function _skyPlayStop() {
   _skyPlayBtn.textContent = '\u25B6';
   _skyFFBtn.textContent = '\u25B6\u25B6';
   _skyFFBtn.classList.add('sky-ff-hidden');
+  document.body.classList.remove('sky-playing');
 }
 function _skyPlayAt(speed) {
   _skyPlayStop();
@@ -1363,6 +1364,7 @@ function _skyPlayAt(speed) {
   const ms = speed === 2 ? 80 : 800;
   _skyPlayTimer = setInterval(_skyAdvance, ms);
   _skyFFBtn.classList.remove('sky-ff-hidden');
+  document.body.classList.add('sky-playing');
   if (speed === 2) {
     _skyFFBtn.textContent = '\u23F8';
   } else {
