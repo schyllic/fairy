@@ -33,7 +33,7 @@ const I18N = {
     location: 'Location',
     lat: 'Lat', lon: 'Lon',
     birthdays: 'Birthdays',
-    share_link: 'Share link\u2026',
+    share_link: 'Backup / Share\u2026',
     moons_badge: '13 Moons',
     bluemoon_year: 'Bluemoon Year',
     year_animal: '{0} Year',

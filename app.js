@@ -275,7 +275,7 @@ function initSettingsModal() {
           `</select>` +
           `<input type="number" id="bday-day" class="bday-input bday-day-input" min="1" max="31" placeholder="Day">` +
           `<button id="bday-add-btn" class="btn">Add</button>` +
-          `<button id="bday-share-btn" class="btn">Share link…</button>` +
+          `<button id="bday-share-btn" class="btn">Backup / Share…</button>` +
         `</div>` +
         `<div id="birthday-list"></div>` +
       `</div>` +
