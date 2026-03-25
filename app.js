@@ -247,6 +247,8 @@ function initSettingsModal() {
       `<div id="modal-header">` +
         `<h2 id="modal-title">Settings</h2>` +
         `<div id="modal-header-btns">` +
+          `<button id="lang-current-btn" class="btn lang-current-btn" title="Primary language"></button>` +
+          `<button id="lang2-current-btn" class="btn lang-current-btn lang2-btn" title="Tooltip language"></button>` +
           `<button id="modal-close" aria-label="Close">✕</button>` +
         `</div>` +
       `</div>` +
@@ -259,8 +261,6 @@ function initSettingsModal() {
           `<label for="settings-lon" id="settings-lon-lbl">Lon</label>` +
           `<input type="number" id="settings-lon" min="-180" max="180" step="0.1" placeholder="-80.0">` +
           `<span class="settings-unit">° E</span>` +
-          `<button id="lang-current-btn" class="btn lang-current-btn" title="Primary language"></button>` +
-          `<button id="lang2-current-btn" class="btn lang-current-btn lang2-btn" title="Tooltip language"></button>` +
         `</div>` +
         `<p class="settings-hint">Used for sky calculations. Negative lon = West.</p>` +
         `<hr class="settings-divider">` +
