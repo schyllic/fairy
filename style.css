@@ -744,7 +744,11 @@ body {
 .sky-view-info {
   font-size: 0.82rem; color: var(--color-text-secondary);
   padding: 0.3rem 0.5rem 0.2rem; text-align: center;
-  min-height: 2.6em;
+  display: flex; flex-wrap: nowrap; justify-content: center; gap: 0.8rem;
+}
+.sky-info-sun, .sky-info-moon { white-space: nowrap; }
+@media (max-width: 600px) {
+  .sky-view-info { flex-direction: column; gap: 0.1rem; }
 }
 .sky-view-planets, .sky-view-constellations {
   font-size: 0.82rem; color: var(--color-text-secondary);

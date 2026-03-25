@@ -374,14 +374,15 @@ function renderSky() {
   const tomorrow = new Date(skyDate.getTime() + 86400000);
   const sunrise  = sunriseTime(tomorrow);
 
-  // Info bar
-  const infoParts = [];
-  if (sunset)   infoParts.push(`☀↓${sunset}`);
-  if (twilight) infoParts.push(`✦${twilight}`);
-  if (mrise)    infoParts.push(`🌙↑${mrise}`);
-  if (mset)     infoParts.push(`🌙↓${mset}`);
-  infoParts.push(`${moonIllum}%`);
-  if (sunrise)  infoParts.push(`☀↑${sunrise}`);
+  // Info bar — two groups for stable two-line layout on mobile
+  const sunParts = [];
+  if (sunset)   sunParts.push(`☀↓${sunset}`);
+  if (twilight) sunParts.push(`✦${twilight}`);
+  if (sunrise)  sunParts.push(`☀↑${sunrise}`);
+  const moonParts = [];
+  if (mrise)    moonParts.push(`🌙↑${mrise}`);
+  if (mset)     moonParts.push(`🌙↓${mset}`);
+  moonParts.push(`${moonIllum}%`);
 
   // Planet list
   const planetInfo = visPlans.length > 0
@@ -415,7 +416,7 @@ function renderSky() {
 
   root.innerHTML =
     `<div class="sky-view">` +
-      `<div class="sky-view-info">${infoParts.join(' · ')}</div>` +
+      `<div class="sky-view-info"><span class="sky-info-sun">${sunParts.join(' · ')}</span><span class="sky-info-moon">${moonParts.join(' · ')}</span></div>` +
       planetInfo +
       conList +
       `<div class="sky-view-chart">${chartHTML}</div>` +
