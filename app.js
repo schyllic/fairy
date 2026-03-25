@@ -324,9 +324,13 @@ function showSettings() {
   document.getElementById('settings-lon').value = OBSERVER.lon;
   // Update language button + translated section heads
   const langMeta = LANGS.find(l => l.code === state.language) || LANGS[0];
-  document.getElementById('lang-current-btn').textContent = langMeta.native;
+  const langBtn = document.getElementById('lang-current-btn');
+  langBtn.textContent = langMeta.native;
+  langBtn.classList.add('active');
   const lang2Meta = state.language2 ? LANGS.find(l => l.code === state.language2) : null;
-  document.getElementById('lang2-current-btn').textContent = lang2Meta ? lang2Meta.native : '+ tips';
+  const lang2Btn = document.getElementById('lang2-current-btn');
+  lang2Btn.textContent = lang2Meta ? lang2Meta.native : '+ tips';
+  lang2Btn.classList.toggle('active', !!state.language2);
   document.getElementById('settings-loc-head').textContent = t('location');
   document.getElementById('settings-bday-head').textContent = t('birthdays');
   document.getElementById('bday-add-btn').textContent = t('add');
