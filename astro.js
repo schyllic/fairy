@@ -568,18 +568,22 @@ CONSTELLATIONS['Gemini'].stars[1] = [7.577, 31.888, 1.58, 'Castor'];
 
 // ─── Observation time helper ────────────────────────────────────────
 function getEveningUTHours(gregDate) {
-  // Find which UTC hour corresponds to 21:00 in OBSERVER.tz
-  const y = gregDate.getUTCFullYear(), m = gregDate.getUTCMonth(), d = gregDate.getUTCDate();
-  for (let utH = 0; utH < 24; utH++) {
-    const test = new Date(Date.UTC(y, m, d, utH, 0, 0));
-    try {
-      const localH = parseInt(test.toLocaleString('en-US', {
-        timeZone: OBSERVER.tz, hour: 'numeric', hour12: false
-      }));
-      if (localH === 21) return utH;
-    } catch(_) {}
+  // Return a fixed UTC offset (hours from midnight of gregDate) for 9pm standard time.
+  // We use standard time year-round — ignoring DST — so the sky chart progresses
+  // smoothly across DST transitions with no overnight jumps.
+  // Determine standard UTC offset from a mid-January date (always standard time).
+  try {
+    const y = gregDate.getUTCFullYear();
+    const janNoon = new Date(Date.UTC(y, 0, 15, 12, 0, 0));
+    const localH = parseInt(janNoon.toLocaleString('en-US', {
+      timeZone: OBSERVER.tz, hour: 'numeric', hour12: false
+    }));
+    // localH at noon UTC ≈ 12 + stdOffset  →  stdOffset = localH - 12
+    const stdOffset = localH - 12;
+    return 21 - stdOffset; // e.g. EST (UTC-5) → 26, JST (UTC+9) → 12
+  } catch(_) {
+    return 26; // fallback: ~9pm EST (UTC-5)
   }
-  return 2; // fallback: EST
 }
 
 // ─── Julian Date (Meeus Ch. 7, valid for all Gregorian dates) ───────
