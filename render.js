@@ -1,5 +1,6 @@
 // ═══ Fairy Calendar — render.js ═══
 
+// GREG_MONTH_NAMES kept for backward compat; use getGregMonths() for translated output
 const GREG_MONTH_NAMES = ['January','February','March','April','May','June',
                           'July','August','September','October','November','December'];
 
@@ -18,8 +19,8 @@ const PHASE_LABELS = {
 
 function moonIcons(fd) {
   let h = '';
-  if (fd.moonPhase)  { const p=PHASE_LABELS[fd.moonPhase];  h+=`<span class="icon" title="${p.label}">${p.icon}</span>`; }
-  if (fd.solarEvent) { const s=SOLAR_LABELS[fd.solarEvent]; h+=`<span class="icon" title="${s.label}">${s.icon}</span>`; }
+  if (fd.moonPhase)  { const p=PHASE_LABELS[fd.moonPhase];  const _p1=tPhase(fd.moonPhase);  const _p2=tPhase2(fd.moonPhase);  h+=`<span class="icon" title="${_p1}${_p2&&_p2!==_p1?' · '+_p2:''}">${p.icon}</span>`; }
+  if (fd.solarEvent) { const s=SOLAR_LABELS[fd.solarEvent]; const _s1=tSolar(fd.solarEvent); const _s2=tSolar2(fd.solarEvent); h+=`<span class="icon" title="${_s1}${_s2&&_s2!==_s1?' · '+_s2:''}">${s.icon}</span>`; }
   if (fd.perigee)    { const _pi=moonIllumPct(fd.gregDate); h+=`<span class="icon perigee-icon" title="Lunar Perigee">Ⓟ\u202f${_pi}%</span>`; }
   if (fd.apogee)     h+=`<span class="icon apogee-icon"  title="Lunar Apogee">@</span>`;
   if (fd.eclipse)    { const ei=fd.eclipse.type==='lunarEclipse'?'🌑':'☀'; h+=`<span class="icon eclipse-icon" title="${fd.eclipse.type} (${fd.eclipse.subtype})">${ei}✕</span>`; }
@@ -39,7 +40,7 @@ function moonIcons(fd) {
 }
 
 function fmtGreg(date) {
-  return `${GREG_MONTH_NAMES[date.getUTCMonth()].slice(0,3)} ${date.getUTCDate()}`;
+  return `${getGregMonths()[date.getUTCMonth()].slice(0,3)} ${date.getUTCDate()}`;
 }
 
 function el(tag, cls, text) {
@@ -56,18 +57,19 @@ function renderGreg(fy) {
   const yt = el('div','fairy-year-title');
   yt.innerHTML = `<span class="year-hero-wrap">${getHeaderSVG(fy.yearAnimal, state.theme)}</span>`
     + `<span class="year-number">${fy.gregYear}</span>`
-    + (fy.hasBluemoon ? ` <span class="bluemoon-badge">13 Moons · Bluemoon Year</span>` : '');
+    + (fy.hasBluemoon ? ` <span class="bluemoon-badge">${t('moons_badge')} \u00b7 ${t('bluemoon_year')}</span>` : '');
   const grid = el('div','greg-grid');
+  const gm = getGregMonths();
   for (let m = 0; m < 12; m++) {
     const lastDay = new Date(Date.UTC(fy.gregYear, m+1, 0));
     const mon = el('div','greg-month');
     const mhdr = el('div','greg-month-header');
     const mFromStr = `${fy.gregYear}-${String(m+1).padStart(2,'0')}-01`;
     const plantIcon = state.theme === 'flower' ? getGregMonthPlantSVG(m) : '';
-    mhdr.innerHTML = plantIcon + `<span>${GREG_MONTH_NAMES[m]}</span><button class="info-btn" data-from="${mFromStr}" data-label="${GREG_MONTH_NAMES[m]} ${fy.gregYear}">ⓘ</button>`;
+    mhdr.innerHTML = plantIcon + `<span>${gm[m]}</span><button class="info-btn" data-from="${mFromStr}" data-label="${gm[m]} ${fy.gregYear}">ⓘ</button>`;
     mon.appendChild(mhdr);
     const wr = el('div','greg-weekrow');
-    for (const wd of getWeekdays()) wr.appendChild(el('div','greg-wday', wd.slice(0,3)));
+    getWeekdays().forEach((wd, wi) => { const d=el('div','greg-wday',wd.slice(0,3)); const _w2=tWeekday2(wi); if(_w2)d.title=_w2; wr.appendChild(d); });
     mon.appendChild(wr);
     const dg = el('div','greg-days');
     const startDow = (new Date(Date.UTC(fy.gregYear,m,1)).getUTCDay() + 6) % 7;
@@ -81,10 +83,10 @@ function renderGreg(fy) {
       if (fd?.solarEvent) cell.classList.add('solar-cell');
       cell.dataset.date = ds;
       cell.appendChild(el('span','greg-daynum', String(d)));
-      if (fd?.isToday) cell.appendChild(el('span','today-label','Today'));
+      if (fd?.isToday) cell.appendChild(el('span','today-label', t('today')));
       if (fd) {
-        const fl = el('span','fairy-label', `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`);
-        if (fd.darkmoonPart) { fl.classList.add('darkmoon-label'); fl.title=`Darkmoon · ${fd.darkmoonPart}`; }
+        const fl = el('span','fairy-label', `${tMoonShort(fd.fairyMonth)} ${fd.fairyDay}`);
+        if (fd.darkmoonPart) { fl.classList.add('darkmoon-label'); const _a1=tAnimal(fd.darkmoonPart); const _a2=tAnimal2(fd.darkmoonPart); fl.title=t('darkmoon_tooltip', _a1)+(_a2&&_a2!==_a1?' · '+_a2:''); }
         cell.appendChild(fl);
         { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=ds; ib.dataset.label=_dayLabel(ib.dataset.from, currentFY); ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); cell.appendChild(ib); }
         const ic = moonIcons(fd);
@@ -104,8 +106,8 @@ function renderFairy(fy) {
   root.className = 'view-fairy' + (state.showOtherDate ? '' : ' hide-other-date');
   const yt = el('div','fairy-year-title');
   yt.innerHTML = `<span class="year-hero-wrap">${getHeaderSVG(fy.yearAnimal, state.theme)}</span>`
-    + `<span class="year-animal">${fy.yearAnimal} Year</span> <span class="year-number">${fy.holYear}</span>`
-    + (fy.hasBluemoon ? ` <span class="bluemoon-badge">13 Moons · Bluemoon Year</span>` : '');
+    + `<span class="year-animal">${t('year_animal', tAnimal(fy.yearAnimal))}</span> <span class="year-number">${fy.holYear}</span>`
+    + (fy.hasBluemoon ? ` <span class="bluemoon-badge">${t('moons_badge')} \u00b7 ${t('bluemoon_year')}</span>` : '');
   root.appendChild(yt);
 
   for (const moon of fy.moons) {
@@ -115,17 +117,22 @@ function renderFairy(fy) {
 
     const hdr = el('div','fairy-moon-header');
     const plantIcon = state.theme === 'flower' ? getMoonPlantSVG(moon.name) : '';
+    const moonDisplayName = tMoon(moon.name);
+    const moonDisplayName2 = tMoon2(moon.name);
+    const yearAnimalDisplay = t('year_animal', tAnimal(fy.yearAnimal));
     hdr.innerHTML = plantIcon
-      + `<span class="moon-name">${moon.name}</span>`
-      + `<button class="info-btn" data-from="${utcDateStr(moon.startDate)}" data-label="${moon.name} · ${fy.yearAnimal} Year ${fy.holYear}">ⓘ</button>`
-      + `<span class="moon-year-tag">${fy.yearAnimal} Year ${fy.holYear}</span>`
+      + `<span class="moon-name"${moonDisplayName2?` title="${moonDisplayName2}"`:''} >${moonDisplayName}</span>`
+      + `<button class="info-btn" data-from="${utcDateStr(moon.startDate)}" data-label="${moonDisplayName} \u00b7 ${yearAnimalDisplay} ${fy.holYear}">ⓘ</button>`
+      + `<span class="moon-year-tag">${yearAnimalDisplay} ${fy.holYear}</span>`
       + `<span class="moon-greg-range">${fmtGreg(moon.startDate)} – ${fmtGreg(moon.endDate)}</span>`;
     sec.appendChild(hdr);
 
     if (moon.name==='Darkmoon') {
       const leg = el('div','darkmoon-legend');
       for (const part of ['Robin','Rabbit','Turkey','Bear','Fox']) {
-        const b = el('span',`dp-badge dp-${part.toLowerCase()}`, part);
+        const _pa1 = tAnimal(part); const b = el('span',`dp-badge dp-${part.toLowerCase()}`, _pa1);
+        const _pa2 = tAnimal2(part);
+        if (_pa2 && _pa2 !== _pa1) b.title = _pa2;
         if (part===fy.yearAnimal) b.classList.add('dp-active');
         leg.appendChild(b);
       }
@@ -138,6 +145,8 @@ function renderFairy(fy) {
     for (const [wi, wd] of getWeekdays().entries()) {
       const th = el('th', wi>=5?'weekend-col':null, wd.slice(0,3));
       th.dataset.short = wd.slice(0,3);
+      const _wd2 = tWeekday2(wi);
+      if (_wd2) th.title = _wd2;
       thr.appendChild(th);
     }
     thead.appendChild(thr); tbl.appendChild(thead);
@@ -159,7 +168,7 @@ function renderFairy(fy) {
       if (fd.solarEvent) td.classList.add('solar-cell');
       td.dataset.date = fdDateStr;
       td.appendChild(el('span','fairy-daynum', String(fd.fairyDay)));
-      if (fd.isToday) td.appendChild(el('span','today-label','Today'));
+      if (fd.isToday) td.appendChild(el('span','today-label', t('today')));
       td.appendChild(el('span','fairy-greg-date', fmtGreg(fd.gregDate)));
       { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=_dayLabel(ib.dataset.from, currentFY); ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
       const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
@@ -179,8 +188,8 @@ function renderWeek(fy) {
   root.className = 'view-week' + (state.showOtherDate ? '' : ' hide-other-date');
   const yt = el('div','fairy-year-title');
   yt.innerHTML = `<span class="year-hero-wrap">${getHeaderSVG(fy.yearAnimal, state.theme)}</span>`
-    + `<span class="year-animal">${fy.yearAnimal} Year</span> <span class="year-number">${fy.holYear}</span>`
-    + (fy.hasBluemoon ? ` <span class="bluemoon-badge">13 Moons</span>` : '');
+    + `<span class="year-animal">${t('year_animal', tAnimal(fy.yearAnimal))}</span> <span class="year-number">${fy.holYear}</span>`
+    + (fy.hasBluemoon ? ` <span class="bluemoon-badge">${t('moons_badge')}</span>` : '');
   root.appendChild(yt);
 
   const allDays = fy.moons.flatMap(m => m.days);
@@ -224,11 +233,11 @@ function renderWeek(fy) {
         if (state.showHolidays && fd.holiday) td.classList.add('holiday-cell');
         if (fd.solarEvent) td.classList.add('solar-cell');
         td.dataset.date = fdDateStr;
-        const wfd = el('div','week-fairy-date',`${fd.fairyMonth.replace(/moon$/i,'')} ${fd.fairyDay}`);
-        wfd.dataset.short = `${fd.fairyMonth.slice(0,3)} ${fd.fairyDay}`;
+        const wfd = el('div','week-fairy-date',`${tMoonShort(fd.fairyMonth)} ${fd.fairyDay}`);
+        wfd.dataset.short = `${tMoonShort(fd.fairyMonth).slice(0,3)} ${fd.fairyDay}`;
         td.appendChild(wfd);
         td.appendChild(el('div','week-greg-date', fmtGreg(fd.gregDate)));
-        if (fd.isToday) td.appendChild(el('span','today-label','Today'));
+        if (fd.isToday) td.appendChild(el('span','today-label', t('today')));
         { const ib=el('button','info-btn today-info-btn'); ib.dataset.from=fdDateStr; ib.dataset.label=_dayLabel(ib.dataset.from, currentFY); ib.textContent='ⓘ'; if(!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
         const ic=moonIcons(fd); if(ic){const ig=el('span','icon-group');ig.innerHTML=ic;td.appendChild(ig);}
         i++;
@@ -238,6 +247,107 @@ function renderWeek(fy) {
     tbody.appendChild(row);
   }
   tbl.appendChild(tbody); root.appendChild(tbl);
+}
+
+// ─── Hebrew View ─────────────────────────────────────────────────
+
+function renderHebrew(fy) {
+  const root = document.getElementById('calendar-root');
+  root.innerHTML = '';
+  root.className = 'view-hebrew';
+
+  const gregYear = fy.holYear - 10000;
+  const hy = hebrewYearForGregYear(gregYear);
+  const isLeap = _hLeap(hy);
+
+  // Merge dayMaps from previous and current Gregorian year to cover the full Hebrew year
+  const prevFY = buildFairyYear(fy.holYear - 1);
+  const dayMap = new Map([...prevFY.dayMap, ...fy.dayMap]);
+
+  const holidayMap = buildHebrewHolidayMap(hy);
+  const months = buildHebrewYear(hy);
+
+  // Year title
+  const yt = el('div', 'hebrew-year-label');
+  yt.innerHTML = `<span class="hebrew-year-num">Hebrew Year ${hy}</span>`
+    + `<span class="hebrew-year-he">${toHebrewYear(hy)}</span>`
+    + (isLeap ? ` <span class="hebrew-leap-badge">${t('leap_year')}</span>` : '');
+  root.appendChild(yt);
+
+  for (const month of months) {
+    const mdata = HEBREW_MONTH_DATA[month.num];
+    const sec = el('div', 'hebrew-month-section');
+
+    // Month header
+    const hdr = el('div', 'hebrew-month-header');
+    hdr.innerHTML =
+      `<span class="hebrew-month-name-he">${mdata.he}</span>`
+      + `<span class="hebrew-month-name-en">${mdata.en}</span>`
+      + `<span class="hebrew-month-days-count">${t('days_count', month.days)}</span>`;
+    sec.appendChild(hdr);
+
+    // Weekday header row (Sun–Shabbat)
+    const tbl = el('table', 'hebrew-table');
+    const thead = document.createElement('thead');
+    const thr = document.createElement('tr');
+    for (const wd of HEBREW_WEEKDAYS) {
+      const th = document.createElement('th');
+      th.innerHTML = `<span class="hebrew-weekday-he">${wd.he}</span><span class="hebrew-weekday-en">${wd.en}</span>`;
+      thr.appendChild(th);
+    }
+    thead.appendChild(thr);
+    tbl.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    // Hebrew week starts Sunday; getUTCDay() 0=Sun … 6=Sat
+    const firstDow = month.gregStart.getUTCDay();
+
+    let row = document.createElement('tr');
+    let col = 0;
+    for (let i = 0; i < firstDow; i++) {
+      row.appendChild(el('td', 'hebrew-cell empty-cell'));
+      col++;
+    }
+
+    for (let dayNum = 1; dayNum <= month.days; dayNum++) {
+      if (col === 7) { tbody.appendChild(row); row = document.createElement('tr'); col = 0; }
+      const dayDate = new Date(month.gregStart.getTime() + (dayNum - 1) * 86400000);
+      const ds = utcDateStr(dayDate);
+      const fd = dayMap.get(ds);
+      const dow = dayDate.getUTCDay();  // 0=Sun, 6=Sat
+
+      const td = el('td', 'hebrew-cell');
+      if (dow === 6) td.classList.add('shabbat');
+      if (fd?.isToday) td.classList.add('is-today');
+      if (ds === selectedDate) td.classList.add('is-selected');
+      td.dataset.date = ds;
+
+      td.appendChild(el('span', 'hebrew-day-num', toGematria(dayNum)));
+      if (fd?.isToday) td.appendChild(el('span', 'today-label', t('today')));
+      td.appendChild(el('span', 'hebrew-greg-date', fmtGreg(dayDate)));
+      if (fd) {
+        const ib = el('button', 'info-btn today-info-btn');
+        ib.dataset.from = ds;
+        ib.dataset.label = _dayLabel(ds, currentFY);
+        ib.textContent = 'ⓘ';
+        if (!fd.isToday) ib.classList.add('day-info-btn');
+        td.appendChild(ib);
+        const ic = moonIcons(fd);
+        if (ic) { const ig = el('span', 'icon-group'); ig.innerHTML = ic; td.appendChild(ig); }
+      }
+      const hols = holidayMap.get(ds);
+      if (hols) {
+        for (const h of hols) td.appendChild(el('span', 'hebrew-holiday-label', h));
+      }
+      row.appendChild(td);
+      col++;
+    }
+    while (col > 0 && col < 7) { row.appendChild(el('td', 'hebrew-cell empty-cell')); col++; }
+    if (col > 0) tbody.appendChild(row);
+    tbl.appendChild(tbody);
+    sec.appendChild(tbl);
+    root.appendChild(sec);
+  }
 }
 
 // ─── Sky View ────────────────────────────────────────────────────────
@@ -309,7 +419,7 @@ function renderSky() {
       planetInfo +
       conList +
       `<div class="sky-view-chart">${chartHTML}</div>` +
-      `<div class="sky-view-hint">Scroll to zoom · Drag to pan · Double-click to reset</div>` +
+      `<div class="sky-view-hint">${t('scroll_hint')}</div>` +
     `</div>`;
 
   // Attach zoom
@@ -380,9 +490,10 @@ function render(holYear, viewMode) {
         document.documentElement.style.setProperty('--pattern-bg', animalPatternDark(wp));
         document.documentElement.style.setProperty('--pattern-bg-size', '120px 120px');
       }
-      if      (viewMode==='greg')  renderGreg(fy);
-      else if (viewMode==='fairy') renderFairy(fy);
-      else if (viewMode==='week')  renderWeek(fy);
+      if      (viewMode==='greg')   renderGreg(fy);
+      else if (viewMode==='fairy')  renderFairy(fy);
+      else if (viewMode==='week')   renderWeek(fy);
+      else if (viewMode==='hebrew') renderHebrew(fy);
       if (scrollToTodayAfterRender) {
         scrollToTodayAfterRender = false;
         requestAnimationFrame(() => {

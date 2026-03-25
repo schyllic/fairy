@@ -32,6 +32,8 @@ let state = {
   theme: 'fairy',
   variant: 'a',
   weekNames: 'myth',
+  language: 'en',
+  language2: null,
   showHolidays: true,
   showMeteors: true,
   showComets: true,
@@ -51,6 +53,8 @@ try {
   if (saved.showComets     !== undefined) state.showComets     = saved.showComets;
   if (saved.showBirthdays  !== undefined) state.showBirthdays  = saved.showBirthdays;
   if (saved.showOtherDate  !== undefined) state.showOtherDate  = saved.showOtherDate;
+  if (saved.language && I18N[saved.language]) state.language = saved.language;
+  if ('language2' in saved && (saved.language2 === null || (saved.language2 && I18N[saved.language2]))) state.language2 = saved.language2;
 } catch(_) {}
 
 // ─── Info Modal ──────────────────────────────────────────────────────
@@ -72,7 +76,7 @@ function _dayLabel(dateStr, fy) {
   }
   if (!fd) return dateStr;
   const gd = fd.gregDate;
-  return `${getWeekdays()[fd.fairyWeekdayIndex]} · ${GREG_MONTH_NAMES[gd.getUTCMonth()]} ${gd.getUTCDate()} / ${fd.fairyMonth} ${fd.fairyDay}`;
+  return `${getWeekdays()[fd.fairyWeekdayIndex]} · ${getGregMonths()[gd.getUTCMonth()]} ${gd.getUTCDate()} / ${tMoon(fd.fairyMonth)} ${fd.fairyDay}`;
 }
 
 function initModal() {
@@ -173,13 +177,31 @@ const HELP_HTML = `
 <h3>Other Lunar Calendars</h3>
 <p>Many cultures have tracked time by the moon. The most widely used today is the <strong>Hebrew calendar</strong>, which shares some features with this one — and differs in revealing ways.</p>
 <p><strong>What they share:</strong> Both are <em>lunisolar</em> — they follow the moon for months but add an intercalary (leap) month to stay aligned with the solar year. Both start each month on the new moon.</p>
-<p><strong>How the Hebrew calendar works:</strong> It has 12 months of 29–30 days. Seven times in every 19-year cycle (the Metonic cycle), a 13th month is inserted on a fixed arithmetic schedule. The year begins in autumn around the fall equinox (Rosh Hashanah). Months carry ancient Babylonian names: Nisan, Iyar, Sivan… The year count runs from a calculated date of creation, placing 2026 CE at approximately year 5786.</p>
+<p><strong>How the Hebrew calendar works:</strong> It has 12 months of 29–30 days (13 in a leap year). Seven times in every 19-year cycle (the Metonic cycle), a 13th month is inserted. The year begins in autumn around the fall equinox (Rosh Hashanah). All month names are ancient Babylonian, adopted during the Jewish exile in the 6th century BCE — before that, months had old Canaanite names (Aviv, Ziv, Ethanim, Bul) or were simply numbered. The year count (Anno Mundi) was calculated in the 2nd century CE by Rabbi Yose ben Halafta, summing the ages of biblical figures back to creation, placing 2026 CE at approximately year <strong>5786</strong>.</p>
+<p><strong>The months</strong> — all names are Akkadian/Babylonian unless noted:</p>
+<table class="help-table">
+  <tr><th>#</th><th>Month</th><th>Days</th><th>Name meaning</th><th>Notes</th></tr>
+  <tr><td>1</td><td><strong>Nisan</strong></td><td>30</td><td>"first fruits / beginning" (<em>Nisanu</em>); pre-exile <em>Aviv</em> = "spring, green grain ears"</td><td>Religious new year; Passover</td></tr>
+  <tr><td>2</td><td><strong>Iyar</strong></td><td>29</td><td>"blossom / brightness" (<em>Ayaru</em>); pre-exile <em>Ziv</em> = "splendor"</td><td></td></tr>
+  <tr><td>3</td><td><strong>Sivan</strong></td><td>30</td><td>"season" (<em>Simanu</em>)</td><td>Shavuot (Weeks / Pentecost)</td></tr>
+  <tr><td>4</td><td><strong>Tammuz</strong></td><td>29</td><td>Named for Dumuzid, Sumerian god of fertility; possibly "true/faithful son"</td><td>The only month named after a pagan deity</td></tr>
+  <tr><td>5</td><td><strong>Av</strong></td><td>30</td><td>"father" (Hebrew/Aramaic <em>Ab</em>)</td><td>Tisha B'Av: mourning the destruction of both Temples (586 BCE and 70 CE)</td></tr>
+  <tr><td>6</td><td><strong>Elul</strong></td><td>29</td><td>"harvest / gleaning" (<em>Ululu</em>); later given a Hebrew acronym: <em>"I am my beloved's and my beloved is mine"</em></td><td>Month of repentance</td></tr>
+  <tr><td>7</td><td><strong>Tishrei</strong></td><td>30</td><td>"beginning" (<em>Tashritu</em>, from "to start") — the year begins here despite being month 7; pre-exile <em>Ethanim</em> = "ever-flowing streams"</td><td>Rosh Hashanah, Yom Kippur, Sukkot</td></tr>
+  <tr><td>8</td><td><strong>Cheshvan</strong></td><td>29–30</td><td>Possibly "eighth month" (<em>Arahsamna</em>); "Mar" (bitter) prefix added later in Aramaic; pre-exile <em>Bul</em> = "rain / produce"</td><td>The only month with no major holidays — <em>Bitter Cheshvan</em></td></tr>
+  <tr><td>9</td><td><strong>Kislev</strong></td><td>30–29</td><td>Uncertain; possibly "Orion's belt" or "flank / thigh"</td><td>Hanukkah begins</td></tr>
+  <tr><td>10</td><td><strong>Tevet</strong></td><td>29</td><td>"to sink / submerge" (<em>Tebetu</em>) — winter rains soaking the earth</td><td>Hanukkah ends</td></tr>
+  <tr><td>11</td><td><strong>Shevat</strong></td><td>30</td><td>"staff / rod" or "strike" (<em>Shabatu</em>) — possibly winter storms</td><td>Tu B'Shevat: new year of the trees</td></tr>
+  <tr><td>12</td><td><strong>Adar</strong></td><td>29 (30 in leap)</td><td>"dark / cloudy" or "threshing floor" (<em>Addaru</em>)</td><td>Purim; becomes Adar I in leap years</td></tr>
+  <tr><td>13</td><td><strong>Adar II</strong></td><td>29</td><td>Leap year only</td><td>The "real" Adar — Purim is always celebrated here, not in Adar I</td></tr>
+</table>
+<p><strong>A few more things worth knowing:</strong> The leap years within each 19-year cycle always fall in years 3, 6, 8, 11, 14, 17, and 19. The Metonic cycle is named for Greek astronomer Meton of Athens (~432 BCE), but the Hebrew calendar was already using it independently. The calendar was standardized by Hillel II around 359 CE, replacing live moon observation with arithmetic — which is why it no longer tracks the actual sky. Judaism also has four distinct "new years": Nisan 1 (religious calendar), Tishrei 1 (civil years — the celebrated one), Elul 1 (animal tithes), and Shevat 15 (trees).</p>
 <p><strong>How this calendar differs:</strong></p>
 <table class="help-table">
   <tr><td><strong>Year anchor</strong></td><td>The Hebrew year begins in <em>autumn</em>. This calendar begins in <em>winter</em> — Snowmoon starts just after the darkest night. The year rises from darkness toward light.</td></tr>
   <tr><td><strong>Leap month rule</strong></td><td>Hebrew intercalation follows a fixed 19-year schedule. This calendar uses a purely astronomical trigger: Bluemoon is added only when the winter solstice drifts late enough in Darkmoon that skipping it would push next year's solstice outside Darkmoon entirely.</td></tr>
   <tr><td><strong>Accuracy</strong></td><td>The modern Hebrew calendar uses a standardized lunar month length fixed since the 4th century CE and no longer tracks actual moon observation. This calendar computes real new moons using Meeus astronomical algorithms — it reflects the actual sky.</td></tr>
-  <tr><td><strong>Month names</strong></td><td>Hebrew months retain ancient Babylonian names. These months are named for what the natural world is doing.</td></tr>
+  <tr><td><strong>Month names</strong></td><td>Hebrew months carry ancient Babylonian names borrowed during exile. These months are named for what the natural world is doing.</td></tr>
   <tr><td><strong>The week</strong></td><td>The Hebrew week counts numbered days ending in Sabbath. This calendar names the days for the Norse gods who already secretly inhabit the English weekday names.</td></tr>
 </table>
 <p>The <strong>Islamic calendar</strong> is purely lunar with no intercalation, drifting through all seasons over ~33 years. The <strong>Chinese calendar</strong> is lunisolar and adds leap months similarly to Hebrew. Both are old and rich — this calendar is simply a new one, built for a specific family, in a specific place, watching a specific sky.</p>
@@ -229,21 +251,20 @@ function initSettingsModal() {
         `</div>` +
       `</div>` +
       `<div id="modal-body">` +
-        `<h3 class="settings-section-head">Location</h3>` +
+        `<h3 class="settings-section-head" id="settings-loc-head">Location</h3>` +
         `<div class="settings-row location-row">` +
-          `<label for="settings-lat">Lat</label>` +
+          `<label for="settings-lat" id="settings-lat-lbl">Lat</label>` +
           `<input type="number" id="settings-lat" min="-90" max="90" step="0.1" placeholder="37.0">` +
           `<span class="settings-unit">° N</span>` +
-          `<label for="settings-lon">Lon</label>` +
+          `<label for="settings-lon" id="settings-lon-lbl">Lon</label>` +
           `<input type="number" id="settings-lon" min="-180" max="180" step="0.1" placeholder="-80.0">` +
           `<span class="settings-unit">° E</span>` +
-          `<button id="settings-save" class="btn">Save</button>` +
-          `<button id="settings-cancel" class="btn">Cancel</button>` +
+          `<button id="lang-current-btn" class="btn lang-current-btn" title="Primary language"></button>` +
+          `<button id="lang2-current-btn" class="btn lang-current-btn lang2-btn" title="Tooltip language"></button>` +
         `</div>` +
         `<p class="settings-hint">Used for sky calculations. Negative lon = West.</p>` +
         `<hr class="settings-divider">` +
-        `<h3 class="settings-section-head">Birthdays</h3>` +
-        `<div id="birthday-list"></div>` +
+        `<h3 class="settings-section-head" id="settings-bday-head">Birthdays</h3>` +
         `<div class="settings-row bday-add-row">` +
           `<input type="text" id="bday-name" class="bday-input" placeholder="Name" maxlength="40">` +
           `<select id="bday-month" class="bday-select">` +
@@ -254,17 +275,26 @@ function initSettingsModal() {
           `</select>` +
           `<input type="number" id="bday-day" class="bday-input bday-day-input" min="1" max="31" placeholder="Day">` +
           `<button id="bday-add-btn" class="btn">Add</button>` +
-        `</div>` +
-        `<div class="settings-row bday-share-row">` +
           `<button id="bday-share-btn" class="btn">Share link…</button>` +
         `</div>` +
+        `<div id="birthday-list"></div>` +
       `</div>` +
     `</div>`;
   document.body.appendChild(modal);
   modal.querySelector('#modal-backdrop').addEventListener('click', closeSettings);
   modal.querySelector('#modal-close').addEventListener('click', closeSettings);
-  modal.querySelector('#settings-cancel').addEventListener('click', closeSettings);
-  modal.querySelector('#settings-save').addEventListener('click', saveSettings);
+  modal.querySelector('#lang-current-btn').addEventListener('click', () => { closeSettings(); showLanguageModal('primary'); });
+  modal.querySelector('#lang2-current-btn').addEventListener('click', () => { closeSettings(); showLanguageModal('secondary'); });
+  const _applyLocation = () => {
+    const lat = parseFloat(document.getElementById('settings-lat').value);
+    const lon = parseFloat(document.getElementById('settings-lon').value);
+    if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lon) || lon < -180 || lon > 180) return;
+    OBSERVER.lat = lat; OBSERVER.lon = lon;
+    try { localStorage.setItem(STORAGE.OBSERVER, JSON.stringify({ lat, lon })); } catch(_) {}
+    refresh();
+  };
+  modal.querySelector('#settings-lat').addEventListener('change', _applyLocation);
+  modal.querySelector('#settings-lon').addEventListener('change', _applyLocation);
   modal.querySelector('#bday-add-btn').addEventListener('click', () => {
     const name  = modal.querySelector('#bday-name').value.trim();
     const month = parseInt(modal.querySelector('#bday-month').value, 10);
@@ -278,13 +308,13 @@ function initSettingsModal() {
     refresh();
   });
   modal.querySelector('#bday-share-btn').addEventListener('click', () => {
-    if (runtimeBirthdays.length === 0) { showToast('No birthdays to share'); return; }
+    if (runtimeBirthdays.length === 0) { showToast(t('no_birthdays_share')); return; }
     const code = _encodeBirthdays(runtimeBirthdays);
     const url = location.href.split('#')[0] + '#' + code;
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(() => showToast('Link copied! Send it to family.')).catch(() => showToast('Could not copy — try again'));
+      navigator.clipboard.writeText(url).then(() => showToast(t('link_copied'))).catch(() => showToast(t('copy_failed')));
     } else {
-      showToast('Could not copy — try again');
+      showToast(t('copy_failed'));
     }
   });
 }
@@ -292,6 +322,19 @@ function initSettingsModal() {
 function showSettings() {
   document.getElementById('settings-lat').value = OBSERVER.lat;
   document.getElementById('settings-lon').value = OBSERVER.lon;
+  // Update language button + translated section heads
+  const langMeta = LANGS.find(l => l.code === state.language) || LANGS[0];
+  document.getElementById('lang-current-btn').textContent = langMeta.native;
+  const lang2Meta = state.language2 ? LANGS.find(l => l.code === state.language2) : null;
+  document.getElementById('lang2-current-btn').textContent = lang2Meta ? lang2Meta.native : '+ tips';
+  document.getElementById('settings-loc-head').textContent = t('location');
+  document.getElementById('settings-bday-head').textContent = t('birthdays');
+  document.getElementById('bday-add-btn').textContent = t('add');
+  document.getElementById('bday-share-btn').textContent = t('share_link');
+  document.querySelector('#settings-modal #modal-title').textContent = t('settings_title');
+  document.querySelector('.settings-hint').textContent = t('sky_hint');
+  document.getElementById('bday-name').placeholder = t('name_ph');
+  document.getElementById('bday-day').placeholder  = t('day_ph');
   _renderBirthdayList();
   document.getElementById('settings-modal').removeAttribute('hidden');
 }
@@ -387,7 +430,7 @@ function _renderBirthdayList() {
   const list = document.getElementById('birthday-list');
   list.innerHTML = '';
   if (runtimeBirthdays.length === 0) {
-    list.innerHTML = '<p class="settings-hint">No birthdays added yet.</p>';
+    list.innerHTML = `<p class="settings-hint">${t('no_bdays_yet')}</p>`;
     return;
   }
   const sorted = [...runtimeBirthdays].sort((a,b) => a.month - b.month || a.day - b.day);
@@ -430,21 +473,82 @@ function closeSettings() {
   document.getElementById('settings-modal').setAttribute('hidden', '');
 }
 
-function saveSettings() {
-  const lat = parseFloat(document.getElementById('settings-lat').value);
-  const lon = parseFloat(document.getElementById('settings-lon').value);
-  if (isNaN(lat) || lat < -90 || lat > 90) return;
-  if (isNaN(lon) || lon < -180 || lon > 180) return;
-  OBSERVER.lat = lat;
-  OBSERVER.lon = lon;
-  try { localStorage.setItem(STORAGE.OBSERVER, JSON.stringify({ lat, lon })); } catch(_) {}
-  closeSettings();
-  refresh();
+// ─── Language Modal ────────────────────────────────────────────────────────
+
+let _langSlot = 'primary'; // 'primary' | 'secondary'
+
+function initLanguageModal() {
+  const modal = document.createElement('div');
+  modal.id = 'language-modal';
+  modal.setAttribute('hidden', '');
+  modal.innerHTML =
+    `<div id="lang-modal-backdrop"></div>` +
+    `<div id="lang-modal-box">` +
+      `<div id="lang-modal-header">` +
+        `<h2 id="lang-modal-title">Language</h2>` +
+        `<button id="lang-modal-close" aria-label="Close">✕</button>` +
+      `</div>` +
+      `<div id="lang-modal-body">` +
+        `<div class="lang-grid">` +
+          `<button id="lang-none-btn" class="lang-grid-btn" style="display:none">` +
+            `<span class="lang-native">—</span>` +
+            `<span class="lang-english">None</span>` +
+          `</button>` +
+          LANGS.map(l =>
+            `<button class="lang-grid-btn" data-lang="${l.code}">` +
+              `<span class="lang-native">${l.native}</span>` +
+              `<span class="lang-english">${l.name}</span>` +
+            `</button>`
+          ).join('') +
+        `</div>` +
+      `</div>` +
+    `</div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#lang-modal-backdrop').addEventListener('click', closeLanguageModal);
+  modal.querySelector('#lang-modal-close').addEventListener('click', closeLanguageModal);
+  const _applyLang = () => {
+    _saveState();
+    closeLanguageModal();
+    refresh();
+    showSettings();
+  };
+  modal.querySelector('#lang-none-btn').addEventListener('click', () => {
+    state.language2 = null;
+    _applyLang();
+  });
+  modal.querySelectorAll('.lang-grid-btn[data-lang]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (_langSlot === 'secondary') state.language2 = btn.dataset.lang;
+      else state.language = btn.dataset.lang;
+      _applyLang();
+    });
+  });
 }
 
+function showLanguageModal(slot = 'primary') {
+  _langSlot = slot;
+  const activeCode = slot === 'secondary' ? state.language2 : state.language;
+  document.querySelectorAll('#language-modal .lang-grid-btn[data-lang]').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.lang === activeCode);
+  });
+  const noneBtn = document.getElementById('lang-none-btn');
+  if (noneBtn) {
+    noneBtn.style.display = slot === 'secondary' ? '' : 'none';
+    noneBtn.classList.toggle('is-active', slot === 'secondary' && !state.language2);
+  }
+  document.getElementById('lang-modal-title').textContent =
+    slot === 'secondary' ? t('language') + ' 2' : t('language');
+  document.getElementById('language-modal').removeAttribute('hidden');
+}
+
+function closeLanguageModal() {
+  document.getElementById('language-modal').setAttribute('hidden', '');
+}
+
+
 function _formatEvent(ev) {
-  if (ev.kind === 'phase')         { const p=PHASE_LABELS[ev.phase];  return {icon:p.icon, text:p.label}; }
-  if (ev.kind === 'solar')         { const s=SOLAR_LABELS[ev.solar];  return {icon:s.icon, text:s.label}; }
+  if (ev.kind === 'phase')         { const p=PHASE_LABELS[ev.phase];  return {icon:p.icon, text:tPhase(ev.phase)}; }
+  if (ev.kind === 'solar')         { const s=SOLAR_LABELS[ev.solar];  return {icon:s.icon, text:tSolar(ev.solar)}; }
   if (ev.kind === 'perigee')       return {icon:'Ⓟ', text:'Lunar Perigee — Moon closest to Earth'};
   if (ev.kind === 'apogee')        return {icon:'@', text:'Lunar Apogee — Moon farthest from Earth'};
   if (ev.kind === 'lunarEclipse')  return {icon:'🌑✕', text:`Lunar Eclipse (${ev.subtype})`};
@@ -455,7 +559,7 @@ function _formatEvent(ev) {
   if (ev.kind==='moonConj')      return {icon:`${PLANET_SYMBOLS[ev.planet]}🌙`, text:`Moon near ${ev.planet} (${ev.sep}°)`};
   if (ev.kind==='planetConj')    return {icon:`${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}`, text:`${ev.planets[0]} & ${ev.planets[1]} conjunction (${ev.sep}°)`};
   if (ev.kind==='meteorShower') {
-    const fmtDs = ds => { const d=new Date(ds); return `${GREG_MONTH_NAMES[d.getUTCMonth()].slice(0,3)} ${d.getUTCDate()}`; };
+    const fmtDs = ds => { const d=new Date(ds); return `${getGregMonths()[d.getUTCMonth()].slice(0,3)} ${d.getUTCDate()}`; };
     const range = ev.windowStart && ev.windowEnd ? ` · active ${fmtDs(ev.windowStart)}–${fmtDs(ev.windowEnd)}` : '';
     return {icon:'🌠', text:`${ev.name} meteor shower peak — ZHR ~${ev.zhr}${range}`};
   }
@@ -997,29 +1101,29 @@ function showModal(fromDateStr, label, fy) {
     if (mset)     parts.push(`🌙↓${mset}`);
     parts.push(`${moonIllum}%`);
     if (sunrise)  parts.push(`☀↑${sunrise}`);
-    const skyLabel = fromDateStr === todayStr ? 'Tonight' : 'Night Sky';
+    const skyLabel = fromDateStr === todayStr ? t('tonight') : t('night_sky');
     eveningSkyHTML += `<div class="modal-section-head">${skyLabel} (${parts.join(', ')})</div>`;
     if (visPlans.length > 0)
-      eveningSkyHTML += `<div class="constellation-list"><b>Planets:</b> ${visPlans.map(p=>`${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ')}</div>`;
+      eveningSkyHTML += `<div class="constellation-list"><b>${t('planets')}</b> ${visPlans.map(p=>`${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ')}</div>`;
     if (activeMeteors.length > 0)
-      eveningSkyHTML += `<div class="constellation-list"><b>Meteor peaks:</b> ${activeMeteors.map(e=>`🌠 ${e.name} (~${e.zhr}/hr)`).join(' · ')}</div>`;
+      eveningSkyHTML += `<div class="constellation-list"><b>${t('meteor_peaks')}</b> ${activeMeteors.map(e=>`🌠 ${e.name} (~${e.zhr}/hr)`).join(' · ')}</div>`;
     if (hasSky) {
       eveningSkyHTML += `<div class="constellation-list">${constellationData.map(c=>c.name).join(' · ')}</div>`;
-      eveningSkyHTML += `<button class="btn modal-sky-btn" data-sky-date="${fromDateStr}">View Sky</button>`;
+      eveningSkyHTML += `<button class="btn modal-sky-btn" data-sky-date="${fromDateStr}">${t('view_sky_btn')}</button>`;
     }
   }
 
   let body = '';
   if (events.length === 0) {
-    if (todayInWindow) body += `<div class="modal-today-marker">— Today —</div>`;
-    body += '<p style="color:var(--color-text-secondary);font-size:0.9rem">No events in next 60 days.</p>';
+    if (todayInWindow) body += `<div class="modal-today-marker">${t('today_marker')}</div>`;
+    body += `<p style="color:var(--color-text-secondary);font-size:0.9rem">${t('no_events')}</p>`;
     body += eveningSkyHTML;
   } else {
     let todayPlaced = false;
     let skyPlaced = !eveningSkyHTML;
     for (const ev of events) {
       if (todayInWindow && !todayPlaced && ev.dateStr >= todayStr) {
-        body += `<div class="modal-today-marker">— Today —</div>`;
+        body += `<div class="modal-today-marker">${t('today_marker')}</div>`;
         todayPlaced = true;
       }
       // Inject Evening Sky before first event after fromDateStr
@@ -1031,8 +1135,8 @@ function showModal(fromDateStr, label, fy) {
       const fd = fy.dayMap.get(ev.dateStr);
       const _gd = fd?.gregDate || new Date(ev.dateStr);
       const dateLabel = ((state.viewMode === 'fairy' || state.viewMode === 'week') && fd)
-        ? `${fd.fairyMonth.replace(/moon$/i,'')} ${fd.fairyDay}`
-        : `${GREG_MONTH_NAMES[_gd.getUTCMonth()].slice(0,3)} ${_gd.getUTCDate()}`;
+        ? `${tMoonShort(fd.fairyMonth)} ${fd.fairyDay}`
+        : `${getGregMonths()[_gd.getUTCMonth()].slice(0,3)} ${_gd.getUTCDate()}`;
       body += `<div class="modal-event">` +
         `<span class="modal-event-icon">${icon}</span>` +
         `<span class="modal-event-date">${dateLabel}</span>` +
@@ -1040,7 +1144,7 @@ function showModal(fromDateStr, label, fy) {
         `</div>`;
     }
     if (todayInWindow && !todayPlaced) {
-      body += `<div class="modal-today-marker">— Today —</div>`;
+      body += `<div class="modal-today-marker">${t('today_marker')}</div>`;
     }
     if (!skyPlaced) body += eveningSkyHTML;
   }
@@ -1115,8 +1219,34 @@ function refresh() {
   if (!_skyViewDate) _skyViewDate = localTodayStr();
   document.getElementById('date-input').value = _skyViewDate;
   document.title = `Fairy Calendar — Year ${state.holYear}`;
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view===state.viewMode));
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme===state.theme));
+  document.querySelectorAll('.view-btn[data-view]').forEach(b => {
+    b.classList.toggle('active', b.dataset.view===state.viewMode);
+    b.textContent = t('view_' + b.dataset.view);
+  });
+  document.getElementById('today-btn').textContent = t('today');
+  document.querySelectorAll('.theme-btn[data-theme]').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme===state.theme);
+    b.textContent = t('theme_' + b.dataset.theme);
+  });
+  document.getElementById('toggle-mythic-week').textContent = t('toggle_mythic');
+  document.getElementById('toggle-other-date').textContent  = t('toggle_otherdate');
+  document.getElementById('toggle-holidays').textContent    = t('toggle_holidays');
+  document.getElementById('toggle-birthdays').textContent   = t('toggle_birthdays');
+  document.getElementById('toggle-meteors').textContent     = t('toggle_meteors');
+  document.getElementById('toggle-comets').textContent      = t('toggle_comets');
+  document.getElementById('label-theme').textContent = t('label_theme');
+  document.getElementById('label-color').textContent = t('label_color');
+  // Secondary-language tooltips on toolbar controls
+  const _tip2 = (el, key, ...args) => { const v=t2(key,...args); if(el){if(v)el.title=v;else el.removeAttribute('title');} };
+  document.querySelectorAll('.view-btn[data-view]').forEach(b => _tip2(b, 'view_'+b.dataset.view));
+  _tip2(document.getElementById('today-btn'), 'today');
+  document.querySelectorAll('.theme-btn[data-theme]').forEach(b => _tip2(b, 'theme_'+b.dataset.theme));
+  _tip2(document.getElementById('toggle-mythic-week'), 'toggle_mythic');
+  _tip2(document.getElementById('toggle-other-date'), 'toggle_otherdate');
+  _tip2(document.getElementById('toggle-holidays'), 'toggle_holidays');
+  _tip2(document.getElementById('toggle-birthdays'), 'toggle_birthdays');
+  _tip2(document.getElementById('toggle-meteors'), 'toggle_meteors');
+  _tip2(document.getElementById('toggle-comets'), 'toggle_comets');
   applyTheme(state.theme, state.variant);
   buildSwatches();
   // Toggle sky-only controls
@@ -1289,7 +1419,7 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
     state.weekNames = state.weekNames === 'myth' ? 'std' : 'myth';
     _saveState();
     update();
-    showToast(state.weekNames === 'myth' ? 'Mythic week on' : 'Mythic week off');
+    showToast(state.weekNames === 'myth' ? t('mythic_on') : t('mythic_off'));
     refresh();
   });
   update();
@@ -1308,7 +1438,7 @@ function _saveState() {
   try { localStorage.setItem(STORAGE.STATE, JSON.stringify(state)); } catch(_) {}
 }
 
-function _wireToggle(id, stateKey, labelOn, labelOff) {
+function _wireToggle(id, stateKey, keyOn, keyOff) {
   const btn = document.getElementById(id);
   if (!btn) return;
   const update = () => btn.classList.toggle('active', state[stateKey]);
@@ -1318,15 +1448,15 @@ function _wireToggle(id, stateKey, labelOn, labelOff) {
     state[stateKey] = !state[stateKey];
     _saveState();
     update();
-    showToast(state[stateKey] ? labelOn : labelOff);
+    showToast(state[stateKey] ? t(keyOn) : t(keyOff));
     refresh();
   });
   update();
 }
-_wireToggle('toggle-holidays',   'showHolidays',   'Holidays on',   'Holidays off');
-_wireToggle('toggle-meteors',    'showMeteors',    'Meteors on',    'Meteors off');
-_wireToggle('toggle-comets',     'showComets',     'Comets on',     'Comets off');
-_wireToggle('toggle-birthdays',  'showBirthdays',  'Birthdays on',  'Birthdays off');
+_wireToggle('toggle-holidays',   'showHolidays',   'holidays_on',   'holidays_off');
+_wireToggle('toggle-meteors',    'showMeteors',    'meteors_on',    'meteors_off');
+_wireToggle('toggle-comets',     'showComets',     'comets_on',     'comets_off');
+_wireToggle('toggle-birthdays',  'showBirthdays',  'birthdays_on',  'birthdays_off');
 { const btn = document.getElementById('toggle-other-date');
   const root = document.getElementById('calendar-root');
   const apply = () => { root.classList.toggle('hide-other-date', !state.showOtherDate); btn.classList.toggle('active', state.showOtherDate); };
@@ -1334,7 +1464,7 @@ _wireToggle('toggle-birthdays',  'showBirthdays',  'Birthdays on',  'Birthdays o
     state.showOtherDate = !state.showOtherDate;
     _saveState();
     apply();
-    showToast(state.showOtherDate ? 'Other date on' : 'Other date off');
+    showToast(state.showOtherDate ? t('otherdate_on') : t('otherdate_off'));
   });
   apply();
 }
@@ -1342,7 +1472,7 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT') return;
   if (e.key==='ArrowLeft')  { state.holYear--; if (_skyViewDate) _skyViewDate = _skyViewDate.replace(/^\d{4}/, String(state.holYear - 10000)); refresh(); }
   if (e.key==='ArrowRight') { state.holYear++; if (_skyViewDate) _skyViewDate = _skyViewDate.replace(/^\d{4}/, String(state.holYear - 10000)); refresh(); }
-  if (e.key==='Escape')     { closeModal(); closeHelp(); closeSettings(); }
+  if (e.key==='Escape')     { closeModal(); closeHelp(); closeSettings(); closeLanguageModal(); }
 });
 
 document.body.addEventListener('click', e => {
@@ -1372,6 +1502,7 @@ document.body.addEventListener('click', e => {
 initModal();
 initHelpModal();
 initSettingsModal();
+initLanguageModal();
 document.getElementById('help-btn').addEventListener('click', showHelp);
 document.getElementById('settings-btn').addEventListener('click', showSettings);
 document.getElementById('print-btn').addEventListener('click', () => {
@@ -1382,11 +1513,11 @@ document.getElementById('print-btn').addEventListener('click', () => {
     `<div class="print-title-border">` +
       `<div class="print-title-inner">` +
         `<div class="print-title-pattern"></div>` +
-        `<p class="print-title-sub">Mythic Lunar</p>` +
-        `<p class="print-title-main">Calendar</p>` +
+        `<p class="print-title-sub">${t('print_sub')}</p>` +
+        `<p class="print-title-main">${t('print_title')}</p>` +
         `<p class="print-title-year">${fy.gregYear}</p>` +
-        `<p class="print-title-holocene">Year ${fy.holYear} of the Human Era</p>` +
-        `<p class="print-title-animal">${fy.yearAnimal} Year · ${fy.hasBluemoon ? '13 Moons' : '12 Moons'}</p>` +
+        `<p class="print-title-holocene">${t('print_holocene', fy.holYear)}</p>` +
+        `<p class="print-title-animal">${t('print_animal', tAnimal(fy.yearAnimal), fy.hasBluemoon ? '13' : '12')}</p>` +
       `</div>` +
     `</div>`;
   const ph = document.createElement('div');

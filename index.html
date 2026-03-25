@@ -34,6 +34,7 @@
       <button class="btn view-btn" data-view="greg">Greg</button>
       <button class="btn view-btn" data-view="week">Week</button>
       <button class="btn view-btn" data-view="sky">Sky</button>
+      <button class="btn view-btn" data-view="hebrew">Hebrew</button>
     </div>
     <div class="toolbar-sep"></div>
     <div class="toolbar-group">
@@ -46,7 +47,7 @@
     </div>
     <div class="toolbar-sep"></div>
     <div class="toolbar-group">
-      <span class="toolbar-label">Theme:</span>
+      <span class="toolbar-label" id="label-theme">Theme:</span>
       <button class="btn theme-btn" data-theme="fairy">Fairy</button>
       <button class="btn theme-btn" data-theme="wizard">Wizard</button>
       <button class="btn theme-btn" data-theme="celtic">Celtic</button>
@@ -55,11 +56,11 @@
     </div>
     <div class="toolbar-sep"></div>
     <div class="toolbar-group" id="variant-group">
-      <span class="toolbar-label">Color:</span>
+      <span class="toolbar-label" id="label-color">Color:</span>
     </div>
     <div class="toolbar-sep"></div>
     <div class="toolbar-group">
-      <button class="btn" id="settings-btn" title="Location settings">🗺</button>
+      <button class="btn" id="settings-btn" title="Settings">🗺</button>
     </div>
     <div class="toolbar-sep"></div>
     <div class="toolbar-group">
@@ -76,6 +77,7 @@
   <div class="loading">Loading calendar…</div>
 </main>
 
+<script src="i18n.js"></script>
 <script src="settings.js"></script>
 <script src="birthdays.js"></script>
 <script src="comets.js"></script>
@@ -85,6 +87,7 @@
 <script src="astro.js"></script>
 <script src="calendar.js"></script>
 <script src="themes.js"></script>
+<script src="hebrew.js"></script>
 <script src="render.js"></script>
 <script src="app.js"></script>
 

@@ -681,6 +681,8 @@ body {
 [data-theme="flower"] .today-info-btn::after { font-size: 0.75rem; }
 .today-info-btn { position: absolute; top: 2px; right: 2px; padding: 0; font-size: 0.75rem; }
 .view-week .today-info-btn { top: auto; bottom: 2px; }
+.view-week .info-btn { display: none; }
+.view-week .is-selected .info-btn { display: inline; }
 .greg-cell, .fairy-cell { position: relative; }
 .view-week td { position: relative; }
 
@@ -807,6 +809,51 @@ body {
 .help-table th { color: var(--color-accent); font-weight: bold; text-align: left; }
 .help-table tr:last-child td { border-bottom: none; }
 
+/* ─── Language Modal ─────────────────────────────────── */
+#language-modal {
+  position: fixed; inset: 0; z-index: 1050;
+  display: flex; align-items: center; justify-content: center;
+}
+#language-modal[hidden] { display: none; }
+#lang-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+#lang-modal-box {
+  position: relative; z-index: 1;
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  border-radius: 10px; padding: 1.2rem 1.4rem;
+  width: min(480px, 96vw); max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+#lang-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+#lang-modal-title { margin: 0; font-size: 1.1rem; color: var(--color-text-primary); }
+#lang-modal-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 1rem; color: var(--color-text-secondary); padding: 0.2rem 0.4rem;
+}
+#lang-modal-close:hover { color: var(--color-accent); }
+.lang-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;
+}
+.lang-grid-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+  padding: 0.7rem 0.5rem; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-alt); color: var(--color-text-primary);
+  transition: border-color 0.15s, background 0.15s;
+}
+.lang-grid-btn:hover { border-color: var(--color-accent); background: var(--color-bg); }
+.lang-grid-btn.is-active {
+  border-color: var(--color-accent); background: var(--color-bg);
+  outline: 2px solid var(--color-accent); outline-offset: -1px;
+}
+.lang-native { font-size: 1rem; font-weight: bold; }
+.lang-english { font-size: 0.72rem; color: var(--color-text-secondary); }
+.lang-current-btn { font-size: 0.85rem; }
+.lang2-btn { opacity: 0.7; font-style: italic; }
+.lang2-btn:hover { opacity: 1; }
+
 /* ─── Settings Modal ─────────────────────────────────── */
 #settings-modal {
   position: fixed; inset: 0; z-index: 1000;
@@ -929,6 +976,141 @@ body {
     font-weight: bold;
   }
 }
+
+/* ─── Hebrew View ───────────────────────────────────────────────────────── */
+.view-hebrew {
+  background: #f5f0e4;
+  font-family: "Palatino Linotype", Palatino, Georgia, serif;
+  padding: 0.5rem;
+  min-height: calc(100vh - 60px);
+}
+
+.hebrew-year-label {
+  text-align: center;
+  padding: 0.6rem 0.5rem 1rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.hebrew-year-num {
+  font-size: 1.1rem;
+  color: #2a1800;
+  font-weight: bold;
+}
+.hebrew-year-he {
+  font-size: 1.3rem;
+  color: #1a3060;
+  direction: rtl;
+}
+.hebrew-leap-badge {
+  font-size: 0.78rem;
+  background: #1a3060;
+  color: #d4a017;
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+}
+
+.hebrew-month-section {
+  margin-bottom: 1.8rem;
+  border: 1px solid #c8b890;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hebrew-month-header {
+  background: #1a3060;
+  color: #d4a017;
+  padding: 0.4rem 0.75rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.hebrew-month-name-he {
+  font-size: 1.4rem;
+  direction: rtl;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+.hebrew-month-name-en {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  flex: 1;
+  text-align: center;
+}
+.hebrew-month-days-count {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.hebrew-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.hebrew-table thead th {
+  background: #2a4a80;
+  color: #e8d090;
+  text-align: center;
+  padding: 3px 0;
+  border-bottom: 1px solid #1a3060;
+}
+.hebrew-weekday-he { font-size: 0.85rem; display: block; }
+.hebrew-weekday-en { font-size: 0.6rem; opacity: 0.75; display: block; }
+
+.hebrew-cell {
+  background: #fefcf4;
+  border: 1px solid #d8c8a0;
+  min-height: 4rem;
+  height: 4rem;
+  padding: 2px 3px;
+  position: relative;
+  vertical-align: top;
+  font-size: 0.8rem;
+}
+.hebrew-cell.empty-cell {
+  background: #f0ebe0;
+}
+.hebrew-cell.shabbat {
+  background: #fff8e8;
+}
+.hebrew-cell.is-today {
+  background: #fff0b0;
+  outline: 2px solid #d4a017;
+  outline-offset: -2px;
+}
+.hebrew-cell.is-selected {
+  outline: 2px solid #1a3060;
+  outline-offset: -2px;
+}
+.hebrew-day-num {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #1a3060;
+  direction: rtl;
+  text-align: right;
+  line-height: 1.2;
+}
+.hebrew-greg-date {
+  position: absolute;
+  bottom: 2px;
+  left: 3px;
+  font-size: 0.6rem;
+  color: #a09060;
+}
+.hebrew-holiday-label {
+  display: block;
+  font-size: 0.62rem;
+  color: #1a3060;
+  font-weight: bold;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+.hebrew-cell .icon-group { display: block; margin-top: 1px; }
+.hebrew-cell .today-info-btn { top: 1px; right: auto; left: 1px; }
 
 /* ─── Print ─────────────────────────────────────────────────────────────── */
 @media print {

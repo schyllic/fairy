@@ -86,14 +86,39 @@ Many cultures have tracked time by the moon. The most widely used today is the *
 
 **What they share:** Both are *lunisolar* — they follow the moon for months but add an intercalary (leap) month to stay aligned with the solar year. Both start each month on the new moon.
 
-**How the Hebrew calendar works:** It has 12 months of 29–30 days. Seven times in every 19-year cycle (the Metonic cycle), a 13th month is inserted on a fixed arithmetic schedule. The year begins in autumn around the fall equinox (Rosh Hashanah). Months carry ancient Babylonian names: Nisan, Iyar, Sivan… The year count runs from a calculated date of creation, placing 2026 CE at approximately year 5786.
+**How the Hebrew calendar works:** It has 12 months of 29–30 days (13 in a leap year). Seven times in every 19-year cycle (the Metonic cycle), a 13th month is inserted. The year begins in autumn around the fall equinox (Rosh Hashanah). All month names are ancient Babylonian, adopted during the Jewish exile in the 6th century BCE — before that, months had old Canaanite names (Aviv, Ziv, Ethanim, Bul) or were simply numbered. The year count (Anno Mundi) was calculated in the 2nd century CE by Rabbi Yose ben Halafta, summing the ages of biblical figures back to creation, placing 2026 CE at approximately year **5786**.
+
+**The months** — all names are Akkadian/Babylonian unless noted:
+
+| # | Month | Days | Name meaning | Notes |
+|---|---|---|---|---|
+| 1 | **Nisan** | 30 | "first fruits / beginning" (*Nisanu*); pre-exile *Aviv* = "spring, green grain ears" | Religious new year; Passover |
+| 2 | **Iyar** | 29 | "blossom / brightness" (*Ayaru*); pre-exile *Ziv* = "splendor" | |
+| 3 | **Sivan** | 30 | "season" (*Simanu*) | Shavuot (Weeks / Pentecost) |
+| 4 | **Tammuz** | 29 | Named for Dumuzid, Sumerian god of fertility; possibly "true/faithful son" | The only month named after a pagan deity |
+| 5 | **Av** | 30 | "father" (Hebrew/Aramaic *Ab*) | Tisha B'Av: mourning the destruction of both Temples (586 BCE and 70 CE) |
+| 6 | **Elul** | 29 | "harvest / gleaning" (*Ululu*); later given a Hebrew acronym: *"I am my beloved's and my beloved is mine"* | Month of repentance |
+| 7 | **Tishrei** | 30 | "beginning" (*Tashritu*, from "to start") — the year begins here despite being month 7; pre-exile *Ethanim* = "ever-flowing streams" | Rosh Hashanah, Yom Kippur, Sukkot |
+| 8 | **Cheshvan** | 29–30 | Possibly "eighth month" (*Arahsamna*); "Mar" (bitter) prefix added later in Aramaic; pre-exile *Bul* = "rain / produce" | The only month with no major holidays — *Bitter Cheshvan* |
+| 9 | **Kislev** | 30–29 | Uncertain; possibly "Orion's belt" or "flank / thigh" | Hanukkah begins |
+| 10 | **Tevet** | 29 | "to sink / submerge" (*Tebetu*) — winter rains soaking the earth | Hanukkah ends |
+| 11 | **Shevat** | 30 | "staff / rod" or "strike" (*Shabatu*) — possibly winter storms | Tu B'Shevat: new year of the trees |
+| 12 | **Adar** | 29 (30 in leap) | "dark / cloudy" or "threshing floor" (*Addaru*) | Purim; becomes Adar I in leap years |
+| 13 | **Adar II** | 29 | Leap year only | The "real" Adar — Purim is always celebrated here, not in Adar I |
+
+**A few more things worth knowing:**
+
+- The leap years within each 19-year cycle always fall in years 3, 6, 8, 11, 14, 17, and 19 — a fixed arithmetic schedule rather than an astronomical one.
+- The Metonic cycle is named for Greek astronomer Meton of Athens (~432 BCE), but the Hebrew calendar was already using the same cycle independently.
+- The calendar was standardized by Hillel II around 359 CE, replacing live moon observation with arithmetic. This is why the modern Hebrew calendar no longer tracks the actual sky.
+- Judaism has four distinct "new years": Nisan 1 (religious calendar / months), Tishrei 1 (civil years — the celebrated one), Elul 1 (animal tithes), and Shevat 15 (trees).
 
 **How this calendar differs:**
 
 - **Year anchor:** The Hebrew year begins in *autumn*. This calendar begins in *winter* — Snowmoon starts just after the darkest night. The year rises from darkness toward light.
 - **Leap month rule:** Hebrew intercalation follows a fixed 19-year schedule. This calendar uses a purely astronomical trigger: Bluemoon is added only when the winter solstice drifts late enough in Darkmoon that skipping it would push next year's solstice outside Darkmoon entirely.
 - **Astronomical accuracy:** The modern Hebrew calendar uses a standardized lunar month length fixed since the 4th century CE and no longer tracks actual moon observation. This calendar computes real new moons using Meeus astronomical algorithms — it reflects the actual sky.
-- **Month names:** Hebrew months retain ancient Babylonian names. These months are named for what the natural world is doing.
+- **Month names:** Hebrew months carry ancient Babylonian names borrowed during exile. These months are named for what the natural world is doing.
 - **The week:** The Hebrew week counts numbered days ending in Sabbath. This calendar names the days for the Norse gods who already secretly inhabit the English weekday names.
 
 The **Islamic calendar** is purely lunar with no intercalation, drifting through all seasons over ~33 years. The **Chinese calendar** is lunisolar and adds leap months similarly to Hebrew. Both are old and rich — this calendar is simply a new one, built for a specific family, in a specific place, watching a specific sky.
