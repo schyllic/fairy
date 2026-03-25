@@ -276,6 +276,7 @@ function initSettingsModal() {
           `<input type="number" id="bday-day" class="bday-input bday-day-input" min="1" max="31" placeholder="Day">` +
           `<button id="bday-add-btn" class="btn">Add</button>` +
           `<button id="bday-share-btn" class="btn">Backup / Share…</button>` +
+          `<button id="bday-export-btn" class="btn">Save to file…</button>` +
         `</div>` +
         `<div id="birthday-list"></div>` +
       `</div>` +
@@ -1591,7 +1592,16 @@ refresh();
     history.replaceState(null, '', location.pathname + location.search);
     try {
       const incoming = _decodeBirthdays(hash);
-      if (incoming.length > 0) _showBirthdayImportReview(incoming);
+      if (incoming.length === 0) return;
+      // If localStorage is empty, silently restore — no review needed
+      if (runtimeBirthdays.length === 0) {
+        runtimeBirthdays = incoming;
+        _saveBirthdays();
+        refresh();
+        showToast(`Restored ${incoming.length} birthday${incoming.length !== 1 ? 's' : ''}`);
+      } else {
+        _showBirthdayImportReview(incoming);
+      }
     } catch(_) {}
   }
 })();
