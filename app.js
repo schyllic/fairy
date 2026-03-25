@@ -277,6 +277,8 @@ function initSettingsModal() {
           `<button id="bday-add-btn" class="btn">Add</button>` +
           `<button id="bday-share-btn" class="btn">Backup / Share…</button>` +
           `<button id="bday-export-btn" class="btn">Save to file…</button>` +
+          `<button id="bday-import-file-btn" class="btn">Load from file…</button>` +
+          `<input type="file" id="bday-import-file-input" accept=".json" style="display:none">` +
         `</div>` +
         `<div id="birthday-list"></div>` +
       `</div>` +
@@ -317,6 +319,42 @@ function initSettingsModal() {
     } else {
       showToast(t('copy_failed'));
     }
+  });
+  modal.querySelector('#bday-export-btn').addEventListener('click', () => {
+    if (runtimeBirthdays.length === 0) { showToast(t('no_birthdays_share')); return; }
+    const json = JSON.stringify(runtimeBirthdays, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'birthdays.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  const fileInput = modal.querySelector('#bday-import-file-input');
+  modal.querySelector('#bday-import-file-btn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!Array.isArray(parsed)) throw new Error();
+        const valid = parsed.filter(b => b.name && b.month >= 1 && b.month <= 12 && b.day >= 1 && b.day <= 31);
+        if (valid.length === 0) { showToast('No valid birthdays found'); return; }
+        if (runtimeBirthdays.length === 0) {
+          runtimeBirthdays = valid;
+          _saveBirthdays();
+          _renderBirthdayList();
+          refresh();
+          showToast(`Restored ${valid.length} birthday${valid.length !== 1 ? 's' : ''}`);
+        } else {
+          _showBirthdayImportReview(valid);
+        }
+      } catch(_) { showToast('Could not read file'); }
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
   });
 }
 
