@@ -588,12 +588,12 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
 
   const cx = 170, cy = 170, R = 160;
   let svg = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0a0a1a"/>`;
-  svg += `<circle cx="${cx}" cy="${cy}" r="${(R*30/90).toFixed(1)}" fill="none" stroke="#223" stroke-width="0.4" stroke-dasharray="2,3"/>`;
-  svg += `<circle cx="${cx}" cy="${cy}" r="${(R*60/90).toFixed(1)}" fill="none" stroke="#223" stroke-width="0.4" stroke-dasharray="2,3"/>`;
+  svg += `<circle class="sky-overlay" cx="${cx}" cy="${cy}" r="${(R*30/90).toFixed(1)}" fill="none" stroke="#223" stroke-width="0.4" stroke-dasharray="2,3"/>`;
+  svg += `<circle class="sky-overlay" cx="${cx}" cy="${cy}" r="${(R*60/90).toFixed(1)}" fill="none" stroke="#223" stroke-width="0.4" stroke-dasharray="2,3"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#446" stroke-width="0.8"/>`;
   // Zenith crosshair (+ sign, not a dot)
-  svg += `<line x1="${cx-4}" y1="${cy}" x2="${cx+4}" y2="${cy}" stroke="#667" stroke-width="0.6"/>`;
-  svg += `<line x1="${cx}" y1="${cy-4}" x2="${cx}" y2="${cy+4}" stroke="#667" stroke-width="0.6"/>`;
+  svg += `<line class="sky-overlay" x1="${cx-4}" y1="${cy}" x2="${cx+4}" y2="${cy}" stroke="#667" stroke-width="0.6"/>`;
+  svg += `<line class="sky-overlay" x1="${cx}" y1="${cy-4}" x2="${cx}" y2="${cy+4}" stroke="#667" stroke-width="0.6"/>`;
 
   // Compass directions — all 8 always visible
   const dirs = [
@@ -658,14 +658,30 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
     }
   }
 
-  // Planets
+  // Planets — small dots slightly larger than brightest stars, natural hues
+  const _planetColors = { Mercury:'#a8a89e', Venus:'#fff6d8', Mars:'#e8633a', Jupiter:'#e8c87a', Saturn:'#d4b86a' };
   for (const p of planets) {
     const pp = _projectAltAz(p.az, p.alt, cx, cy, R, rotDeg);
-    svg += `<circle cx="${pp.x.toFixed(1)}" cy="${pp.y.toFixed(1)}" r="6" fill="none" stroke="#ffaa22" stroke-width="1.5" opacity="0.9"/>`;
-    svg += `<circle cx="${pp.x.toFixed(1)}" cy="${pp.y.toFixed(1)}" r="3.5" fill="#ffcc44" opacity="0.95"/>`;
+    const col = _planetColors[p.name] || '#e0e0cc';
+    if (p.name === 'Saturn') {
+      // Ring tilt: edge-on ~Mar 2025, period 29.46yr; B = sub-Earth latitude
+      const sd = _skyViewDate ? new Date(_skyViewDate + 'T00:00:00Z') : new Date();
+      const jy = sd.getUTCFullYear() + sd.getUTCMonth() / 12;
+      const B = 26.73 * Math.sin(2 * Math.PI * (jy - 2025.22) / 29.46);
+      const rRx = 4.8, rRy = Math.max(0.35, rRx * Math.abs(Math.sin(B * Math.PI / 180)));
+      const x = pp.x.toFixed(1), y = pp.y.toFixed(1);
+      const x0 = (pp.x - rRx).toFixed(1), x1 = (pp.x + rRx).toFixed(1);
+      const rRxS = rRx.toFixed(1), rRyS = rRy.toFixed(1);
+      // Back arc (behind planet), then dot, then front arc (in front of planet)
+      svg += `<path d="M ${x0} ${y} A ${rRxS} ${rRyS} 0 0 1 ${x1} ${y}" fill="none" stroke="${col}" stroke-width="0.9" opacity="0.35"/>`;
+      svg += `<circle cx="${x}" cy="${y}" r="2.2" fill="${col}" opacity="0.95"/>`;
+      svg += `<path d="M ${x1} ${y} A ${rRxS} ${rRyS} 0 0 1 ${x0} ${y}" fill="none" stroke="${col}" stroke-width="0.9" opacity="0.6"/>`;
+    } else {
+      svg += `<circle cx="${pp.x.toFixed(1)}" cy="${pp.y.toFixed(1)}" r="2.2" fill="${col}" opacity="0.95"/>`;
+    }
     const anchor = pp.x >= cx ? 'start' : 'end';
-    const dx = pp.x >= cx ? 9 : -9;
-    svg += `<text x="${(pp.x+dx).toFixed(1)}" y="${(pp.y-7).toFixed(1)}" font-size="10" fill="#ffcc44" font-family="sans-serif" text-anchor="${anchor}" opacity="0.95">${p.symbol} ${p.name}</text>`;
+    const dx = pp.x >= cx ? 5 : -5;
+    svg += `<text class="sky-label" x="${(pp.x+dx).toFixed(1)}" y="${(pp.y-4).toFixed(1)}" font-size="8" fill="${col}" font-family="sans-serif" text-anchor="${anchor}" opacity="0.75">${p.symbol} ${p.name}</text>`;
   }
 
   // Moon
@@ -697,7 +713,7 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
     // Label
     const anchor = mp.x >= cx ? 'start' : 'end';
     const dx = mp.x >= cx ? mr + 4 : -(mr + 4);
-    svg += `<text x="${(mp.x + dx).toFixed(1)}" y="${(mp.y + 3).toFixed(1)}" font-size="8" fill="#e8e0c8" font-family="sans-serif" text-anchor="${anchor}" opacity="0.8">Moon</text>`;
+    svg += `<text class="sky-label" x="${(mp.x + dx).toFixed(1)}" y="${(mp.y + 3).toFixed(1)}" font-size="8" fill="#e8e0c8" font-family="sans-serif" text-anchor="${anchor}" opacity="0.8">Moon</text>`;
   }
 
   const vb = '-20 -20 380 380';
@@ -1358,6 +1374,15 @@ _skyPlayBtn.addEventListener('click', () => {
 });
 _skyFFBtn.addEventListener('click', () => {
   if (_skyPlaySpeed === 2) _skyPlayStop(); else _skyPlayAt(2);
+});
+// Sky labels toggle
+let _skyLabelsOn = true;
+const _skyLabelsBtn = document.getElementById('sky-labels-btn');
+_skyLabelsBtn.addEventListener('click', () => {
+  _skyLabelsOn = !_skyLabelsOn;
+  _skyLabelsBtn.classList.toggle('active', _skyLabelsOn);
+  const svgEl = document.querySelector('.sky-chart-svg');
+  if (svgEl) svgEl.classList.toggle('sky-labels-off', !_skyLabelsOn);
 });
 
 // (date-input change handler is above)

@@ -750,12 +750,22 @@ body {
 @media (max-width: 600px) {
   .sky-view-info { flex-direction: column; gap: 0.1rem; }
 }
-.sky-view-planets, .sky-view-constellations {
+.sky-view-planets {
   font-size: 0.82rem; color: var(--color-text-secondary);
   padding: 0.1rem 0.5rem; text-align: center;
+  height: calc(0.82rem * 1.4 + 0.2rem); overflow: hidden;
+}
+.sky-view-constellations {
+  font-size: 0.82rem; color: var(--color-text-secondary);
+  padding: 0.1rem 0.5rem; text-align: center;
+  height: calc(6 * 0.82rem * 1.4 + 0.2rem); overflow: hidden;
 }
 .sky-view-con { cursor: pointer; }
 .sky-view-con:hover { color: var(--color-accent); }
+.sky-chart-svg.sky-labels-off .sky-overlay,
+.sky-chart-svg.sky-labels-off .sky-dir-label,
+.sky-chart-svg.sky-labels-off .sky-const-label,
+.sky-chart-svg.sky-labels-off .sky-label { display: none; }
 .sky-view-chart {
   flex: 1; width: 100%; max-width: 700px;
   display: flex; align-items: center; justify-content: center;

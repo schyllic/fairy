@@ -385,15 +385,9 @@ function renderSky(resetZoom = false) {
   if (mset)     moonParts.push(`🌙↓${mset}`);
   moonParts.push(`${moonIllum}%`);
 
-  // Planet list
-  const planetInfo = visPlans.length > 0
-    ? `<div class="sky-view-planets">${visPlans.map(p => `${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ')}</div>`
-    : '';
-
-  // Constellation list
-  const conList = constellations.length > 0
-    ? `<div class="sky-view-constellations">${constellations.map(c => `<span class="sky-view-con" data-cname="${c.name}">${c.name}</span>`).join(' · ')}</div>`
-    : '';
+  // Planet list + constellation list — always rendered at fixed height to prevent layout jump
+  const planetInfo = `<div class="sky-view-planets">${visPlans.length > 0 ? visPlans.map(p => `${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ') : ''}</div>`;
+  const conList = `<div class="sky-view-constellations">${constellations.length > 0 ? constellations.map(c => `<span class="sky-view-con" data-cname="${c.name}">${c.name}</span>`).join(' · ') : ''}</div>`;
 
   // Moon position + phase
   const moonPos = getMoonAltAz(skyDate);
@@ -427,7 +421,7 @@ function renderSky(resetZoom = false) {
   // Attach zoom — only reset state when switching into sky view
   if (resetZoom) _resetSkyZoom();
   const svgEl = root.querySelector('.sky-chart-svg');
-  if (svgEl) { _attachSkyZoom(svgEl); _applySkyZoom(svgEl); }
+  if (svgEl) { _attachSkyZoom(svgEl); _applySkyZoom(svgEl); if (!_skyLabelsOn) svgEl.classList.add('sky-labels-off'); }
 
   // Back button → return to previous calendar view
   const backEl = document.getElementById('sky-back-btn');
