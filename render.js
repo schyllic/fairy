@@ -353,8 +353,9 @@ function renderHebrew(fy) {
 // ─── Sky View ────────────────────────────────────────────────────────
 
 let _skyViewDate = null;  // current date for sky view (YYYY-MM-DD string)
+let _skyRootClickController = null;
 
-function renderSky() {
+function renderSky(resetZoom = false) {
   const root = document.getElementById('calendar-root');
   root.className = 'view-sky';
   if (!_skyViewDate) _skyViewDate = localTodayStr();
@@ -423,10 +424,10 @@ function renderSky() {
       `<div class="sky-view-hint">${t('scroll_hint')}</div>` +
     `</div>`;
 
-  // Attach zoom
-  _resetSkyZoom();
+  // Attach zoom — only reset state when switching into sky view
+  if (resetZoom) _resetSkyZoom();
   const svgEl = root.querySelector('.sky-chart-svg');
-  if (svgEl) _attachSkyZoom(svgEl);
+  if (svgEl) { _attachSkyZoom(svgEl); _applySkyZoom(svgEl); }
 
   // Back button → return to previous calendar view
   const backEl = document.getElementById('sky-back-btn');
@@ -451,7 +452,9 @@ function renderSky() {
     });
   });
 
-  // Delegated clicks inside the chart SVG
+  // Delegated clicks inside the chart SVG (abort previous to avoid accumulation)
+  if (_skyRootClickController) _skyRootClickController.abort();
+  _skyRootClickController = new AbortController();
   root.addEventListener('click', e => {
     const dir = e.target.closest('.sky-dir-label');
     if (dir && _skyChartState) {
@@ -471,14 +474,14 @@ function renderSky() {
     if (lbl && typeof showConstellationDetailStandalone === 'function') {
       showConstellationDetailStandalone(lbl.dataset.cname);
     }
-  });
+  }, { signal: _skyRootClickController.signal });
 }
 
 function render(holYear, viewMode) {
   const root = document.getElementById('calendar-root');
 
   // Sky view doesn't need the fairy year — render immediately
-  if (viewMode === 'sky') { renderSky(); return; }
+  if (viewMode === 'sky') { renderSky(true); return; }
 
   root.innerHTML = '<div class="loading">Calculating calendar…</div>';
   setTimeout(() => {

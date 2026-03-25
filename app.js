@@ -579,6 +579,7 @@ function _projectAltAz(az, alt, cx, cy, R, rotDeg) {
 
 // Store last chart data for re-rendering on rotation
 let _skyChartState = null;
+let _skyZoomAbortController = null;
 
 function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) {
   // catalogData: { tier1, tier2, constellations }
@@ -737,6 +738,11 @@ function _clampPan() {
 
 function _attachSkyZoom(svgEl) {
   if (!svgEl) return;
+  // Abort previous listeners to prevent accumulation across re-renders
+  if (_skyZoomAbortController) _skyZoomAbortController.abort();
+  _skyZoomAbortController = new AbortController();
+  const { signal } = _skyZoomAbortController;
+
   const wrap = svgEl.parentElement;
   _skyZoomBaseW = wrap.getBoundingClientRect().width;
 
@@ -763,7 +769,7 @@ function _attachSkyZoom(svgEl) {
 
     _clampPan();
     _applySkyZoom(svgEl);
-  }, { passive: false });
+  }, { passive: false, signal });
 
   // Mouse drag for panning (1:1 screen pixels)
   let dragging = false, lastX = 0, lastY = 0;
@@ -773,7 +779,7 @@ function _attachSkyZoom(svgEl) {
     lastX = e.clientX; lastY = e.clientY;
     svgEl.style.cursor = 'grabbing';
     e.preventDefault();
-  });
+  }, { signal });
   window.addEventListener('mousemove', e => {
     if (!dragging) return;
     _skyZoom.tx += e.clientX - lastX;
@@ -781,10 +787,10 @@ function _attachSkyZoom(svgEl) {
     lastX = e.clientX; lastY = e.clientY;
     _clampPan();
     _applySkyZoom(svgEl);
-  });
+  }, { signal });
   window.addEventListener('mouseup', () => {
     if (dragging) { dragging = false; svgEl.style.cursor = ''; }
-  });
+  }, { signal });
 
   // Touch: pinch zoom + drag pan
   let touches0 = null, touchDist0 = 0, touchZoom0 = 1, touchTx0 = 0, touchTy0 = 0;
@@ -803,7 +809,7 @@ function _attachSkyZoom(svgEl) {
       lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
       dragging = true;
     }
-  }, { passive: false });
+  }, { passive: false, signal });
   svgEl.addEventListener('touchmove', e => {
     if (e.touches.length === 2 && touches0) {
       e.preventDefault();
@@ -828,15 +834,15 @@ function _attachSkyZoom(svgEl) {
       _clampPan();
       _applySkyZoom(svgEl);
     }
-  }, { passive: false });
-  svgEl.addEventListener('touchend', () => { touches0 = null; dragging = false; });
+  }, { passive: false, signal });
+  svgEl.addEventListener('touchend', () => { touches0 = null; dragging = false; }, { signal });
 
   // Double-click to reset
   svgEl.addEventListener('dblclick', e => {
     e.preventDefault();
     _resetSkyZoom();
     _applySkyZoom(svgEl);
-  });
+  }, { signal });
 }
 
 let _savedModal = null;
