@@ -763,8 +763,15 @@ body.sky-playing .sky-view-constellations { display: none; }
 .sky-chart-svg.sky-labels-off .sky-dir-label,
 .sky-chart-svg.sky-labels-off .sky-const-label,
 .sky-chart-svg.sky-labels-off .sky-label { display: none; }
+.sky-view.sky-labels-hidden .sky-view-info,
+.sky-view.sky-labels-hidden .sky-view-planets,
+.sky-view.sky-labels-hidden .sky-view-constellations { display: none; }
+.sky-view-controls {
+  padding: 0.3rem 0 0; text-align: center;
+}
+.sky-labels-btn-inline { font-size: 0.75rem; padding: 0.15rem 0.5rem; }
 .sky-view-chart {
-  flex: 1; width: 100%; max-width: 700px;
+  width: 100%; max-width: 100vh; max-height: 100vh;
   display: flex; align-items: center; justify-content: center;
 }
 .sky-view-chart .sky-chart-wrap { margin: 0; width: 100%; }

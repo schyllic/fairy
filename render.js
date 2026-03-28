@@ -254,7 +254,7 @@ function renderWeek(fy) {
 function renderHebrew(fy) {
   const root = document.getElementById('calendar-root');
   root.innerHTML = '';
-  root.className = 'view-hebrew';
+  root.className = 'view-hebrew' + (state.showOtherDate ? '' : ' hide-other-date');
 
   const gregYear = fy.holYear - 10000;
   const hy = hebrewYearForGregYear(gregYear);
@@ -264,90 +264,71 @@ function renderHebrew(fy) {
   const prevFY = buildFairyYear(fy.holYear - 1);
   const dayMap = new Map([...prevFY.dayMap, ...fy.dayMap]);
 
-  const holidayMap = buildHebrewHolidayMap(hy);
   const months = buildHebrewYear(hy);
 
   // Year title
   const yt = el('div', 'hebrew-year-label');
   yt.innerHTML = `<span class="hebrew-year-num">Hebrew Year ${hy}</span>`
-    + `<span class="hebrew-year-he">${toHebrewYear(hy)}</span>`
     + (isLeap ? ` <span class="hebrew-leap-badge">${t('leap_year')}</span>` : '');
-  root.appendChild(yt);
+
+  // Sun–Sat weekday abbreviations (Hebrew week starts Sunday)
+  const HEB_WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Shab'];
+  const grid = el('div', 'greg-grid');
 
   for (const month of months) {
     const mdata = HEBREW_MONTH_DATA[month.num];
-    const sec = el('div', 'hebrew-month-section');
+    const mon = el('div', 'greg-month');
 
     // Month header
-    const hdr = el('div', 'hebrew-month-header');
-    hdr.innerHTML =
-      `<span class="hebrew-month-name-he">${mdata.he}</span>`
-      + `<span class="hebrew-month-name-en">${mdata.en}</span>`
-      + `<span class="hebrew-month-days-count">${t('days_count', month.days)}</span>`;
-    sec.appendChild(hdr);
+    const mhdr = el('div', 'greg-month-header');
+    mhdr.innerHTML = `<span>${mdata.en}</span>`;
+    mon.appendChild(mhdr);
 
-    // Weekday header row (Sun–Shabbat)
-    const tbl = el('table', 'hebrew-table');
-    const thead = document.createElement('thead');
-    const thr = document.createElement('tr');
-    for (const wd of HEBREW_WEEKDAYS) {
-      const th = document.createElement('th');
-      th.innerHTML = `<span class="hebrew-weekday-he">${wd.he}</span><span class="hebrew-weekday-en">${wd.en}</span>`;
-      thr.appendChild(th);
-    }
-    thead.appendChild(thr);
-    tbl.appendChild(thead);
+    // Weekday header row
+    const wr = el('div', 'greg-weekrow');
+    HEB_WDAYS.forEach((wd, wi) => {
+      const d = el('div', 'greg-wday', wd);
+      if (wi === 6) d.classList.add('weekend-col');
+      wr.appendChild(d);
+    });
+    mon.appendChild(wr);
 
-    const tbody = document.createElement('tbody');
+    const dg = el('div', 'greg-days');
     // Hebrew week starts Sunday; getUTCDay() 0=Sun … 6=Sat
     const firstDow = month.gregStart.getUTCDay();
-
-    let row = document.createElement('tr');
-    let col = 0;
-    for (let i = 0; i < firstDow; i++) {
-      row.appendChild(el('td', 'hebrew-cell empty-cell'));
-      col++;
-    }
+    for (let i = 0; i < firstDow; i++) dg.appendChild(el('div', 'greg-cell empty-cell'));
 
     for (let dayNum = 1; dayNum <= month.days; dayNum++) {
-      if (col === 7) { tbody.appendChild(row); row = document.createElement('tr'); col = 0; }
       const dayDate = new Date(month.gregStart.getTime() + (dayNum - 1) * 86400000);
       const ds = utcDateStr(dayDate);
       const fd = dayMap.get(ds);
       const dow = dayDate.getUTCDay();  // 0=Sun, 6=Sat
 
-      const td = el('td', 'hebrew-cell');
-      if (dow === 6) td.classList.add('shabbat');
-      if (fd?.isToday) td.classList.add('is-today');
-      if (ds === selectedDate) td.classList.add('is-selected');
-      td.dataset.date = ds;
+      const cell = el('div', 'greg-cell' + (fd?.isToday ? ' is-today' : '') + (dow === 6 ? ' hebrew-shabbat' : ''));
+      if (ds === selectedDate) cell.classList.add('is-selected');
+      if (fd?.solarEvent) cell.classList.add('solar-cell');
+      cell.dataset.date = ds;
 
-      td.appendChild(el('span', 'hebrew-day-num', toGematria(dayNum)));
-      if (fd?.isToday) td.appendChild(el('span', 'today-label', t('today')));
-      td.appendChild(el('span', 'hebrew-greg-date', fmtGreg(dayDate)));
+      cell.appendChild(el('span', 'greg-daynum', String(dayNum)));
+      if (fd?.isToday) cell.appendChild(el('span', 'today-label', t('today')));
+      cell.appendChild(el('span', 'fairy-label', fmtGreg(dayDate)));
       if (fd) {
         const ib = el('button', 'info-btn today-info-btn');
         ib.dataset.from = ds;
         ib.dataset.label = _dayLabel(ds, currentFY);
         ib.textContent = 'ⓘ';
         if (!fd.isToday) ib.classList.add('day-info-btn');
-        td.appendChild(ib);
+        cell.appendChild(ib);
         const ic = moonIcons(fd);
-        if (ic) { const ig = el('span', 'icon-group'); ig.innerHTML = ic; td.appendChild(ig); }
+        if (ic) { const ig = el('span', 'icon-group'); ig.innerHTML = ic; cell.appendChild(ig); }
       }
-      const hols = holidayMap.get(ds);
-      if (hols) {
-        for (const h of hols) td.appendChild(el('span', 'hebrew-holiday-label', h));
-      }
-      row.appendChild(td);
-      col++;
+      dg.appendChild(cell);
     }
-    while (col > 0 && col < 7) { row.appendChild(el('td', 'hebrew-cell empty-cell')); col++; }
-    if (col > 0) tbody.appendChild(row);
-    tbl.appendChild(tbody);
-    sec.appendChild(tbl);
-    root.appendChild(sec);
+    mon.appendChild(dg);
+    grid.appendChild(mon);
   }
+  root.appendChild(yt);
+  root.appendChild(grid);
 }
 
 // ─── Sky View ────────────────────────────────────────────────────────
@@ -410,7 +391,7 @@ function renderSky(resetZoom = false) {
   }
 
   root.innerHTML =
-    `<div class="sky-view">` +
+    `<div class="sky-view${_skyLabelsOn ? '' : ' sky-labels-hidden'}">` +
       `<div class="sky-view-info"><span class="sky-info-sun">${sunParts.join(' · ')}</span><span class="sky-info-moon">${moonParts.join(' · ')}</span></div>` +
       planetInfo +
       conList +

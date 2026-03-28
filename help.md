@@ -2,7 +2,7 @@
 
 ## The Year Number
 
-This calendar uses the **Human Era** (also called the Holocene Era). Instead of counting from an arbitrary religious date, it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = **Year 12026**.
+This calendar uses the **Human Era** (also called the Holocene Era). The standard BC/CE year count is anchored to 1 CE — a reference point calculated in the 6th century from estimated lifespans. The Human Era shifts the origin to something older and more universal: it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = **Year 12026**.
 
 This numbering was conceived independently for this calendar — it was only later discovered that scientist Cesare Emiliani had proposed the same idea decades earlier.
 

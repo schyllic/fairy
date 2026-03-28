@@ -28,7 +28,7 @@ try {
 
 let state = {
   holYear: new Date().getFullYear() + 10000,
-  viewMode: 'fairy',
+  viewMode: 'sky',
   theme: 'fairy',
   variant: 'a',
   weekNames: 'myth',
@@ -123,7 +123,7 @@ function closeModal() {
 
 const HELP_HTML = `
 <h3>The Year Number</h3>
-<p>This calendar uses the <strong>Human Era</strong> (Holocene Era). Instead of counting from an arbitrary religious date, it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = <strong>Year 12026</strong>.</p>
+<p>This calendar uses the <strong>Human Era</strong> (Holocene Era). The standard BC/CE year count is anchored to 1 CE — a reference point calculated in the 6th century from estimated lifespans. The Human Era shifts the origin to something older and more universal: it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = <strong>Year 12026</strong>.</p>
 <p>This numbering was conceived independently for this calendar — it was only later discovered that scientist Cesare Emiliani had proposed the same idea decades earlier.</p>
 <hr>
 <h3>The Moons (Lunar Months)</h3>
@@ -626,7 +626,8 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
   _skyChartState = { catalogData, planets, rotDeg, moonData };
 
   const cx = 170, cy = 170, R = 160;
-  let svg = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0a0a1a"/>`;
+  let svg = `<defs><clipPath id="skyBound"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath></defs>`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0a0a1a"/>`;
   svg += `<circle class="sky-overlay" cx="${cx}" cy="${cy}" r="${(R*30/90).toFixed(1)}" fill="none" stroke="#223" stroke-width="0.4" stroke-dasharray="2,3"/>`;
   svg += `<circle class="sky-overlay" cx="${cx}" cy="${cy}" r="${(R*60/90).toFixed(1)}" fill="none" stroke="#223" stroke-width="0.4" stroke-dasharray="2,3"/>`;
   svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#446" stroke-width="0.8"/>`;
@@ -687,14 +688,16 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
     }
   }
 
-  // Constellation labels
+  // Constellation labels — clipped to sky circle
   if (data.constellations) {
+    svg += `<g clip-path="url(#skyBound)">`;
     for (const c of data.constellations) {
       const cpt = _projectAltAz(c.centroidAz, c.centroidAlt, cx, cy, R, rotDeg);
       const anchor = cpt.x >= cx ? 'start' : 'end';
       const dx = cpt.x >= cx ? 16 : -16;
       svg += `<text class="sky-const-label" data-cname="${c.name}" x="${(cpt.x+dx).toFixed(1)}" y="${(cpt.y+3).toFixed(1)}" font-size="8" fill="#ccd8ee" font-family="sans-serif" text-anchor="${anchor}" cursor="pointer" opacity="0.85">${c.name}</text>`;
     }
+    svg += `</g>`;
   }
 
   // Planets — small dots slightly larger than brightest stars, natural hues
@@ -732,7 +735,7 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
     const mk = (1 - 2 * illum) * mr;
     const clipId = 'moonclip';
     const edgePath = `M ${mp.x.toFixed(1)} ${(mp.y - mr).toFixed(1)} A ${mr} ${mr} 0 0 ${wax ? 1 : 0} ${mp.x.toFixed(1)} ${(mp.y + mr).toFixed(1)}`;
-    const termPath = `A ${Math.abs(mk).toFixed(1)} ${mr} 0 0 ${mk > 0 ? 1 : 0} ${mp.x.toFixed(1)} ${(mp.y - mr).toFixed(1)}`;
+    const termPath = `A ${Math.abs(mk).toFixed(1)} ${mr} 0 0 ${((mk > 0) !== wax) ? 1 : 0} ${mp.x.toFixed(1)} ${(mp.y - mr).toFixed(1)}`;
     moonDefs = `<defs><clipPath id="${clipId}"><path d="${edgePath} ${termPath}"/></clipPath></defs>`;
     // Dark disc + lit surface + maria texture
     svg += `<circle cx="${mp.x.toFixed(1)}" cy="${mp.y.toFixed(1)}" r="${mr+1}" fill="#0a0a1a" opacity="0.5"/>`;
@@ -752,7 +755,7 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
     // Label
     const anchor = mp.x >= cx ? 'start' : 'end';
     const dx = mp.x >= cx ? mr + 4 : -(mr + 4);
-    svg += `<text class="sky-label" x="${(mp.x + dx).toFixed(1)}" y="${(mp.y + 3).toFixed(1)}" font-size="8" fill="#e8e0c8" font-family="sans-serif" text-anchor="${anchor}" opacity="0.8">Moon</text>`;
+    svg += `<text class="sky-label" x="${(mp.x + dx).toFixed(1)}" y="${(mp.y + 3).toFixed(1)}" font-size="8" fill="#e8e0c8" font-family="sans-serif" text-anchor="${anchor}" opacity="0.8">${t('moon_label')}</text>`;
   }
 
   const vb = '-20 -20 380 380';
@@ -1299,6 +1302,7 @@ function refresh() {
   document.getElementById('toggle-birthdays').textContent   = t('toggle_birthdays');
   document.getElementById('toggle-meteors').textContent     = t('toggle_meteors');
   document.getElementById('toggle-comets').textContent      = t('toggle_comets');
+  document.getElementById('sky-labels-btn').textContent     = t('sky_labels');
   document.getElementById('label-theme').textContent = t('label_theme');
   document.getElementById('label-color').textContent = t('label_color');
   // Secondary-language tooltips on toolbar controls
@@ -1417,14 +1421,18 @@ _skyFFBtn.addEventListener('click', () => {
   if (_skyPlaySpeed === 2) _skyPlayStop(); else _skyPlayAt(2);
 });
 // Sky labels toggle
-let _skyLabelsOn = true;
-const _skyLabelsBtn = document.getElementById('sky-labels-btn');
-_skyLabelsBtn.addEventListener('click', () => {
-  _skyLabelsOn = !_skyLabelsOn;
-  _skyLabelsBtn.classList.toggle('active', _skyLabelsOn);
-  const svgEl = document.querySelector('.sky-chart-svg');
-  if (svgEl) svgEl.classList.toggle('sky-labels-off', !_skyLabelsOn);
-});
+let _skyLabelsOn = false;
+{ const btn = document.getElementById('sky-labels-btn');
+  const apply = () => {
+    btn.classList.toggle('active', _skyLabelsOn);
+    const skyView = document.querySelector('.sky-view');
+    if (skyView) skyView.classList.toggle('sky-labels-hidden', !_skyLabelsOn);
+    const svgEl = document.querySelector('.sky-chart-svg');
+    if (svgEl) svgEl.classList.toggle('sky-labels-off', !_skyLabelsOn);
+  };
+  btn.addEventListener('click', () => { _skyLabelsOn = !_skyLabelsOn; apply(); });
+  apply();
+}
 
 // (date-input change handler is above)
 document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', () => {

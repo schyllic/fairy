@@ -381,7 +381,7 @@ function getMoonPhaseSVG(illum, waxing, size) {
   const dark = '#1a1a2e';
   const light = '#e8e0c8';
   const edge = `M ${cx} ${cy - r} A ${r} ${r} 0 0 ${waxing ? 1 : 0} ${cx} ${cy + r}`;
-  const terminator = `A ${Math.abs(k)} ${r} 0 0 ${k > 0 ? 1 : 0} ${cx} ${cy - r}`;
+  const terminator = `A ${Math.abs(k)} ${r} 0 0 ${((k > 0) !== waxing) ? 1 : 0} ${cx} ${cy - r}`;
   const id = `mt${Date.now()}`;
   // Mare (dark patches) approximating real lunar features
   const maria =

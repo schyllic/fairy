@@ -863,8 +863,8 @@ function moonPhaseInfo(date) {
   const elong = _angSep(sun.ra, sun.dec, moon.ra, moon.dec);
   const illum = (1 - Math.cos(rad(elong))) / 2;
   let diff = moon.ra - sun.ra;
-  if (diff < -180) diff += 360;
-  if (diff > 180) diff -= 360;
+  if (diff < -Math.PI) diff += 2 * Math.PI;
+  if (diff > Math.PI)  diff -= 2 * Math.PI;
   return { illum, waxing: diff > 0 };
 }
 

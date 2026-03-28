@@ -43,6 +43,7 @@ const I18N = {
     meteor_peaks: 'Meteor peaks:',
     view_sky_btn: 'View Sky',
     scroll_hint: 'Scroll to zoom \u00b7 Drag to pan \u00b7 Double-click to reset',
+    moon_label: 'Moon', sky_labels: 'Labels',
     today_marker: '\u2014 Today \u2014',
     no_events: 'No events in next 60 days.',
     no_birthdays_share: 'No birthdays to share',
@@ -591,7 +592,7 @@ function tMoonShort(englishName) {
   const words = full.trim().split(/\s+/);
   if (words.length > 1) return words[words.length - 1];
   // Single word — strip common moon-word suffixes
-  return full.replace(/mond$/i, '').replace(/sírë$/i, '').replace(/vēzos$/i, '') || full.slice(0, 7);
+  return full.replace(/moon$/i, '').replace(/mond$/i, '').replace(/sírë$/i, '').replace(/vēzos$/i, '') || full.slice(0, 7);
 }
 
 /** Translate a Darkmoon animal name from its canonical English form. */
