@@ -681,8 +681,9 @@ function getVisibleConstellationPositions(gregDate) {
 }
 
 // ─── Get visible catalog stars (real HYG catalog) ────────────────────
-function getVisibleCatalogStars(gregDate) {
+function getVisibleCatalogStars(gregDate, opts) {
   if (typeof STAR_CATALOG === 'undefined') return { tier1: [], tier2: [], constellations: [] };
+  const skipTier2 = opts && opts.skipTier2;
   const { T, LST, latR } = _eveningSky(gregDate);
   const sunRD = _sunRADecT(T);
 
@@ -692,6 +693,7 @@ function getVisibleCatalogStars(gregDate) {
 
   for (const star of STAR_CATALOG) {
     const [raH, decDeg, mag, conAbbrev, name] = star;
+    if (skipTier2 && mag > 4.5) continue;
     const precessed = _precessJ2000(raH, decDeg, T);
     const pos = _altAz(precessed.ra, precessed.dec, LST, latR);
     if (!pos || pos.alt <= 0) continue;

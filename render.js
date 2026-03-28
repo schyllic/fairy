@@ -343,7 +343,8 @@ function renderSky(resetZoom = false) {
   const skyDate = new Date(_skyViewDate + 'T00:00:00Z');
 
   // Compute sky data
-  const catalogData = (typeof getVisibleCatalogStars === 'function') ? getVisibleCatalogStars(skyDate) : null;
+  const isPlaying = document.body.classList.contains('sky-playing');
+  const catalogData = (typeof getVisibleCatalogStars === 'function') ? getVisibleCatalogStars(skyDate, { skipTier2: isPlaying }) : null;
   const constellations = catalogData ? catalogData.constellations : [];
   const visPlans = getVisiblePlanets(skyDate);
   const planetPositions = getPlanetAltAz(skyDate);
@@ -399,10 +400,14 @@ function renderSky(resetZoom = false) {
       `<div class="sky-view-hint">${t('scroll_hint')}</div>` +
     `</div>`;
 
-  // Attach zoom — only reset state when switching into sky view
+  // Attach zoom — skip during play (no interaction possible, saves AbortController churn)
   if (resetZoom) _resetSkyZoom();
   const svgEl = root.querySelector('.sky-chart-svg');
-  if (svgEl) { _attachSkyZoom(svgEl); _applySkyZoom(svgEl); if (!_skyLabelsOn) svgEl.classList.add('sky-labels-off'); }
+  if (svgEl) {
+    if (!isPlaying) _attachSkyZoom(svgEl);
+    _applySkyZoom(svgEl);
+    if (!_skyLabelsOn) svgEl.classList.add('sky-labels-off');
+  }
 
   // Back button → return to previous calendar view
   const backEl = document.getElementById('sky-back-btn');

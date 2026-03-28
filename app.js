@@ -1393,13 +1393,21 @@ function _skyAdvance() {
   const next = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() + 86400000);
   _skySetDate(utcDateStr(next));
 }
-function _skyPlayStop() {
+function _skyPlayStop(rerender = false) {
   if (_skyPlayTimer) { clearInterval(_skyPlayTimer); _skyPlayTimer = null; }
   _skyPlaySpeed = 0;
   _skyPlayBtn.textContent = '\u25B6';
   _skyFFBtn.textContent = '\u25B6\u25B6';
   _skyFFBtn.classList.add('sky-ff-hidden');
   document.body.classList.remove('sky-playing');
+  if (rerender && state.viewMode === 'sky') {
+    // Re-render with full tier2 stars; _attachSkyZoom runs inside renderSky
+    renderSky();
+  } else {
+    // Just reattach zoom to the current (unhandled) SVG element
+    const svgEl = document.querySelector('.sky-chart-svg');
+    if (svgEl) _attachSkyZoom(svgEl);
+  }
 }
 function _skyPlayAt(speed) {
   _skyPlayStop();
@@ -1415,10 +1423,10 @@ function _skyPlayAt(speed) {
   }
 }
 _skyPlayBtn.addEventListener('click', () => {
-  if (_skyPlaySpeed === 1) _skyPlayStop(); else _skyPlayAt(1);
+  if (_skyPlaySpeed === 1) _skyPlayStop(true); else _skyPlayAt(1);
 });
 _skyFFBtn.addEventListener('click', () => {
-  if (_skyPlaySpeed === 2) _skyPlayStop(); else _skyPlayAt(2);
+  if (_skyPlaySpeed === 2) _skyPlayStop(true); else _skyPlayAt(2);
 });
 // Sky labels toggle
 let _skyLabelsOn = false;
