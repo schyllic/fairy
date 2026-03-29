@@ -61,8 +61,9 @@ body {
 
 #toolbar-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem 0.75rem;
 }
 
 #toolbar-collapsible {
@@ -111,7 +112,13 @@ body {
 .view-sky-active .sky-only { display: inline-flex; }
 .cal-only { display: inline-flex; }
 .view-sky-active .cal-only { display: none; }
-.sky-ff-hidden { display: none !important; }
+/* Sky inline controls: visibility managed by JS hidden attribute */
+#sky-inline-controls { display: flex; gap: 0.25rem; align-items: center; }
+#sky-inline-controls[hidden] { display: none; }
+@media (max-width: 600px) {
+  /* On mobile, sky toggles wrap to their own row */
+  #sky-inline-controls { order: 99; flex-basis: 100%; justify-content: center; padding: 0.15rem 0; }
+}
 
 /* Buttons base */
 .btn {
@@ -143,10 +150,6 @@ body {
 .theme-btn.active[data-theme="animal"]::before { content: "🐾 "; }
 .theme-btn.active[data-theme="flower"]::before { content: "🌸 "; }
 
-/* Other-date hide toggle */
-.hide-other-date .fairy-label,
-.hide-other-date .fairy-greg-date,
-.hide-other-date .week-greg-date { display: none; }
 
 /* Toggle buttons (Holidays / Meteors / Comets) */
 .toggle-btn { font-size: 0.78rem; padding: 0.2rem 0.5rem; opacity: 0.6; }
@@ -165,6 +168,8 @@ body {
 #toast.toast-show { opacity: 1; }
 #toast.toast-hide { opacity: 0; }
 
+.settings-version-row { font-size: 0.8rem; color: var(--color-text-secondary); padding: 0.25rem 0; }
+
 /* Color variant swatches */
 .variant-btn {
   width: 2rem;
@@ -175,6 +180,7 @@ body {
   cursor: pointer;
   transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
   padding: 0;
+  flex-shrink: 0;
 }
 .variant-btn:hover { border-color: rgba(0,0,0,0.5); transform: scale(1.15); }
 .variant-btn.active {
@@ -182,6 +188,9 @@ body {
   box-shadow: 0 0 0 2px var(--color-accent), 0 1px 3px rgba(0,0,0,0.3);
   transform: scale(1.2);
 }
+/* Utility buttons in top bar */
+#toolbar-utils { display: flex; gap: 0.25rem; align-items: center; margin-left: auto; }
+@media (max-width: 600px) { #toolbar-utils { display: none; } }
 
 /* Theme label */
 .toolbar-label {
@@ -291,9 +300,8 @@ body {
 }
 [data-date] { cursor: pointer; }
 .empty-cell {
-  background-color: transparent !important;
-  background-image: var(--pattern-bg) !important;
-  background-size: var(--pattern-bg-size, 60px 60px) !important;
+  background-color: var(--color-bg-alt) !important;
+  background-image: none !important;
 }
 .fairy-moon-icon {
   display: block;
@@ -319,11 +327,10 @@ body {
 
 .greg-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
 
-@media (max-width: 900px) { .greg-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .greg-grid { grid-template-columns: 1fr; } }
 
 .greg-month {
@@ -375,14 +382,14 @@ body {
 }
 
 .greg-cell {
-  min-height: 4.2rem;
+  min-height: 3rem;
   padding: 2px 3px;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
   font-size: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
   background: var(--color-surface);
   transition: background 0.1s;
   border-radius: 0;
@@ -393,15 +400,15 @@ body {
 .new-moon-cell { box-shadow: inset 0 0 0 2px var(--color-text-primary); }
 
 .greg-daynum {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: bold;
   color: var(--color-text-primary);
   line-height: 1;
 }
 .fairy-label {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--color-text-secondary);
-  line-height: 1.2;
+  line-height: 1.0;
   overflow: hidden;
   white-space: nowrap;
 }
@@ -414,12 +421,11 @@ body {
 .view-fairy {
   padding: 1rem;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   align-items: start;
 }
 .view-fairy .fairy-year-title { grid-column: 1 / -1; }
-@media (max-width: 900px) { .view-fairy { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 600px) { .view-fairy { grid-template-columns: 1fr; } }
 
 .fairy-moon {
@@ -499,8 +505,8 @@ body {
 .fairy-table th:last-child { border-right: none; }
 
 .fairy-cell {
-  min-height: 4rem;
-  height: 4rem;
+  min-height: 3rem;
+  height: 3rem;
   padding: 3px 4px;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
@@ -514,15 +520,16 @@ body {
 .fairy-cell:hover { background: var(--color-bg-alt) !important; }
 
 .fairy-daynum {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: bold;
   display: block;
   line-height: 1;
 }
 .fairy-greg-date {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--color-text-secondary);
   display: block;
+  line-height: 1;
 }
 
 /* ─── 6. Week Mode ────────────────────────────────────── */
@@ -625,10 +632,10 @@ body {
 }
 .holiday-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   color: #3a9a5c;
   font-weight: bold;
-  line-height: 1.4;
+  line-height: 1.0;
 }
 
 .solar-cell {
@@ -640,10 +647,10 @@ body {
 /* ─── 9. Birthday label ──────────────────────────────── */
 .birthday-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   color: var(--color-accent);
   font-weight: bold;
-  line-height: 1.4;
+  line-height: 1.0;
 }
 
 /* ─── 10. Perigee / Apogee / Eclipse icons ───────────── */
@@ -694,22 +701,29 @@ body {
   overflow-y: auto; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
 #modal-header {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 0.5rem; margin-bottom: 0.5rem;
+  position: relative; text-align: center; margin-bottom: 0.4rem;
 }
-#modal-header-left { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
-#modal-header-btns { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
 #modal-close {
+  position: absolute; top: 0; right: 0;
   background: none; border: none; font-size: 1.5rem; cursor: pointer;
   color: var(--color-text-secondary); line-height: 1;
-  padding: 0.25rem 0.4rem; margin: -0.25rem -0.4rem 0 0; flex-shrink: 0;
-  min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+  padding: 0.25rem 0.4rem; min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
 }
 #modal-close:hover { color: var(--color-text-primary); }
 #modal-title {
   font-family: var(--font-family-header); color: var(--color-accent);
-  font-size: 1rem; margin: 0;
+  font-size: 1rem; margin: 0 0 0.3rem;
 }
+#modal-header-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.35rem; flex-wrap: wrap;
+}
+.settings-picker-label {
+  font-size: 0.75rem; color: var(--color-text-secondary);
+  margin-left: 0.5rem;
+}
+.settings-picker-label:first-child { margin-left: 0; }
 .modal-event {
   display: flex; gap: 0.5rem; align-items: baseline;
   padding: 0.18rem 0; border-bottom: 1px solid var(--color-border);
@@ -823,30 +837,30 @@ body.sky-playing .sky-view-constellations { display: none; }
 .help-table th { color: var(--color-accent); font-weight: bold; text-align: left; }
 .help-table tr:last-child td { border-bottom: none; }
 
-/* ─── Language Modal ─────────────────────────────────── */
-#language-modal {
+/* ─── Language Modal + Calendar Picker Modal ──────────── */
+#language-modal, #calendar-modal {
   position: fixed; inset: 0; z-index: 1050;
   display: flex; align-items: center; justify-content: center;
 }
-#language-modal[hidden] { display: none; }
-#lang-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
-#lang-modal-box {
+#language-modal[hidden], #calendar-modal[hidden] { display: none; }
+#lang-modal-backdrop, #cal-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+#lang-modal-box, #cal-modal-box {
   position: relative; z-index: 1;
   background: var(--color-bg); border: 1px solid var(--color-border);
   border-radius: 10px; padding: 1.2rem 1.4rem;
   width: min(480px, 96vw); max-height: 90vh; overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0,0,0,0.35);
 }
-#lang-modal-header {
+#lang-modal-header, #cal-modal-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 1rem;
 }
-#lang-modal-title { margin: 0; font-size: 1.1rem; color: var(--color-text-primary); }
-#lang-modal-close {
+#lang-modal-title, #cal-modal-title { margin: 0; font-size: 1.1rem; color: var(--color-text-primary); }
+#lang-modal-close, #cal-modal-close {
   background: none; border: none; cursor: pointer;
   font-size: 1rem; color: var(--color-text-secondary); padding: 0.2rem 0.4rem;
 }
-#lang-modal-close:hover { color: var(--color-accent); }
+#lang-modal-close:hover, #cal-modal-close:hover { color: var(--color-accent); }
 .lang-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;
 }
@@ -1085,7 +1099,7 @@ body.sky-playing .sky-view-constellations { display: none; }
   font-size: 0.8rem;
 }
 .hebrew-cell.empty-cell {
-  background: #f0ebe0;
+  background: var(--color-bg-alt) !important;
 }
 .hebrew-cell.shabbat {
   background: #fff8e8;

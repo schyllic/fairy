@@ -57,21 +57,22 @@ const I18N = {
     comets_on: 'Comets on',       comets_off: 'Comets off',
     birthdays_on: 'Birthdays on', birthdays_off: 'Birthdays off',
     otherdate_on: 'Other date on', otherdate_off: 'Other date off',
-    view_fairy: 'Lunar', view_greg: 'Greg', view_week: 'Week',
+    view_fairy: 'Fairy', view_greg: 'Greg', view_week: 'Week',
     view_sky: 'Sky', view_hebrew: 'Hebrew',
     darkmoon_tooltip: 'Darkmoon \u00b7 {0}',
-    print_sub: 'Mythic Lunar', print_title: 'Calendar',
+    print_sub: 'Mythic Fairy', print_title: 'Calendar',
     print_holocene: 'Year {0} of the Human Era',
     print_animal: '{0} Year \u00b7 {1} Moons',
     no_bdays_yet: 'No birthdays added yet.',
     review_bdays: 'Review {0} birthday{1}',
     bdays_added: 'Added {0} birthday{1}',
-    label_theme: 'Theme:', label_color: 'Color:',
+    label_theme: 'Theme:', label_color: 'Palette:',
     theme_fairy: 'Fairy', theme_wizard: 'Wizard', theme_celtic: 'Celtic', theme_animal: 'Animal', theme_flower: 'Flower',
     toggle_mythic: 'Mythic Week', toggle_otherdate: 'Other Date', toggle_holidays: 'Holidays',
     toggle_birthdays: 'Birthdays', toggle_meteors: 'Meteors', toggle_comets: 'Comets',
     sky_hint: 'Used for sky calculations. Negative lon = West.',
     name_ph: 'Name', day_ph: 'Day',
+    mode_calendar: 'Calendar', label_view: 'View', span_month: 'Month',
   },
 
   de: {
@@ -129,6 +130,7 @@ const I18N = {
     toggle_birthdays: 'Geburtstage', toggle_meteors: 'Meteore', toggle_comets: 'Kometen',
     sky_hint: 'Für Himmelsberechnungen. Neg. Lon = West.',
     name_ph: 'Name', day_ph: 'Tag',
+    mode_calendar: 'Kalender', label_view: 'Ansicht', span_month: 'Monat',
   },
 
   fr: {
@@ -186,6 +188,7 @@ const I18N = {
     toggle_birthdays: 'Anniversaires', toggle_meteors: 'Météores', toggle_comets: 'Comètes',
     sky_hint: 'Pour calculs du ciel. Lon négatif\u00a0= Ouest.',
     name_ph: 'Nom', day_ph: 'Jour',
+    mode_calendar: 'Calendrier', label_view: 'Vue', span_month: 'Mois',
   },
 
   it: {
@@ -243,6 +246,7 @@ const I18N = {
     toggle_birthdays: 'Compleanni', toggle_meteors: 'Meteore', toggle_comets: 'Comete',
     sky_hint: 'Per calcoli celesti. Lon negativo = Ovest.',
     name_ph: 'Nome', day_ph: 'Giorno',
+    mode_calendar: 'Calendario', label_view: 'Vista', span_month: 'Mese',
   },
 
   es: {
@@ -300,6 +304,7 @@ const I18N = {
     toggle_birthdays: 'Cumpleaños', toggle_meteors: 'Meteoros', toggle_comets: 'Cometas',
     sky_hint: 'Para cálculos del cielo. Lon negativo = Oeste.',
     name_ph: 'Nombre', day_ph: 'Día',
+    mode_calendar: 'Calendario', label_view: 'Vista', span_month: 'Mes',
   },
 
   sw: {
@@ -357,6 +362,7 @@ const I18N = {
     toggle_birthdays: 'Kuzaliwa', toggle_meteors: 'Meteori', toggle_comets: 'Kometi',
     sky_hint: 'Kwa mahesabu ya anga. Lon hasi = Magharibi.',
     name_ph: 'Jina', day_ph: 'Siku',
+    mode_calendar: 'Kalenda', label_view: 'Mtazamo', span_month: 'Mwezi',
   },
 
   la: {
@@ -414,6 +420,7 @@ const I18N = {
     toggle_birthdays: 'Dies Natales', toggle_meteors: 'Meteora', toggle_comets: 'Cometae',
     sky_hint: 'Ad caelum computandum. Lon neg. = Occidens.',
     name_ph: 'Nomen', day_ph: 'Dies',
+    mode_calendar: 'Calendarium', label_view: 'Visus', span_month: 'Mensis',
   },
 
   // Quenya — Tolkien's High Elvish. Attested words used where possible.
@@ -471,6 +478,7 @@ const I18N = {
     toggle_birthdays: 'Coivierë', toggle_meteors: 'Isili', toggle_comets: 'Ëar',
     sky_hint: 'An menel cenë. Lon norwa = Númen.',
     name_ph: 'Essë', day_ph: 'Aurë',
+    mode_calendar: 'Randa', label_view: 'Cenë', span_month: 'Mettarë',
   },
 
   // High Valyrian — from Game of Thrones. Attested words used where possible.
@@ -528,6 +536,7 @@ const I18N = {
     toggle_birthdays: 'Jorrāelis', toggle_meteors: 'Dēmalion', toggle_comets: 'Ëar',
     sky_hint: 'Metel cēnagon. Lon dōrior = Ñuqetis.',
     name_ph: 'Ēza', day_ph: 'Bantis',
+    mode_calendar: 'Randa', label_view: 'Cēnagon', span_month: 'Vēzundos',
   },
 };
 

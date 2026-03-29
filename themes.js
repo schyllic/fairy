@@ -574,16 +574,23 @@ const VARIANT_SWATCH_BORDERS = {
   flower: ['#f080a8','#50c070','#d0c020','#5890d8','#d07030'],
 };
 
-function applyTheme(themeName, variantName) {
+// Color properties owned by variants — stripped from theme application
+const _PALETTE_PROPS = new Set([
+  '--color-accent','--color-accent-2','--color-header',
+  '--color-bg','--color-bg-alt','--color-surface','--color-border',
+  '--color-text-primary','--color-text-secondary',
+  '--color-today-highlight','--color-weekend',
+]);
+
+function applyTheme(themeName) {
   const theme = THEMES[themeName];
   if (!theme) return;
-  const variant = theme.variants[variantName];
-  if (!variant) return;
   const e = document.documentElement;
-  for (const [k,v] of Object.entries(theme))  { if (k!=='variants') e.style.setProperty(k,v); }
-  for (const [k,v] of Object.entries(variant)) e.style.setProperty(k,v);
+  // Apply only non-color, non-variant theme properties (fonts, patterns, moon colors)
+  for (const [k,v] of Object.entries(theme)) {
+    if (k !== 'variants' && !_PALETTE_PROPS.has(k)) e.style.setProperty(k, v);
+  }
   e.dataset.theme = themeName;
-  e.dataset.variant = variantName;
   if (themeName === 'animal' && currentFY) {
     const wp = ANIMAL_PATTERNS[currentFY.yearAnimal] || PATTERNS.animal;
     e.style.setProperty('--pattern-bg-header', wp);
@@ -596,4 +603,14 @@ function applyTheme(themeName, variantName) {
     e.style.removeProperty('--pattern-bg-header');
     e.style.setProperty('--pattern-bg-size', '60px 60px');
   }
+}
+
+function applyVariant(themeName, variantName, colorScheme) {
+  const themeKey = colorScheme === 'dark' ? 'wizard' : themeName;
+  const vars = THEMES[themeKey]?.variants?.[variantName];
+  if (!vars) return;
+  const e = document.documentElement;
+  for (const [k, v] of Object.entries(vars)) e.style.setProperty(k, v);
+  e.dataset.variant = variantName;
+  e.dataset.colorScheme = colorScheme;
 }

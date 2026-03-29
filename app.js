@@ -1,10 +1,13 @@
 // ═══ Fairy Calendar — app.js ═══
 
+const APP_VERSION = 1;
+
 const STORAGE = {
   STATE:     'fairy-cal-state',
   BIRTHDAYS: 'fairy-cal-birthdays',
   OBSERVER:  'fairy-cal-observer',
   TOOLBAR:   'fairy-cal-toolbar-open',
+  VERSION:   'fairy-cal-version',
 };
 
 let currentFY    = null;
@@ -12,7 +15,7 @@ let selectedDate = null;
 let scrollToTodayAfterRender     = false;
 let scrollToSelectedAfterRender  = false;
 let restoreScrollFracAfterRender = null;
-let _skyReturnState = null; // {view, scrollY} — set when jumping to sky from modal
+let _skyReturnState = null; // {mode, calendarType, calendarSpan, scrollY, selectedDate}
 let runtimeBirthdays = (typeof BIRTHDAYS !== 'undefined') ? [...BIRTHDAYS] : [];
 
 try {
@@ -28,9 +31,13 @@ try {
 
 let state = {
   holYear: new Date().getFullYear() + 10000,
-  viewMode: 'sky',
+  mode: 'sky',           // 'sky' | 'calendar'
+  calendarType: 'fairy', // 'fairy' | 'greg' | 'hebrew'
+  calendarSpan: 'month', // 'month' | 'week'
+  skyShowMoon: true,
   theme: 'fairy',
   variant: 'a',
+  colorScheme: 'dark',
   weekNames: 'myth',
   language: 'en',
   language2: null,
@@ -38,24 +45,57 @@ let state = {
   showMeteors: true,
   showComets: true,
   showBirthdays: true,
-  showOtherDate: true,
+  calendarType2: 'greg', // null | 'fairy' | 'greg' | 'hebrew'
 };
 
 try {
   const saved = JSON.parse(localStorage.getItem(STORAGE.STATE) || '{}');
   if (saved.holYear)    state.holYear    = Number(saved.holYear);
-  if (saved.viewMode)   state.viewMode   = saved.viewMode;
-  if (saved.theme)      state.theme      = saved.theme;
-  if (saved.variant)    state.variant    = saved.variant;
+  // Migrate from old viewMode
+  if (saved.mode) {
+    state.mode = saved.mode;
+  } else if (saved.viewMode) {
+    if (saved.viewMode === 'sky') {
+      state.mode = 'sky';
+    } else {
+      state.mode = 'calendar';
+      if (saved.viewMode === 'week') { state.calendarSpan = 'week'; }
+      else { state.calendarType = saved.viewMode; } // 'fairy', 'greg', 'hebrew'
+    }
+  }
+  if (saved.calendarType && ['fairy','greg','hebrew'].includes(saved.calendarType)) state.calendarType = saved.calendarType;
+  if (saved.calendarSpan && ['month','week'].includes(saved.calendarSpan)) state.calendarSpan = saved.calendarSpan;
+  if (saved.skyShowMoon !== undefined) state.skyShowMoon = saved.skyShowMoon;
+  if (saved.theme) state.theme = saved.theme;
+  // Variant + color scheme: load saved, or migrate from old palette
+  if (saved.variant && 'abcde'.includes(saved.variant)) state.variant = saved.variant;
+  else if (saved.palette) {
+    const PM = { midnight:'a','deep-sea':'b',grove:'c',rose:'a',violet:'b',forest:'c',golden:'d',ember:'d',parchment:'a',sky:'d' };
+    state.variant = PM[saved.palette] || 'a';
+    state.colorScheme = ['midnight','deep-sea','grove'].includes(saved.palette) ? 'dark' : 'light';
+  }
+  if (saved.colorScheme && ['dark','light'].includes(saved.colorScheme)) state.colorScheme = saved.colorScheme;
   if (saved.weekNames)  state.weekNames  = saved.weekNames;
   if (saved.showHolidays !== undefined) state.showHolidays = saved.showHolidays;
   if (saved.showMeteors    !== undefined) state.showMeteors    = saved.showMeteors;
   if (saved.showComets     !== undefined) state.showComets     = saved.showComets;
   if (saved.showBirthdays  !== undefined) state.showBirthdays  = saved.showBirthdays;
-  if (saved.showOtherDate  !== undefined) state.showOtherDate  = saved.showOtherDate;
+  // calendarType2: load saved, or migrate from old showOtherDate
+  if ('calendarType2' in saved) {
+    state.calendarType2 = (saved.calendarType2 === null || ['fairy','greg','hebrew'].includes(saved.calendarType2)) ? saved.calendarType2 : 'greg';
+  } else if (saved.showOtherDate !== undefined) {
+    const _defSec = { fairy: 'greg', greg: 'fairy', hebrew: 'greg' };
+    state.calendarType2 = saved.showOtherDate ? (_defSec[state.calendarType] ?? 'greg') : null;
+  }
   if (saved.language && I18N[saved.language]) state.language = saved.language;
   if ('language2' in saved && (saved.language2 === null || (saved.language2 && I18N[saved.language2]))) state.language2 = saved.language2;
 } catch(_) {}
+
+function _computeViewMode() {
+  if (state.mode === 'sky') return 'sky';
+  if (state.calendarSpan === 'week') return 'week';
+  return state.calendarType;
+}
 
 // ─── Info Modal ──────────────────────────────────────────────────────
 
@@ -121,92 +161,6 @@ function closeModal() {
 
 // ─── Help Modal ───────────────────────────────────────────────────────
 
-const HELP_HTML = `
-<h3>The Year Number</h3>
-<p>This calendar uses the <strong>Human Era</strong> (Holocene Era). The standard BC/CE year count is anchored to 1 CE — a reference point calculated in the 6th century from estimated lifespans. The Human Era shifts the origin to something older and more universal: it adds 10,000 years to place the dawn of human civilization — the agricultural revolution — at Year 1. The result: 2026 CE = <strong>Year 12026</strong>.</p>
-<p>This numbering was conceived independently for this calendar — it was only later discovered that scientist Cesare Emiliani had proposed the same idea decades earlier.</p>
-<hr>
-<h3>The Moons (Lunar Months)</h3>
-<p>The calendar has 12 moons per year, each beginning on a new moon:</p>
-<p>Snowmoon · Wakingmoon · Seedmoon · Bloommoon · Flowermoon · Berrymoon · Summermoon · Harvestmoon · Gathermoon · Leafmoon · Frostmoon · <strong>Darkmoon</strong></p>
-<p><strong>Darkmoon</strong> is always the last moon of the year — the one containing the winter solstice.</p>
-<p><strong>Bluemoon:</strong> When the solstice falls on day 19 or later of Darkmoon (Bear or Fox), a 13th moon (Bluemoon) is added after Darkmoon, making a 13-moon year.</p>
-<p>The threshold isn't arbitrary. A solar year (~365.24 days) is about 10.88 days longer than 12 lunar months (~354.36 days). If the solstice falls on day 19 of Darkmoon, next year without correction it would land on day ~30 — right at the edge of the month, or just past it. Day 20 or later means the solstice would overshoot into the <em>following</em> moon entirely, so Darkmoon would no longer contain the solstice. The Bear/Fox rule is the exact astronomical threshold for when the calendar must self-correct. Adding Bluemoon resets the solstice back to Robin or Rabbit territory (~day 6) the following year, and the cycle begins again.</p>
-<hr>
-<h3>The Year Animal</h3>
-<p>Darkmoon is divided into five named parts. Whichever part the winter solstice falls in names the year:</p>
-<table class="help-table">
-  <tr><th>Part</th><th>Days</th><th>Character</th></tr>
-  <tr><td><strong>Robin</strong></td><td>1–6</td><td>Early and bright — the year begins before the dark has truly settled</td></tr>
-  <tr><td><strong>Rabbit</strong></td><td>7–12</td><td>Alert and watchful, sitting at the threshold</td></tr>
-  <tr><td><strong>Turkey</strong></td><td>13–18</td><td>Mid-dark, gathering and deliberate</td></tr>
-  <tr><td><strong>Bear</strong></td><td>19–24</td><td>Deep in the dark — needs to sleep a little longer this year</td></tr>
-  <tr><td><strong>Fox</strong></td><td>25–end</td><td>Deepest drift — already out hunting in the long night</td></tr>
-</table>
-<p>The year animal is a shorthand for the offset between the solar and lunar calendar. A Robin year means the solstice arrived early in Darkmoon; a Fox year means the calendar has drifted far and a Bluemoon is coming.</p>
-<hr>
-<h3>The Weekday Names</h3>
-<p>In <strong>Myth</strong> mode, the days are named for Norse gods and celestial bodies. The standard English weekday names already hide these figures — this calendar brings them forward.</p>
-<table class="help-table">
-  <tr><th>Fairy</th><th>Standard</th><th>Named for</th></tr>
-  <tr><td><strong>Heimday</strong></td><td>Monday</td><td><strong>Heimdall</strong> — watchman of Asgard, guardian of the Bifrost rainbow bridge. He stands at the threshold, ever-watching — a fitting start to the week.</td></tr>
-  <tr><td><strong>Tyrsday</strong></td><td>Tuesday</td><td><strong>Tyr</strong> — god of justice and honorable combat. He sacrificed his hand to bind the wolf Fenrir, upholding the law of the gods.</td></tr>
-  <tr><td><strong>Wodensday</strong></td><td>Wednesday</td><td><strong>Woden (Odin)</strong> — the All-Father, god of wisdom, poetry, and the dead. He hung himself on Yggdrasil for nine days to earn the knowledge of the runes.</td></tr>
-  <tr><td><strong>Thorsday</strong></td><td>Thursday</td><td><strong>Thor</strong> — god of thunder and lightning, defender of both gods and humans.</td></tr>
-  <tr><td><strong>Freyasday</strong></td><td>Friday</td><td><strong>Freya</strong> — goddess of love, beauty, gold, and magic. She leads the Valkyries and weeps tears of red gold.</td></tr>
-  <tr><td><strong>Moonday</strong></td><td>Saturday</td><td><strong>The Moon.</strong> Saturday is named for Saturn, a Roman deity who has no place among these Norse gods. Monday is already Moon's day — but that means a billion people begin their work week cursing the Moon. Moving it to the weekend transforms it from a burden into a blessing, and gives it the night sky it deserves.</td></tr>
-  <tr><td><strong>Sunday</strong></td><td>Sunday</td><td><strong>The Sun</strong> — unchanged.</td></tr>
-</table>
-<hr>
-<h3>Icons on Calendar Days</h3>
-<table class="help-table">
-  <tr><th>Icon</th><th>Meaning</th></tr>
-  <tr><td>🌑 🌓 🌕 🌗</td><td>New moon, first quarter, full moon, last quarter</td></tr>
-  <tr><td>☀</td><td>Solstice or equinox</td></tr>
-  <tr><td>Ⓟ + %</td><td>Lunar perigee (Moon closest to Earth); illumination percentage</td></tr>
-  <tr><td>@</td><td>Lunar apogee (Moon farthest from Earth)</td></tr>
-  <tr><td>🌠</td><td>Meteor shower near peak</td></tr>
-  <tr><td>☄</td><td>Comet in visibility window</td></tr>
-  <tr><td>🎂</td><td>Birthday</td></tr>
-  <tr><td>Colored border</td><td>US federal holiday</td></tr>
-</table>
-<hr>
-<h3>The Night Sky Panel</h3>
-<p>Click any <strong>ⓘ</strong> button to open the events panel. When viewing today, the <strong>Tonight</strong> section shows sunset time, astronomical twilight (when the sky is truly dark — sun 18° below horizon, roughly 1.5–2 hours after sunset), visible planets, active meteor showers, and evening constellations visible from your location.</p>
-<hr>
-<h3>Other Lunar Calendars</h3>
-<p>Many cultures have tracked time by the moon. The most widely used today is the <strong>Hebrew calendar</strong>, which shares some features with this one — and differs in revealing ways.</p>
-<p><strong>What they share:</strong> Both are <em>lunisolar</em> — they follow the moon for months but add an intercalary (leap) month to stay aligned with the solar year. Both start each month on the new moon.</p>
-<p><strong>How the Hebrew calendar works:</strong> It has 12 months of 29–30 days (13 in a leap year). Seven times in every 19-year cycle (the Metonic cycle), a 13th month is inserted. The year begins in autumn around the fall equinox (Rosh Hashanah). All month names are ancient Babylonian, adopted during the Jewish exile in the 6th century BCE — before that, months had old Canaanite names (Aviv, Ziv, Ethanim, Bul) or were simply numbered. The year count (Anno Mundi) was calculated in the 2nd century CE by Rabbi Yose ben Halafta, summing the ages of biblical figures back to creation, placing 2026 CE at approximately year <strong>5786</strong>.</p>
-<p><strong>The months</strong> — all names are Akkadian/Babylonian unless noted:</p>
-<table class="help-table">
-  <tr><th>#</th><th>Month</th><th>Days</th><th>Name meaning</th><th>Notes</th></tr>
-  <tr><td>1</td><td><strong>Nisan</strong></td><td>30</td><td>"first fruits / beginning" (<em>Nisanu</em>); pre-exile <em>Aviv</em> = "spring, green grain ears"</td><td>Religious new year; Passover</td></tr>
-  <tr><td>2</td><td><strong>Iyar</strong></td><td>29</td><td>"blossom / brightness" (<em>Ayaru</em>); pre-exile <em>Ziv</em> = "splendor"</td><td></td></tr>
-  <tr><td>3</td><td><strong>Sivan</strong></td><td>30</td><td>"season" (<em>Simanu</em>)</td><td>Shavuot (Weeks / Pentecost)</td></tr>
-  <tr><td>4</td><td><strong>Tammuz</strong></td><td>29</td><td>Named for Dumuzid, Sumerian god of fertility; possibly "true/faithful son"</td><td>The only month named after a pagan deity</td></tr>
-  <tr><td>5</td><td><strong>Av</strong></td><td>30</td><td>"father" (Hebrew/Aramaic <em>Ab</em>)</td><td>Tisha B'Av: mourning the destruction of both Temples (586 BCE and 70 CE)</td></tr>
-  <tr><td>6</td><td><strong>Elul</strong></td><td>29</td><td>"harvest / gleaning" (<em>Ululu</em>); later given a Hebrew acronym: <em>"I am my beloved's and my beloved is mine"</em></td><td>Month of repentance</td></tr>
-  <tr><td>7</td><td><strong>Tishrei</strong></td><td>30</td><td>"beginning" (<em>Tashritu</em>, from "to start") — the year begins here despite being month 7; pre-exile <em>Ethanim</em> = "ever-flowing streams"</td><td>Rosh Hashanah, Yom Kippur, Sukkot</td></tr>
-  <tr><td>8</td><td><strong>Cheshvan</strong></td><td>29–30</td><td>Possibly "eighth month" (<em>Arahsamna</em>); "Mar" (bitter) prefix added later in Aramaic; pre-exile <em>Bul</em> = "rain / produce"</td><td>The only month with no major holidays — <em>Bitter Cheshvan</em></td></tr>
-  <tr><td>9</td><td><strong>Kislev</strong></td><td>30–29</td><td>Uncertain; possibly "Orion's belt" or "flank / thigh"</td><td>Hanukkah begins</td></tr>
-  <tr><td>10</td><td><strong>Tevet</strong></td><td>29</td><td>"to sink / submerge" (<em>Tebetu</em>) — winter rains soaking the earth</td><td>Hanukkah ends</td></tr>
-  <tr><td>11</td><td><strong>Shevat</strong></td><td>30</td><td>"staff / rod" or "strike" (<em>Shabatu</em>) — possibly winter storms</td><td>Tu B'Shevat: new year of the trees</td></tr>
-  <tr><td>12</td><td><strong>Adar</strong></td><td>29 (30 in leap)</td><td>"dark / cloudy" or "threshing floor" (<em>Addaru</em>)</td><td>Purim; becomes Adar I in leap years</td></tr>
-  <tr><td>13</td><td><strong>Adar II</strong></td><td>29</td><td>Leap year only</td><td>The "real" Adar — Purim is always celebrated here, not in Adar I</td></tr>
-</table>
-<p><strong>A few more things worth knowing:</strong> The leap years within each 19-year cycle always fall in years 3, 6, 8, 11, 14, 17, and 19. The Metonic cycle is named for Greek astronomer Meton of Athens (~432 BCE), but the Hebrew calendar was already using it independently. The calendar was standardized by Hillel II around 359 CE, replacing live moon observation with arithmetic — which is why it no longer tracks the actual sky. Judaism also has four distinct "new years": Nisan 1 (religious calendar), Tishrei 1 (civil years — the celebrated one), Elul 1 (animal tithes), and Shevat 15 (trees).</p>
-<p><strong>How this calendar differs:</strong></p>
-<table class="help-table">
-  <tr><td><strong>Year anchor</strong></td><td>The Hebrew year begins in <em>autumn</em>. This calendar begins in <em>winter</em> — Snowmoon starts just after the darkest night. The year rises from darkness toward light.</td></tr>
-  <tr><td><strong>Leap month rule</strong></td><td>Hebrew intercalation follows a fixed 19-year schedule. This calendar uses a purely astronomical trigger: Bluemoon is added only when the winter solstice drifts late enough in Darkmoon that skipping it would push next year's solstice outside Darkmoon entirely.</td></tr>
-  <tr><td><strong>Accuracy</strong></td><td>The modern Hebrew calendar uses a standardized lunar month length fixed since the 4th century CE and no longer tracks actual moon observation. This calendar computes real new moons using Meeus astronomical algorithms — it reflects the actual sky.</td></tr>
-  <tr><td><strong>Month names</strong></td><td>Hebrew months carry ancient Babylonian names borrowed during exile. These months are named for what the natural world is doing.</td></tr>
-  <tr><td><strong>The week</strong></td><td>The Hebrew week counts numbered days ending in Sabbath. This calendar names the days for the Norse gods who already secretly inhabit the English weekday names.</td></tr>
-</table>
-<p>The <strong>Islamic calendar</strong> is purely lunar with no intercalation, drifting through all seasons over ~33 years. The <strong>Chinese calendar</strong> is lunisolar and adds leap months similarly to Hebrew. Both are old and rich — this calendar is simply a new one, built for a specific family, in a specific place, watching a specific sky.</p>
-`;
-
 function initHelpModal() {
   const modal = document.createElement('div');
   modal.id = 'help-modal';
@@ -220,7 +174,7 @@ function initHelpModal() {
           `<button id="modal-close" aria-label="Close">✕</button>` +
         `</div>` +
       `</div>` +
-      `<div id="modal-body">${HELP_HTML}</div>` +
+      `<div id="modal-body"><div id="help-modal-body"></div></div>` +
     `</div>`;
   document.body.appendChild(modal);
   modal.querySelector('#modal-backdrop').addEventListener('click', closeHelp);
@@ -228,6 +182,7 @@ function initHelpModal() {
 }
 
 function showHelp() {
+  document.getElementById('help-modal-body').innerHTML = getHelpHtml();
   document.getElementById('help-modal').removeAttribute('hidden');
 }
 
@@ -245,11 +200,15 @@ function initSettingsModal() {
     `<div id="modal-backdrop"></div>` +
     `<div id="modal-box">` +
       `<div id="modal-header">` +
+        `<button id="modal-close" aria-label="Close">✕</button>` +
         `<h2 id="modal-title">Settings</h2>` +
-        `<div id="modal-header-btns">` +
+        `<div id="modal-header-row">` +
+          `<span class="settings-picker-label" id="label-lang">Language</span>` +
           `<button id="lang-current-btn" class="btn lang-current-btn" title="Primary language"></button>` +
           `<button id="lang2-current-btn" class="btn lang-current-btn lang2-btn" title="Tooltip language"></button>` +
-          `<button id="modal-close" aria-label="Close">✕</button>` +
+          `<span class="settings-picker-label" id="label-cal">Calendar</span>` +
+          `<button class="btn lang-current-btn" id="cal-primary-btn" title="Primary calendar"></button>` +
+          `<button class="btn lang-current-btn" id="cal2-btn" title="Other date calendar"></button>` +
         `</div>` +
       `</div>` +
       `<div id="modal-body">` +
@@ -281,11 +240,17 @@ function initSettingsModal() {
           `<input type="file" id="bday-import-file-input" accept=".json" style="display:none">` +
         `</div>` +
         `<div id="birthday-list"></div>` +
+        `<hr class="settings-divider">` +
+        `<div class="settings-version-row">` +
+          `<span id="settings-version-label"></span>` +
+        `</div>` +
       `</div>` +
     `</div>`;
   document.body.appendChild(modal);
   modal.querySelector('#modal-backdrop').addEventListener('click', closeSettings);
   modal.querySelector('#modal-close').addEventListener('click', closeSettings);
+  modal.querySelector('#cal-primary-btn').addEventListener('click', () => { closeSettings(); showCalendarModal('primary'); });
+  modal.querySelector('#cal2-btn').addEventListener('click', () => { closeSettings(); showCalendarModal('secondary'); });
   modal.querySelector('#lang-current-btn').addEventListener('click', () => { closeSettings(); showLanguageModal('primary'); });
   modal.querySelector('#lang2-current-btn').addEventListener('click', () => { closeSettings(); showLanguageModal('secondary'); });
   const _applyLocation = () => {
@@ -370,6 +335,15 @@ function showSettings() {
   const lang2Btn = document.getElementById('lang2-current-btn');
   lang2Btn.textContent = lang2Meta ? lang2Meta.native : '+ tips';
   lang2Btn.classList.toggle('active', !!state.language2);
+  const _calNames = { fairy: 'Fairy', greg: 'Greg', hebrew: 'Hebrew' };
+  const cpBtn = document.getElementById('cal-primary-btn');
+  cpBtn.textContent = _calNames[state.calendarType] || state.calendarType;
+  cpBtn.classList.add('active');
+  const c2Btn = document.getElementById('cal2-btn');
+  c2Btn.textContent = state.calendarType2 ? (_calNames[state.calendarType2] || state.calendarType2) : '—';
+  c2Btn.classList.toggle('active', !!state.calendarType2);
+  document.getElementById('label-lang').textContent = t('language') || 'Language';
+  document.getElementById('label-cal').textContent = 'Calendar';
   document.getElementById('settings-loc-head').textContent = t('location');
   document.getElementById('settings-bday-head').textContent = t('birthdays');
   document.getElementById('bday-add-btn').textContent = t('add');
@@ -379,6 +353,7 @@ function showSettings() {
   document.getElementById('bday-name').placeholder = t('name_ph');
   document.getElementById('bday-day').placeholder  = t('day_ph');
   _renderBirthdayList();
+  document.getElementById('settings-version-label').textContent = `Version ${APP_VERSION}`;
   document.getElementById('settings-modal').removeAttribute('hidden');
 }
 
@@ -586,6 +561,75 @@ function showLanguageModal(slot = 'primary') {
 
 function closeLanguageModal() {
   document.getElementById('language-modal').setAttribute('hidden', '');
+}
+
+// ─── Calendar Picker Modal ─────────────────────────────────────────────────
+
+let _calSlot = 'primary'; // 'primary' | 'secondary'
+
+const CAL_OPTIONS = [
+  { key: 'fairy',  label: 'Fairy'  },
+  { key: 'greg',   label: 'Greg'   },
+  { key: 'hebrew', label: 'Hebrew' },
+];
+
+function initCalendarModal() {
+  const modal = document.createElement('div');
+  modal.id = 'calendar-modal';
+  modal.setAttribute('hidden', '');
+  modal.innerHTML =
+    `<div id="cal-modal-backdrop"></div>` +
+    `<div id="cal-modal-box">` +
+      `<div id="cal-modal-header">` +
+        `<h2 id="cal-modal-title">Calendar</h2>` +
+        `<button id="cal-modal-close" aria-label="Close">✕</button>` +
+      `</div>` +
+      `<div id="cal-modal-body">` +
+        `<div class="lang-grid">` +
+          `<button id="cal-none-btn" class="lang-grid-btn" style="display:none">` +
+            `<span class="lang-native">—</span>` +
+            `<span class="lang-english">None</span>` +
+          `</button>` +
+          CAL_OPTIONS.map(c =>
+            `<button class="lang-grid-btn" data-cal="${c.key}">` +
+              `<span class="lang-native">${c.label}</span>` +
+            `</button>`
+          ).join('') +
+        `</div>` +
+      `</div>` +
+    `</div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#cal-modal-backdrop').addEventListener('click', closeCalendarModal);
+  modal.querySelector('#cal-modal-close').addEventListener('click', closeCalendarModal);
+  const _applyCal = () => { _saveState(); closeCalendarModal(); refresh(); showSettings(); };
+  modal.querySelector('#cal-none-btn').addEventListener('click', () => {
+    state.calendarType2 = null;
+    _applyCal();
+  });
+  modal.querySelectorAll('.lang-grid-btn[data-cal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (_calSlot === 'secondary') state.calendarType2 = btn.dataset.cal;
+      else state.calendarType = btn.dataset.cal;
+      _applyCal();
+    });
+  });
+}
+
+function showCalendarModal(slot = 'primary') {
+  _calSlot = slot;
+  const active = slot === 'secondary' ? state.calendarType2 : state.calendarType;
+  document.querySelectorAll('#calendar-modal .lang-grid-btn[data-cal]').forEach(btn =>
+    btn.classList.toggle('is-active', btn.dataset.cal === active));
+  const nb = document.getElementById('cal-none-btn');
+  nb.style.display = slot === 'secondary' ? '' : 'none';
+  nb.classList.toggle('is-active', slot === 'secondary' && !state.calendarType2);
+  document.getElementById('cal-modal-title').textContent =
+    slot === 'secondary' ? 'Other Date' : 'Calendar';
+  document.getElementById('calendar-modal').removeAttribute('hidden');
+}
+
+function closeCalendarModal() {
+  document.getElementById('calendar-modal').setAttribute('hidden', '');
 }
 
 
@@ -1202,7 +1246,7 @@ function showModal(fromDateStr, label, fy) {
       const {icon, text} = _formatEvent(ev);
       const fd = fy.dayMap.get(ev.dateStr);
       const _gd = fd?.gregDate || new Date(ev.dateStr);
-      const dateLabel = ((state.viewMode === 'fairy' || state.viewMode === 'week') && fd)
+      const dateLabel = ((state.mode === 'calendar' && (state.calendarType === 'fairy' || state.calendarSpan === 'week')) && fd)
         ? `${tMoonShort(fd.fairyMonth)} ${fd.fairyDay}`
         : `${getGregMonths()[_gd.getUTCMonth()].slice(0,3)} ${_gd.getUTCDate()}`;
       body += `<div class="modal-event">` +
@@ -1235,9 +1279,9 @@ function showModal(fromDateStr, label, fy) {
     skyBtn.addEventListener('click', () => {
       const date = skyBtn.dataset.skyDate;
       closeModal();
-      _skyReturnState = { view: state.viewMode, scrollY: window.scrollY, selectedDate: date };
+      _skyReturnState = { mode: state.mode, calendarType: state.calendarType, calendarSpan: state.calendarSpan, scrollY: window.scrollY, selectedDate: date };
       _skyViewDate = date;
-      state.viewMode = 'sky';
+      state.mode = 'sky';
       refresh();
     });
   }
@@ -1250,11 +1294,12 @@ const VARIANT_NAMES = ['a','b','c','d','e'];
 function buildSwatches() {
   const group = document.getElementById('variant-group');
   group.querySelectorAll('.variant-btn').forEach(b => b.remove());
-  const colors  = VARIANT_SWATCH_COLORS[state.theme]  || [];
-  const borders = VARIANT_SWATCH_BORDERS[state.theme] || [];
+  const themeKey = state.colorScheme === 'dark' ? 'wizard' : state.theme;
+  const colors  = VARIANT_SWATCH_COLORS[themeKey] || [];
+  const borders = VARIANT_SWATCH_BORDERS[themeKey] || [];
   VARIANT_NAMES.forEach((v, idx) => {
     const btn = document.createElement('button');
-    btn.className = 'variant-btn' + (v===state.variant?' active':'');
+    btn.className = 'variant-btn' + (v === state.variant ? ' active' : '');
     btn.dataset.variant = v;
     const bg = colors[idx] || '#eee';
     const ln = borders[idx] || '#999';
@@ -1262,13 +1307,49 @@ function buildSwatches() {
     btn.title = `Color ${v.toUpperCase()}`;
     btn.addEventListener('click', () => {
       state.variant = v;
-      applyTheme(state.theme, state.variant);
+      applyVariant(state.theme, v, state.colorScheme);
       document.querySelectorAll('.variant-btn').forEach(b => b.classList.toggle('active', b.dataset.variant === v));
       _saveState();
     });
     group.appendChild(btn);
   });
+  const sb = document.getElementById('scheme-toggle');
+  if (sb) sb.textContent = state.colorScheme === 'dark' ? '🌙' : '☀';
 }
+
+function _applyThemeSwitch(themeName) {
+  applyTheme(themeName);
+  applyVariant(themeName, state.variant, state.colorScheme);
+  if (currentFY) document.querySelectorAll('.year-hero-wrap').forEach(w => {
+    w.innerHTML = getHeaderSVG(currentFY.yearAnimal, themeName);
+  });
+  document.querySelectorAll('.greg-month-header').forEach((hdr, i) => {
+    const existing = hdr.querySelector('.month-plant-svg');
+    if (themeName === 'flower') {
+      if (!existing) { const svg = getGregMonthPlantSVG(i); if (svg) hdr.insertAdjacentHTML('afterbegin', svg); }
+    } else { if (existing) existing.remove(); }
+  });
+  document.querySelectorAll('.fairy-moon-header').forEach(hdr => {
+    const existing = hdr.querySelector('.moon-plant-svg');
+    if (themeName === 'flower') {
+      if (!existing) { const moonName = hdr.querySelector('.moon-name')?.textContent; const svg = getMoonPlantSVG(moonName); if (svg) hdr.insertAdjacentHTML('afterbegin', svg); }
+    } else { if (existing) existing.remove(); }
+  });
+  document.querySelectorAll('.fairy-moon').forEach(sec => {
+    const existingIcon = sec.querySelector('.fairy-moon-icon');
+    if (themeName === 'fairy') {
+      if (!existingIcon) {
+        const moonName = sec.querySelector('.moon-name')?.textContent;
+        const emptyCells = [...sec.querySelectorAll('td.empty-cell')];
+        const firstTbodyCell = sec.querySelector('tbody tr:first-child td:first-child');
+        const startsWithEmpty = firstTbodyCell && firstTbodyCell.classList.contains('empty-cell');
+        const target = startsWithEmpty ? emptyCells[0] : emptyCells[emptyCells.length-1];
+        if (target) target.innerHTML = getFairyMoonSVG(moonName);
+      }
+    } else { if (existingIcon) existingIcon.remove(); }
+  });
+}
+
 
 function _currentDateStr() {
   // Derive current date from holYear + stored sky date, or default to Jan 1
@@ -1283,44 +1364,58 @@ function _syncFromDate(dateStr) {
 }
 
 function refresh() {
-  const isSky = state.viewMode === 'sky';
+  const isSky = state.mode === 'sky';
+  const viewMode = _computeViewMode();
   if (!_skyViewDate) _skyViewDate = localTodayStr();
   document.getElementById('date-input').value = _skyViewDate;
   document.title = `Fairy Calendar — Year ${state.holYear}`;
-  document.querySelectorAll('.view-btn[data-view]').forEach(b => {
-    b.classList.toggle('active', b.dataset.view===state.viewMode);
-    b.textContent = t('view_' + b.dataset.view);
+  // Secondary-language tooltip helper (used throughout this function)
+  const _tip2 = (el, key, ...args) => { const v=t2(key,...args); if(el){if(v)el.title=v;else el.removeAttribute('title');} };
+  // Mode buttons
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === state.mode);
+    if (b.dataset.mode === 'sky') { b.textContent = t('view_sky'); _tip2(b, 'view_sky'); }
+    else if (b.dataset.mode === 'calendar') { b.textContent = t('mode_calendar'); _tip2(b, 'mode_calendar'); }
   });
+  // Calendar span buttons
+  document.querySelectorAll('.span-btn[data-span]').forEach(b => {
+    b.classList.toggle('active', b.dataset.span === state.calendarSpan);
+    if (b.dataset.span === 'month') { b.textContent = t('span_month'); _tip2(b, 'span_month'); }
+    else if (b.dataset.span === 'week') { b.textContent = t('view_week'); _tip2(b, 'view_week'); }
+  });
+  { const el = document.getElementById('label-view'); if (el) el.textContent = t('label_view') + ':'; }
   document.getElementById('today-btn').textContent = t('today');
-  document.querySelectorAll('.theme-btn[data-theme]').forEach(b => {
-    b.classList.toggle('active', b.dataset.theme===state.theme);
-    b.textContent = t('theme_' + b.dataset.theme);
-  });
   document.getElementById('toggle-mythic-week').textContent = t('toggle_mythic');
-  document.getElementById('toggle-other-date').textContent  = t('toggle_otherdate');
   document.getElementById('toggle-holidays').textContent    = t('toggle_holidays');
   document.getElementById('toggle-birthdays').textContent   = t('toggle_birthdays');
   document.getElementById('toggle-meteors').textContent     = t('toggle_meteors');
   document.getElementById('toggle-comets').textContent      = t('toggle_comets');
   document.getElementById('sky-labels-btn').textContent     = t('sky_labels');
-  document.getElementById('label-theme').textContent = t('label_theme');
-  document.getElementById('label-color').textContent = t('label_color');
   // Secondary-language tooltips on toolbar controls
-  const _tip2 = (el, key, ...args) => { const v=t2(key,...args); if(el){if(v)el.title=v;else el.removeAttribute('title');} };
-  document.querySelectorAll('.view-btn[data-view]').forEach(b => _tip2(b, 'view_'+b.dataset.view));
   _tip2(document.getElementById('today-btn'), 'today');
-  document.querySelectorAll('.theme-btn[data-theme]').forEach(b => _tip2(b, 'theme_'+b.dataset.theme));
   _tip2(document.getElementById('toggle-mythic-week'), 'toggle_mythic');
-  _tip2(document.getElementById('toggle-other-date'), 'toggle_otherdate');
   _tip2(document.getElementById('toggle-holidays'), 'toggle_holidays');
   _tip2(document.getElementById('toggle-birthdays'), 'toggle_birthdays');
   _tip2(document.getElementById('toggle-meteors'), 'toggle_meteors');
   _tip2(document.getElementById('toggle-comets'), 'toggle_comets');
-  applyTheme(state.theme, state.variant);
+  _tip2(document.getElementById('sky-labels-btn'), 'sky_labels');
+  document.querySelectorAll('.theme-btn[data-theme]').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === state.theme);
+    b.textContent = t('theme_' + b.dataset.theme);
+  });
+  { const el = document.getElementById('label-theme'); if (el) el.textContent = t('label_theme'); }
+  { const el = document.getElementById('label-color'); if (el) el.textContent = t('label_color'); }
+  applyTheme(state.theme);
+  applyVariant(state.theme, state.variant, state.colorScheme);
   buildSwatches();
-  // Toggle sky-only controls
+  // Toggle sky-only controls and body class
   document.body.classList.toggle('view-sky-active', isSky);
-  // Moon phase in toolbar
+  // Sky inline controls visibility
+  document.getElementById('sky-inline-controls').hidden = !isSky;
+  // Sky moon button active state
+  const moonBtn = document.getElementById('sky-moon-btn');
+  if (moonBtn) { moonBtn.classList.toggle('active', state.skyShowMoon); _tip2(moonBtn, 'moon_label'); }
+  // Moon phase in toolbar (cal-only, but update content regardless — CSS hides in sky)
   const moonDate = new Date(_skyViewDate + 'T00:00:00Z');
   const phase = moonPhaseInfo(moonDate);
   document.getElementById('toolbar-moon').innerHTML = getMoonPhaseSVG(phase.illum, phase.waxing);
@@ -1329,7 +1424,7 @@ function refresh() {
     const oldBack = document.getElementById('sky-back-btn');
     if (oldBack) oldBack.remove();
   }
-  render(state.holYear, state.viewMode);
+  render(state.holYear, viewMode);
   _saveState();
 }
 
@@ -1350,6 +1445,7 @@ document.getElementById('today-btn').addEventListener('click', () => {
   selectedDate = _skyViewDate;
   scrollToTodayAfterRender = true;
   refresh();
+  _showT2Toast('today');
 });
 document.getElementById('date-input').addEventListener('change', e => {
   if (!e.target.value) return;
@@ -1363,70 +1459,50 @@ document.getElementById('date-input').addEventListener('change', e => {
 function _skySetDate(dateStr) {
   _syncFromDate(dateStr);
   document.getElementById('date-input').value = dateStr;
-  // Update toolbar moon phase
+  // Update toolbar moon phase (cal-only, CSS hides in sky, but keep content current)
   const moonDate = new Date(dateStr + 'T00:00:00Z');
   const phase = moonPhaseInfo(moonDate);
   document.getElementById('toolbar-moon').innerHTML = getMoonPhaseSVG(phase.illum, phase.waxing);
   _saveState();
-  if (state.viewMode === 'sky') renderSky();
-  else render(state.holYear, state.viewMode);
+  if (state.mode === 'sky') renderSky();
+  else render(state.holYear, _computeViewMode());
 }
-document.getElementById('sky-prev').addEventListener('click', () => {
-  _skyPlayStop();
-  if (!_skyViewDate) _skyViewDate = localTodayStr();
-  const prev = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() - 86400000);
-  _skySetDate(utcDateStr(prev));
-});
-document.getElementById('sky-next').addEventListener('click', () => {
-  _skyPlayStop();
-  if (!_skyViewDate) _skyViewDate = localTodayStr();
-  const next = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() + 86400000);
-  _skySetDate(utcDateStr(next));
-});
-// Sky timelapse play / fast-forward
+// Sky timelapse play (forward and backward)
 let _skyPlayTimer = null;
-let _skyPlaySpeed = 0; // 0=stopped, 1=play, 2=ff
+let _skyPlayDir = 0; // 0=stopped, 1=forward, -1=backward
 const _skyPlayBtn = document.getElementById('sky-play');
-const _skyFFBtn = document.getElementById('sky-ff');
+const _skyBackBtn = document.getElementById('sky-back');
 function _skyAdvance() {
   if (!_skyViewDate) _skyViewDate = localTodayStr();
-  const next = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() + 86400000);
+  const next = new Date(new Date(_skyViewDate + 'T00:00:00Z').getTime() + _skyPlayDir * 86400000);
   _skySetDate(utcDateStr(next));
 }
 function _skyPlayStop(rerender = false) {
   if (_skyPlayTimer) { clearInterval(_skyPlayTimer); _skyPlayTimer = null; }
-  _skyPlaySpeed = 0;
+  _skyPlayDir = 0;
   _skyPlayBtn.textContent = '\u25B6';
-  _skyFFBtn.textContent = '\u25B6\u25B6';
-  _skyFFBtn.classList.add('sky-ff-hidden');
+  _skyBackBtn.textContent = '\u25C0';
   document.body.classList.remove('sky-playing');
-  if (rerender && state.viewMode === 'sky') {
-    // Re-render with full tier2 stars; _attachSkyZoom runs inside renderSky
+  if (rerender && state.mode === 'sky') {
     renderSky();
   } else {
-    // Just reattach zoom to the current (unhandled) SVG element
     const svgEl = document.querySelector('.sky-chart-svg');
     if (svgEl) _attachSkyZoom(svgEl);
   }
 }
-function _skyPlayAt(speed) {
+function _skyPlayStart(dir) {
   _skyPlayStop();
-  _skyPlaySpeed = speed;
-  const ms = speed === 2 ? 80 : 800;
-  _skyPlayTimer = setInterval(_skyAdvance, ms);
-  _skyFFBtn.classList.remove('sky-ff-hidden');
+  _skyPlayDir = dir;
+  _skyPlayTimer = setInterval(_skyAdvance, 80);
   document.body.classList.add('sky-playing');
-  if (speed === 2) {
-    _skyFFBtn.textContent = '\u23F8';
-  } else {
-    _skyPlayBtn.textContent = '\u23F8';
-  }
+  if (dir > 0) _skyPlayBtn.textContent = '\u23F8';
+  else         _skyBackBtn.textContent = '\u23F8';
 }
 _skyPlayBtn.addEventListener('click', () => {
-  if (_skyPlaySpeed === 1) _skyPlayStop(true); else _skyPlayAt(1);
+  if (_skyPlayDir === 1) _skyPlayStop(true); else _skyPlayStart(1);
 });
-_skyFFBtn.addEventListener('click', () => {
-  if (_skyPlaySpeed === 2) _skyPlayStop(true); else _skyPlayAt(2);
+_skyBackBtn.addEventListener('click', () => {
+  if (_skyPlayDir === -1) _skyPlayStop(true); else _skyPlayStart(-1);
 });
 // Sky labels toggle
 let _skyLabelsOn = false;
@@ -1438,12 +1514,24 @@ let _skyLabelsOn = false;
     const svgEl = document.querySelector('.sky-chart-svg');
     if (svgEl) svgEl.classList.toggle('sky-labels-off', !_skyLabelsOn);
   };
-  btn.addEventListener('click', () => { _skyLabelsOn = !_skyLabelsOn; apply(); });
+  btn.addEventListener('click', () => { _skyLabelsOn = !_skyLabelsOn; apply(); _showT2Toast('sky_labels'); });
+  apply();
+}
+// Sky moon toggle
+{ const btn = document.getElementById('sky-moon-btn');
+  const apply = () => { btn.classList.toggle('active', state.skyShowMoon); };
+  btn.addEventListener('click', () => {
+    state.skyShowMoon = !state.skyShowMoon;
+    _saveState();
+    apply();
+    _showT2Toast('moon_label');
+    if (state.mode === 'sky') renderSky();
+  });
   apply();
 }
 
-// (date-input change handler is above)
-document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', () => {
+// Mode and calendar type / span button handlers
+document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.addEventListener('click', () => {
   _skyPlayStop();
   if (selectedDate) {
     scrollToSelectedAfterRender = true;
@@ -1451,58 +1539,39 @@ document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', 
     const sh = document.documentElement.scrollHeight - window.innerHeight;
     restoreScrollFracAfterRender = sh > 0 ? window.scrollY / sh : 0;
   }
-  state.viewMode = b.dataset.view;
-  _skyReturnState = null; // clear back state when switching views directly
+  state.mode = b.dataset.mode;
+  _skyReturnState = null;
   refresh();
+  _showT2Toast(b.dataset.mode === 'sky' ? 'view_sky' : 'mode_calendar');
+}));
+
+document.querySelectorAll('.span-btn[data-span]').forEach(b => b.addEventListener('click', () => {
+  if (selectedDate) {
+    scrollToSelectedAfterRender = true;
+  } else {
+    const sh = document.documentElement.scrollHeight - window.innerHeight;
+    restoreScrollFracAfterRender = sh > 0 ? window.scrollY / sh : 0;
+  }
+  state.calendarSpan = b.dataset.span;
+  _skyReturnState = null;
+  refresh();
+  _showT2Toast(b.dataset.span === 'month' ? 'span_month' : 'view_week');
 }));
 document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => {
   state.theme = b.dataset.theme;
-  applyTheme(state.theme, state.variant);
+  _applyThemeSwitch(state.theme);
   document.querySelectorAll('.theme-btn').forEach(b2 => b2.classList.toggle('active', b2.dataset.theme === state.theme));
-  buildSwatches(); // swatch colors change per theme
-  if (currentFY) document.querySelectorAll('.year-hero-wrap').forEach(w => {
-    w.innerHTML = getHeaderSVG(currentFY.yearAnimal, state.theme);
-  });
-  document.querySelectorAll('.greg-month-header').forEach((hdr, i) => {
-    const existing = hdr.querySelector('.month-plant-svg');
-    if (state.theme === 'flower') {
-      if (!existing) {
-        const svg = getGregMonthPlantSVG(i);
-        if (svg) hdr.insertAdjacentHTML('afterbegin', svg);
-      }
-    } else {
-      if (existing) existing.remove();
-    }
-  });
-  document.querySelectorAll('.fairy-moon-header').forEach(hdr => {
-    const existing = hdr.querySelector('.moon-plant-svg');
-    if (state.theme === 'flower') {
-      if (!existing) {
-        const moonName = hdr.querySelector('.moon-name')?.textContent;
-        const svg = getMoonPlantSVG(moonName);
-        if (svg) hdr.insertAdjacentHTML('afterbegin', svg);
-      }
-    } else {
-      if (existing) existing.remove();
-    }
-  });
-  document.querySelectorAll('.fairy-moon').forEach(sec => {
-    const existingIcon = sec.querySelector('.fairy-moon-icon');
-    if (state.theme === 'fairy') {
-      if (!existingIcon) {
-        const moonName = sec.querySelector('.moon-name')?.textContent;
-        const emptyCells = [...sec.querySelectorAll('td.empty-cell')];
-        const firstTbodyCell = sec.querySelector('tbody tr:first-child td:first-child');
-        const startsWithEmpty = firstTbodyCell && firstTbodyCell.classList.contains('empty-cell');
-        const target = startsWithEmpty ? emptyCells[0] : emptyCells[emptyCells.length-1];
-        if (target) target.innerHTML = getFairyMoonSVG(moonName);
-      }
-    } else {
-      if (existingIcon) existingIcon.remove();
-    }
-  });
+  buildSwatches();
   _saveState();
 }));
+{ const btn = document.getElementById('scheme-toggle');
+  btn.addEventListener('click', () => {
+    state.colorScheme = state.colorScheme === 'dark' ? 'light' : 'dark';
+    applyVariant(state.theme, state.variant, state.colorScheme);
+    buildSwatches();
+    _saveState();
+  });
+}
 { const btn = document.getElementById('toggle-mythic-week');
   const update = () => btn.classList.toggle('active', state.weekNames === 'myth');
   btn.addEventListener('click', () => {
@@ -1511,19 +1580,35 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
     state.weekNames = state.weekNames === 'myth' ? 'std' : 'myth';
     _saveState();
     update();
-    showToast(state.weekNames === 'myth' ? t('mythic_on') : t('mythic_off'));
+    showToast(state.weekNames === 'myth' ? t('mythic_on') : t('mythic_off'),
+              state.weekNames === 'myth' ? t2('mythic_on') : t2('mythic_off'));
     refresh();
   });
   update();
 }
-function showToast(msg) {
+function _initVersion() {
+  // Store version for all users (new and existing). Banner/redirect logic lives in v1.html when v2 ships.
+  if (localStorage.getItem(STORAGE.VERSION) === null) {
+    try { localStorage.setItem(STORAGE.VERSION, String(APP_VERSION)); } catch(_) {}
+  }
+}
+
+function showToast(msg, msg2) {
+  const isMobile = window.matchMedia('(hover: none)').matches;
+  const text = (msg2 && isMobile) ? `${msg} \u00b7 ${msg2}` : msg;
   let t = document.getElementById('toast');
   if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg;
+  t.textContent = text;
   t.classList.remove('toast-hide');
   t.classList.add('toast-show');
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-hide'); }, 1800);
+}
+function _showT2Toast(key) {
+  if (!state.language2) return;
+  if (!window.matchMedia('(hover: none)').matches) return;
+  const v = t2(key);
+  if (v) showToast(v);
 }
 
 function _saveState() {
@@ -1540,7 +1625,8 @@ function _wireToggle(id, stateKey, keyOn, keyOff) {
     state[stateKey] = !state[stateKey];
     _saveState();
     update();
-    showToast(state[stateKey] ? t(keyOn) : t(keyOff));
+    showToast(state[stateKey] ? t(keyOn) : t(keyOff),
+              state[stateKey] ? t2(keyOn) : t2(keyOff));
     refresh();
   });
   update();
@@ -1549,17 +1635,6 @@ _wireToggle('toggle-holidays',   'showHolidays',   'holidays_on',   'holidays_of
 _wireToggle('toggle-meteors',    'showMeteors',    'meteors_on',    'meteors_off');
 _wireToggle('toggle-comets',     'showComets',     'comets_on',     'comets_off');
 _wireToggle('toggle-birthdays',  'showBirthdays',  'birthdays_on',  'birthdays_off');
-{ const btn = document.getElementById('toggle-other-date');
-  const root = document.getElementById('calendar-root');
-  const apply = () => { root.classList.toggle('hide-other-date', !state.showOtherDate); btn.classList.toggle('active', state.showOtherDate); };
-  btn.addEventListener('click', () => {
-    state.showOtherDate = !state.showOtherDate;
-    _saveState();
-    apply();
-    showToast(state.showOtherDate ? t('otherdate_on') : t('otherdate_off'));
-  });
-  apply();
-}
 document.addEventListener('keydown', e => {
   if (e.target.tagName==='INPUT') return;
   if (e.key==='ArrowLeft')  { state.holYear--; if (_skyViewDate) _skyViewDate = _skyViewDate.replace(/^\d{4}/, String(state.holYear - 10000)); refresh(); }
@@ -1595,6 +1670,7 @@ initModal();
 initHelpModal();
 initSettingsModal();
 initLanguageModal();
+initCalendarModal();
 document.getElementById('help-btn').addEventListener('click', showHelp);
 document.getElementById('settings-btn').addEventListener('click', showSettings);
 document.getElementById('print-btn').addEventListener('click', () => {
@@ -1614,7 +1690,7 @@ document.getElementById('print-btn').addEventListener('click', () => {
     `</div>`;
   const ph = document.createElement('div');
   ph.id = 'print-help';
-  ph.innerHTML = HELP_HTML;
+  ph.innerHTML = getHelpHtml();
   document.body.insertBefore(pt, document.body.firstChild);
   document.body.appendChild(ph);
   window.print();
@@ -1638,6 +1714,7 @@ _toolbarToggle.addEventListener('click', () => {
 });
 
 refresh();
+_initVersion();
 
 // Check for birthday share link in URL hash
 (function() {
