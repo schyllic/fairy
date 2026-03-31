@@ -74,9 +74,6 @@ body {
   padding-top: 0.5rem;
   margin-top: 0.4rem;
   border-top: 1px solid var(--color-border);
-  background: var(--color-surface);
-  background-image: var(--pattern-bg);
-  background-size: var(--pattern-bg-size, 60px 60px);
   margin-left: -1rem;
   margin-right: -1rem;
   padding-left: 1rem;
@@ -171,7 +168,6 @@ body {
 #toast.toast-show { opacity: 1; }
 #toast.toast-hide { opacity: 0; }
 
-.settings-version-row { font-size: 0.8rem; color: var(--color-text-secondary); padding: 0.25rem 0; }
 
 /* Color variant swatches */
 .variant-btn {
@@ -306,6 +302,10 @@ body {
   background-color: var(--color-bg-alt) !important;
   background-image: var(--pattern-bg) !important;
   background-size: var(--pattern-bg-size, 60px 60px) !important;
+}
+:root:not([data-color-scheme="dark"]) .fairy-icon-cell {
+  background-color: #fff !important;
+  background-image: none !important;
 }
 .fairy-moon-icon {
   display: block;

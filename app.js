@@ -1,13 +1,10 @@
 // ═══ Fairy Calendar — app.js ═══
 
-const APP_VERSION = 1;
-
 const STORAGE = {
   STATE:     'fairy-cal-state',
   BIRTHDAYS: 'fairy-cal-birthdays',
   OBSERVER:  'fairy-cal-observer',
   TOOLBAR:   'fairy-cal-toolbar-open',
-  VERSION:   'fairy-cal-version',
 };
 
 let currentFY    = null;
@@ -243,10 +240,6 @@ function initSettingsModal() {
           `<input type="file" id="bday-import-file-input" accept=".json" style="display:none">` +
         `</div>` +
         `<div id="birthday-list"></div>` +
-        `<hr class="settings-divider">` +
-        `<div class="settings-version-row">` +
-          `<span id="settings-version-label"></span>` +
-        `</div>` +
       `</div>` +
     `</div>`;
   document.body.appendChild(modal);
@@ -356,7 +349,6 @@ function showSettings() {
   document.getElementById('bday-name').placeholder = t('name_ph');
   document.getElementById('bday-day').placeholder  = t('day_ph');
   _renderBirthdayList();
-  document.getElementById('settings-version-label').textContent = `Version ${APP_VERSION}`;
   document.getElementById('settings-modal').removeAttribute('hidden');
 }
 
@@ -1361,9 +1353,9 @@ function _applyThemeSwitch(themeName) {
         const firstTbodyCell = sec.querySelector('tbody tr:first-child td:first-child');
         const startsWithEmpty = firstTbodyCell && firstTbodyCell.classList.contains('empty-cell');
         const target = startsWithEmpty ? emptyCells[0] : emptyCells[emptyCells.length-1];
-        if (target) target.innerHTML = getFairyMoonSVG(moonName);
+        if (target) { target.innerHTML = getFairyMoonSVG(moonName); target.classList.add('fairy-icon-cell'); }
       }
-    } else { if (existingIcon) existingIcon.remove(); }
+    } else { if (existingIcon) { existingIcon.closest('td')?.classList.remove('fairy-icon-cell'); existingIcon.remove(); } }
   });
 }
 
@@ -1637,12 +1629,6 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
   });
   update();
 }
-function _initVersion() {
-  // Store version for all users (new and existing). Banner/redirect logic lives in v1.html when v2 ships.
-  if (localStorage.getItem(STORAGE.VERSION) === null) {
-    try { localStorage.setItem(STORAGE.VERSION, String(APP_VERSION)); } catch(_) {}
-  }
-}
 
 function showToast(msg, msg2) {
   const isMobile = window.matchMedia('(hover: none)').matches;
@@ -1771,7 +1757,6 @@ _toolbarToggle.addEventListener('click', () => {
 });
 
 refresh();
-_initVersion();
 
 // Check for birthday share link in URL hash
 (function() {

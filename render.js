@@ -244,7 +244,7 @@ function renderFairy(fy) {
     const tbody = document.createElement('tbody');
     let row = document.createElement('tr'), col=0;
     const firstWd = moon.days[0].fairyWeekdayIndex;
-    for (let i=0;i<firstWd;i++) { const ec=el('td','fairy-cell empty-cell'); if(state.theme==='fairy'&&i===0) ec.innerHTML=getFairyMoonSVG(moon.name); row.appendChild(ec); col++; }
+    for (let i=0;i<firstWd;i++) { const ec=el('td','fairy-cell empty-cell'); if(state.theme==='fairy'&&i===0) { ec.innerHTML=getFairyMoonSVG(moon.name); ec.classList.add('fairy-icon-cell'); } row.appendChild(ec); col++; }
 
     for (const fd of moon.days) {
       if (col===7) { tbody.appendChild(row); row=document.createElement('tr'); col=0; }
@@ -266,7 +266,7 @@ function renderFairy(fy) {
     }
     const trailingCells=[];
     while(col>0&&col<7){const ec=el('td','fairy-cell empty-cell');trailingCells.push(ec);row.appendChild(ec);col++;}
-    if(state.theme==='fairy'&&firstWd===0&&trailingCells.length>0) trailingCells[trailingCells.length-1].innerHTML=getFairyMoonSVG(moon.name);
+    if(state.theme==='fairy'&&firstWd===0&&trailingCells.length>0) { const tc=trailingCells[trailingCells.length-1]; tc.innerHTML=getFairyMoonSVG(moon.name); tc.classList.add('fairy-icon-cell'); }
     if(col>0) tbody.appendChild(row);
     tbl.appendChild(tbody); sec.appendChild(tbl); root.appendChild(sec);
   }
