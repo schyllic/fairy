@@ -1384,7 +1384,7 @@ function refresh() {
   document.querySelectorAll('.mode-btn[data-mode]').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === state.mode);
     if (b.dataset.mode === 'sky') { b.textContent = t('view_sky'); _tip2(b, 'view_sky'); }
-    else if (b.dataset.mode === 'calendar') { b.textContent = t('mode_calendar'); _tip2(b, 'mode_calendar'); }
+    else if (b.dataset.mode === 'calendar') { b.innerHTML = `<span class="label-long">${t('mode_calendar')}</span><span class="label-short">${t('mode_calendar_short')}</span>`; _tip2(b, 'mode_calendar'); }
   });
   // Calendar span buttons
   document.querySelectorAll('.span-btn[data-span]').forEach(b => {

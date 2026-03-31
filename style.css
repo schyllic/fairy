@@ -114,9 +114,18 @@ body {
 /* Sky inline controls: visibility managed by JS hidden attribute */
 #sky-inline-controls { display: flex; gap: 0.25rem; align-items: center; }
 #sky-inline-controls[hidden] { display: none; }
+.label-short { display: none; }
 @media (max-width: 600px) {
   /* On mobile, sky toggles wrap to their own row */
   #sky-inline-controls { order: 99; flex-basis: 100%; justify-content: center; padding: 0.15rem 0; }
+  /* Compact toolbar to fit one row */
+  #toolbar { padding: 0.4rem 0.5rem; }
+  #toolbar-top { gap: 0.3rem 0.4rem; }
+  #toolbar .btn { padding: 0.15rem 0.4rem; }
+  #date-input { width: 6.5rem; }
+  #toolbar-moon { display: none; }
+  .label-long { display: none; }
+  .label-short { display: inline; }
 }
 
 /* Buttons base */
