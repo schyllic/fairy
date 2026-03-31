@@ -1,7 +1,30 @@
 // ═══ Fairy Calendar — render.js ═══
 
 function wdAbbr(wd) {
-  return wd.endsWith('day') ? wd.slice(0, -3) : wd.slice(0, 3);
+  if (wd.endsWith('day'))   return wd.slice(0, -3);   // English
+  if (wd.endsWith('दिनम्')) return wd.slice(0, -5);  // Sanskrit myth suffix
+  if (wd.endsWith('वारः'))  return wd.slice(0, -4);  // Sanskrit std suffix
+  const parts = wd.trim().split(/\s+/);
+  if (parts.length > 1) return parts[parts.length - 1].slice(0, 3); // multi-word: last word
+  return wd.slice(0, 3);
+}
+
+function _iroquoisName(idx) {
+  const im = IROQUOIS_MONTHS[idx];
+  if (!im) return '';
+  const lang = (typeof state !== 'undefined') ? state.language : 'en';
+  if (lang !== 'en' && IROQUOIS_MONTHS_I18N && IROQUOIS_MONTHS_I18N[lang] && IROQUOIS_MONTHS_I18N[lang][idx])
+    return IROQUOIS_MONTHS_I18N[lang][idx];
+  return im.en;
+}
+
+function _cherokeeName(idx) {
+  const cm = CHEROKEE_MONTHS[idx];
+  if (!cm) return '';
+  const lang = (typeof state !== 'undefined') ? state.language : 'en';
+  if (lang !== 'en' && CHEROKEE_MONTHS_I18N && CHEROKEE_MONTHS_I18N[lang] && CHEROKEE_MONTHS_I18N[lang][idx])
+    return CHEROKEE_MONTHS_I18N[lang][idx];
+  return cm.en;
 }
 
 // GREG_MONTH_NAMES kept for backward compat; use getGregMonths() for translated output
@@ -66,12 +89,43 @@ function _hebrewDateStr(date) {
   return '';
 }
 
+function _cherokeeMonthStr(gregDate) {
+  const ds = utcDateStr(gregDate);
+  const fd = (currentFY && currentFY.dayMap.get(ds));
+  if (!fd) return '';
+  const moonIdx = currentFY.moons.findIndex(m => m.name === fd.fairyMonth);
+  if (moonIdx < 0) return '';
+  return CHEROKEE_MONTHS[moonIdx] ? `${_cherokeeName(moonIdx)} ${fd.fairyDay}` : '';
+}
+
+function _iroquoisMonthStr(gregDate) {
+  const ds = utcDateStr(gregDate);
+  const fd = (currentFY && currentFY.dayMap.get(ds));
+  if (!fd) return '';
+  const moonIdx = currentFY.moons.findIndex(m => m.name === fd.fairyMonth);
+  if (moonIdx < 0) return '';
+  return IROQUOIS_MONTHS[moonIdx] ? `${_iroquoisName(moonIdx)} ${fd.fairyDay}` : '';
+}
+
+function _hinduMonthStr(gregDate) {
+  const ds = utcDateStr(gregDate);
+  const fd = (currentFY && currentFY.dayMap.get(ds));
+  if (!fd) return '';
+  const moonIdx = currentFY.moons.findIndex(m => m.name === fd.fairyMonth);
+  if (moonIdx < 0) return '';
+  const hm = HINDU_MONTHS[moonIdx];
+  return hm ? `${hm.dev} ${fd.fairyDay}` : '';
+}
+
 function _secondaryStr(fd, primaryType) {
   const sec = state.calendarType2;
   if (!sec || sec === primaryType) return null;
-  if (sec === 'greg')   return fmtGreg(fd.gregDate);
-  if (sec === 'fairy')  return `${tMoonShort(fd.fairyMonth)} ${fd.fairyDay}`;
-  if (sec === 'hebrew') return _hebrewDateStr(fd.gregDate);
+  if (sec === 'greg')     return fmtGreg(fd.gregDate);
+  if (sec === 'fairy')    return `${tMoonShort(fd.fairyMonth)} ${fd.fairyDay}`;
+  if (sec === 'hebrew')   return _hebrewDateStr(fd.gregDate);
+  if (sec === 'cherokee') return _cherokeeMonthStr(fd.gregDate);
+  if (sec === 'iroquois') return _iroquoisMonthStr(fd.gregDate);
+  if (sec === 'hindu')    return _hinduMonthStr(fd.gregDate);
   return null;
 }
 
@@ -101,7 +155,7 @@ function renderGreg(fy) {
     mhdr.innerHTML = plantIcon + `<span>${gm[m]}</span><button class="info-btn" data-from="${mFromStr}" data-label="${gm[m]} ${fy.gregYear}">ⓘ</button>`;
     mon.appendChild(mhdr);
     const wr = el('div','greg-weekrow');
-    getWeekdays().forEach((wd, wi) => { const d=el('div','greg-wday',wdAbbr(wd)); const _w2=tWeekday2(wi); if(_w2)d.title=_w2; wr.appendChild(d); });
+    getWeekdays().forEach((wd, wi) => { const d=el('div','greg-wday',wdAbbr(tWeekday(wi))); d.dataset.full=tWeekday(wi); const _w2=tWeekday2(wi); if(_w2)d.title=_w2; wr.appendChild(d); });
     mon.appendChild(wr);
     const dg = el('div','greg-days');
     const startDow = (new Date(Date.UTC(fy.gregYear,m,1)).getUTCDay() + 6) % 7;
@@ -178,8 +232,9 @@ function renderFairy(fy) {
     const thead = document.createElement('thead');
     const thr = document.createElement('tr');
     for (const [wi, wd] of getWeekdays().entries()) {
-      const th = el('th', wi>=5?'weekend-col':null, wdAbbr(wd));
+      const th = el('th', wi>=5?'weekend-col':null, wdAbbr(tWeekday(wi)));
       th.dataset.short = wd.slice(0,3);
+      th.dataset.full  = tWeekday(wi);
       const _wd2 = tWeekday2(wi);
       if (_wd2) th.title = _wd2;
       thr.appendChild(th);
@@ -217,6 +272,212 @@ function renderFairy(fy) {
   }
 }
 
+// ─── Cherokee View ────────────────────────────────────────────────
+
+function renderCherokee(fy) {
+  const root = document.getElementById('calendar-root');
+  root.innerHTML = '';
+  root.className = 'view-fairy';
+
+  const gregYear = fy.holYear - 10000;
+  const yt = el('div', 'fairy-year-title');
+  yt.innerHTML =
+    `<span class="year-animal">ᏣᎳᎩ ᎧᏃᎮᏓ</span>` +
+    ` <span class="year-number">${gregYear}</span>` +
+    (fy.hasBluemoon ? ` <span class="bluemoon-badge">13 Moons</span>` : '');
+  root.appendChild(yt);
+
+  for (const [i, moon] of fy.moons.entries()) {
+    const cm = CHEROKEE_MONTHS[i] || CHEROKEE_MONTHS[12];
+    const sec = el('section', 'fairy-moon');
+
+    const hdr = el('div', 'fairy-moon-header');
+    hdr.innerHTML =
+      `<span class="moon-name">${_cherokeeName(i)}</span>` +
+      `<span class="moon-year-tag">${cm.syl} \u00b7 ${cm.rom}</span>` +
+      `<button class="info-btn" data-from="${utcDateStr(moon.startDate)}" data-label="${cm.en} \u00b7 ${cm.rom} \u00b7 ${gregYear}">ⓘ</button>` +
+      `<span class="moon-greg-range">${fmtGreg(moon.startDate)} \u2013 ${fmtGreg(moon.endDate)}</span>`;
+    sec.appendChild(hdr);
+
+    const tbl = el('table', 'fairy-table');
+    const thead = document.createElement('thead');
+    const thr = document.createElement('tr');
+    for (const [wi, wd] of getWeekdays().entries()) {
+      const th = el('th', wi >= 5 ? 'weekend-col' : null, wdAbbr(tWeekday(wi)));
+      th.dataset.short = wd.slice(0, 3);
+      th.dataset.full  = tWeekday(wi);
+      const _wd2 = tWeekday2(wi);
+      if (_wd2) th.title = _wd2;
+      thr.appendChild(th);
+    }
+    thead.appendChild(thr); tbl.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    let row = document.createElement('tr'), col = 0;
+    const firstWd = moon.days[0].fairyWeekdayIndex;
+    for (let j = 0; j < firstWd; j++) { row.appendChild(el('td', 'fairy-cell empty-cell')); col++; }
+
+    for (const fd of moon.days) {
+      if (col === 7) { tbody.appendChild(row); row = document.createElement('tr'); col = 0; }
+      const td = el('td', 'fairy-cell');
+      const fdDateStr = utcDateStr(fd.gregDate);
+      if (fd.isToday) td.classList.add('is-today');
+      if (fdDateStr === selectedDate) td.classList.add('is-selected');
+      if (fd.fairyWeekdayIndex >= 5) td.classList.add('weekend-col');
+      if (fd.solarEvent) td.classList.add('solar-cell');
+      if (state.showHolidays && fd.holiday) td.classList.add('holiday-cell');
+      td.dataset.date = fdDateStr;
+      td.appendChild(el('span', 'fairy-daynum', String(fd.fairyDay)));
+      if (fd.isToday) td.appendChild(el('span', 'today-label', t('today')));
+      { const _sec = _secondaryStr(fd, 'cherokee'); if (_sec) td.appendChild(el('span', 'fairy-greg-date', _sec)); }
+      { const ib = el('button', 'info-btn today-info-btn'); ib.dataset.from = fdDateStr; ib.dataset.label = _dayLabel(fdDateStr, currentFY); ib.textContent = 'ⓘ'; if (!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
+      const ic = moonIcons(fd); if (ic) { const ig = el('span', 'icon-group'); ig.innerHTML = ic; td.appendChild(ig); }
+      row.appendChild(td); col++;
+    }
+    while (col > 0 && col < 7) { row.appendChild(el('td', 'fairy-cell empty-cell')); col++; }
+    if (col > 0) tbody.appendChild(row);
+    tbl.appendChild(tbody); sec.appendChild(tbl); root.appendChild(sec);
+  }
+}
+
+// ─── Iroquois (Haudenosaunee) View ───────────────────────────────
+
+function renderIroquois(fy) {
+  const root = document.getElementById('calendar-root');
+  root.innerHTML = '';
+  root.className = 'view-fairy';
+
+  const gregYear = fy.holYear - 10000;
+  const yt = el('div', 'fairy-year-title');
+  yt.innerHTML =
+    `<span class="year-animal">Haudenosaunee</span>` +
+    ` <span class="year-number">${gregYear}</span>` +
+    (fy.hasBluemoon ? ` <span class="bluemoon-badge">13 Moons</span>` : '');
+  root.appendChild(yt);
+
+  for (const [i, moon] of fy.moons.entries()) {
+    const im = IROQUOIS_MONTHS[i] || IROQUOIS_MONTHS[12];
+    const sec = el('section', 'fairy-moon');
+
+    const hdr = el('div', 'fairy-moon-header');
+    hdr.innerHTML =
+      `<span class="moon-name">${_iroquoisName(i)}</span>` +
+      (im.native ? `<span class="moon-year-tag">${im.native}</span>` : `<span class="moon-year-tag">${gregYear}</span>`) +
+      `<button class="info-btn" data-from="${utcDateStr(moon.startDate)}" data-label="${im.en} \u00b7 ${gregYear}">ⓘ</button>` +
+      `<span class="moon-greg-range">${fmtGreg(moon.startDate)} \u2013 ${fmtGreg(moon.endDate)}</span>`;
+    sec.appendChild(hdr);
+
+    const tbl = el('table', 'fairy-table');
+    const thead = document.createElement('thead');
+    const thr = document.createElement('tr');
+    for (const [wi, wd] of getWeekdays().entries()) {
+      const th = el('th', wi >= 5 ? 'weekend-col' : null, wdAbbr(tWeekday(wi)));
+      th.dataset.short = wd.slice(0, 3);
+      th.dataset.full  = tWeekday(wi);
+      const _wd2 = tWeekday2(wi);
+      if (_wd2) th.title = _wd2;
+      thr.appendChild(th);
+    }
+    thead.appendChild(thr); tbl.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    let row = document.createElement('tr'), col = 0;
+    const firstWd = moon.days[0].fairyWeekdayIndex;
+    for (let j = 0; j < firstWd; j++) { row.appendChild(el('td', 'fairy-cell empty-cell')); col++; }
+
+    for (const fd of moon.days) {
+      if (col === 7) { tbody.appendChild(row); row = document.createElement('tr'); col = 0; }
+      const td = el('td', 'fairy-cell');
+      const fdDateStr = utcDateStr(fd.gregDate);
+      if (fd.isToday) td.classList.add('is-today');
+      if (fdDateStr === selectedDate) td.classList.add('is-selected');
+      if (fd.fairyWeekdayIndex >= 5) td.classList.add('weekend-col');
+      if (fd.solarEvent) td.classList.add('solar-cell');
+      if (state.showHolidays && fd.holiday) td.classList.add('holiday-cell');
+      td.dataset.date = fdDateStr;
+      td.appendChild(el('span', 'fairy-daynum', String(fd.fairyDay)));
+      if (fd.isToday) td.appendChild(el('span', 'today-label', t('today')));
+      { const _sec = _secondaryStr(fd, 'iroquois'); if (_sec) td.appendChild(el('span', 'fairy-greg-date', _sec)); }
+      { const ib = el('button', 'info-btn today-info-btn'); ib.dataset.from = fdDateStr; ib.dataset.label = _dayLabel(fdDateStr, currentFY); ib.textContent = 'ⓘ'; if (!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
+      const ic = moonIcons(fd); if (ic) { const ig = el('span', 'icon-group'); ig.innerHTML = ic; td.appendChild(ig); }
+      row.appendChild(td); col++;
+    }
+    while (col > 0 && col < 7) { row.appendChild(el('td', 'fairy-cell empty-cell')); col++; }
+    if (col > 0) tbody.appendChild(row);
+    tbl.appendChild(tbody); sec.appendChild(tbl); root.appendChild(sec);
+  }
+}
+
+// ─── Hindu (Panchanga) View ───────────────────────────────────────
+
+function renderHindu(fy) {
+  const root = document.getElementById('calendar-root');
+  root.innerHTML = '';
+  root.className = 'view-fairy';
+
+  const gregYear = fy.holYear - 10000;
+  const vs = gregYear + 57; // Vikrama Samvat (from Chaitra onward; approximate)
+  const yt = el('div', 'fairy-year-title');
+  yt.innerHTML =
+    `<span class="year-animal">हिन्दू पञ्चाङ्ग</span>` +
+    ` <span class="year-number">VS\u00a0${vs}</span>` +
+    (fy.hasBluemoon ? ` <span class="bluemoon-badge">13 Moons</span>` : '');
+  root.appendChild(yt);
+
+  for (const [i, moon] of fy.moons.entries()) {
+    const hm = HINDU_MONTHS[i] || HINDU_MONTHS[12];
+    const isNewYear = (i === 3); // Chaitra = Vikrama Samvat new year
+    const sec = el('section', 'fairy-moon');
+
+    const hdr = el('div', 'fairy-moon-header');
+    hdr.innerHTML =
+      `<span class="moon-name">${hm.dev}</span>` +
+      `<span class="moon-year-tag">${hm.iast} \u00b7 ${hm.en}${isNewYear ? ' \u00b7 \u0928\u0935 \u0935\u0930\u094d\u0937' : ''}</span>` +
+      `<button class="info-btn" data-from="${utcDateStr(moon.startDate)}" data-label="${hm.en} \u00b7 ${hm.iast} \u00b7 VS\u00a0${vs}">ⓘ</button>` +
+      `<span class="moon-greg-range">${fmtGreg(moon.startDate)} \u2013 ${fmtGreg(moon.endDate)}</span>`;
+    sec.appendChild(hdr);
+
+    const tbl = el('table', 'fairy-table');
+    const thead = document.createElement('thead');
+    const thr = document.createElement('tr');
+    for (const [wi, wd] of getWeekdays().entries()) {
+      const th = el('th', wi >= 5 ? 'weekend-col' : null, wdAbbr(tWeekday(wi)));
+      th.dataset.short = wd.slice(0, 3);
+      th.dataset.full  = tWeekday(wi);
+      const _wd2 = tWeekday2(wi);
+      if (_wd2) th.title = _wd2;
+      thr.appendChild(th);
+    }
+    thead.appendChild(thr); tbl.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    let row = document.createElement('tr'), col = 0;
+    const firstWd = moon.days[0].fairyWeekdayIndex;
+    for (let j = 0; j < firstWd; j++) { row.appendChild(el('td', 'fairy-cell empty-cell')); col++; }
+
+    for (const fd of moon.days) {
+      if (col === 7) { tbody.appendChild(row); row = document.createElement('tr'); col = 0; }
+      const td = el('td', 'fairy-cell');
+      const fdDateStr = utcDateStr(fd.gregDate);
+      if (fd.isToday) td.classList.add('is-today');
+      if (fdDateStr === selectedDate) td.classList.add('is-selected');
+      if (fd.fairyWeekdayIndex >= 5) td.classList.add('weekend-col');
+      if (fd.solarEvent) td.classList.add('solar-cell');
+      if (state.showHolidays && fd.holiday) td.classList.add('holiday-cell');
+      td.dataset.date = fdDateStr;
+      td.appendChild(el('span', 'fairy-daynum', String(fd.fairyDay)));
+      if (fd.isToday) td.appendChild(el('span', 'today-label', t('today')));
+      { const _sec = _secondaryStr(fd, 'hindu'); if (_sec) td.appendChild(el('span', 'fairy-greg-date', _sec)); }
+      { const ib = el('button', 'info-btn today-info-btn'); ib.dataset.from = fdDateStr; ib.dataset.label = _dayLabel(fdDateStr, currentFY); ib.textContent = 'ⓘ'; if (!fd.isToday) ib.classList.add('day-info-btn'); td.appendChild(ib); }
+      const ic = moonIcons(fd); if (ic) { const ig = el('span', 'icon-group'); ig.innerHTML = ic; td.appendChild(ig); }
+      row.appendChild(td); col++;
+    }
+    while (col > 0 && col < 7) { row.appendChild(el('td', 'fairy-cell empty-cell')); col++; }
+    if (col > 0) tbody.appendChild(row);
+    tbl.appendChild(tbody); sec.appendChild(tbl); root.appendChild(sec);
+  }
+}
+
 function renderWeek(fy) {
   const root = document.getElementById('calendar-root');
   root.innerHTML = '';
@@ -232,8 +493,9 @@ function renderWeek(fy) {
   const thead = document.createElement('thead');
   const thr = document.createElement('tr');
   for (const [wi, wd] of getWeekdays().entries()) {
-    const th = el('th', wi>=5?'weekend-col':null, wd);
+    const th = el('th', wi>=5?'weekend-col':null, tWeekday(wi));
     th.dataset.short = wd.slice(0,3);
+    th.dataset.full  = tWeekday(wi);
     thr.appendChild(th);
   }
   thead.appendChild(thr); tbl.appendChild(thead);
@@ -405,8 +667,17 @@ function renderSky(resetZoom = false) {
   moonParts.push(`${moonIllum}%`);
 
   // Planet list + constellation list — always rendered at fixed height to prevent layout jump
-  const planetInfo = `<div class="sky-view-planets">${visPlans.length > 0 ? visPlans.map(p => `${PLANET_SYMBOLS[p.name]} ${p.name} (${p.elong}°)`).join(' · ') : ''}</div>`;
-  const conList = `<div class="sky-view-constellations">${constellations.length > 0 ? constellations.map(c => `<span class="sky-view-con" data-cname="${c.name}">${c.name}</span>`).join(' · ') : ''}</div>`;
+  const _cMap = { pawnee: SKIDI_PAWNEE, hindu: HINDU_SKY }[state.skyCulture] || null;
+  const _planetLabels = { pawnee: { Venus: 'Evening Star' }, hindu: HINDU_PLANET_NAMES }[state.skyCulture] || {};
+  const planetInfo = `<div class="sky-view-planets">${visPlans.length > 0 ? visPlans.map(p => {
+    const label = _planetLabels[p.name] || p.name;
+    return `${PLANET_SYMBOLS[p.name]} ${label} (${p.elong}°)`;
+  }).join(' · ') : ''}</div>`;
+  const _visConstellations = _cMap ? constellations.filter(c => _cMap[c.name]) : constellations;
+  const conList = `<div class="sky-view-constellations">${_visConstellations.length > 0 ? _visConstellations.map(c => {
+    const label = _cMap?.[c.name]?.name || c.name;
+    return `<span class="sky-view-con" data-cname="${c.name}">${label}</span>`;
+  }).join(' · ') : ''}</div>`;
 
   // Moon position + phase (omit if user toggled moon off)
   const moonPos = getMoonAltAz(skyDate);
@@ -516,7 +787,10 @@ function render(holYear, viewMode) {
       if      (viewMode==='greg')   renderGreg(fy);
       else if (viewMode==='fairy')  renderFairy(fy);
       else if (viewMode==='week')   renderWeek(fy);
-      else if (viewMode==='hebrew') renderHebrew(fy);
+      else if (viewMode==='hebrew')   renderHebrew(fy);
+      else if (viewMode==='cherokee') renderCherokee(fy);
+      else if (viewMode==='iroquois') renderIroquois(fy);
+      else if (viewMode==='hindu')    renderHindu(fy);
       if (scrollToTodayAfterRender) {
         scrollToTodayAfterRender = false;
         requestAnimationFrame(() => {

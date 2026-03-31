@@ -401,7 +401,7 @@ function getMoonPhaseSVG(illum, waxing, size) {
     + `<circle cx="${cx-r*0.08}" cy="${cy-r*0.45}" r="${r*0.06}" fill="#c8c0b0" opacity="0.3"/>`
     + `<circle cx="${cx+r*0.30}" cy="${cy+r*0.30}" r="${r*0.07}" fill="#c0b8a8" opacity="0.35"/>`
     + `<circle cx="${cx-r*0.35}" cy="${cy-r*0.35}" r="${r*0.05}" fill="#c0b8a8" opacity="0.3"/>`;
-  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" class="moon-phase-icon" aria-label="Moon phase">`
+  return `<svg viewBox="-1 -1 ${size+2} ${size+2}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" class="moon-phase-icon" aria-label="Moon phase">`
     + `<defs><clipPath id="${id}"><path d="${edge} ${terminator}"/></clipPath></defs>`
     + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${dark}"/>`
     + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${light}" clip-path="url(#${id})"/>`

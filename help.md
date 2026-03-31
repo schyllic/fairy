@@ -122,3 +122,127 @@ Many cultures have tracked time by the moon. The most widely used today is the *
 - **The week:** The Hebrew week counts numbered days ending in Sabbath. This calendar names the days for the Norse gods who already secretly inhabit the English weekday names.
 
 The **Islamic calendar** is purely lunar with no intercalation, drifting through all seasons over ~33 years. The **Chinese calendar** is lunisolar and adds leap months similarly to Hebrew. Both are old and rich — this calendar is simply a new one, built for a specific family, in a specific place, watching a specific sky.
+
+---
+
+## The Hindu Calendar (Panchanga)
+
+The Hindu calendar is one of the oldest continuous lunisolar calendars in the world, with roots in Vedic astronomical texts thousands of years old. This app follows the **Amanta** system — months run from new moon to new moon — aligned with the Drik Panchanga astronomical almanac.
+
+**Year and era:** The Hindu year begins in spring, at the new moon of **Chaitra**, near the vernal equinox. The era is the **Vikrama Samvat**: years count from 57 BCE, so 2026 CE corresponds to **VS 2083** (from Chaitra onward).
+
+**The twelve months:**
+
+| # | Sanskrit | IAST | Season | Notable festival |
+|---|---|---|---|---|
+| 1 | चैत्र | Caitra | Spring | New Year (Ugadi, Gudi Padwa, Vishu) |
+| 2 | वैशाख | Vaiśākha | Spring | Akshaya Tritiya |
+| 3 | ज्येष्ठ | Jyeṣṭha | Early summer | |
+| 4 | आषाढ | Āṣāḍha | Monsoon begins | Guru Purnima |
+| 5 | श्रावण | Śrāvaṇa | Monsoon | Raksha Bandhan; named for nakshatra Shravana |
+| 6 | भाद्रपद | Bhādrapada | Late monsoon | Ganesh Chaturthi |
+| 7 | आश्विन | Āśvina | Autumn | Navaratri, Dussehra |
+| 8 | कार्तिक | Kārtika | Autumn | Diwali |
+| 9 | मार्गशीर्ष | Mārgaśīrṣa | Early winter | Auspicious for worship |
+| 10 | पौष | Pauṣa | Winter | |
+| 11 | माघ | Māgha | Winter | Vasant Panchami |
+| 12 | फाल्गुन | Phālguna | Late winter | Holi |
+| +1 | अधिक मास | Adhika Māsa | varies | Leap month — see below |
+
+**Intercalation:** When a lunar month passes without the Sun crossing into a new zodiac sign (*sankranti*), that month has no solar anchor and is declared **Adhika Māsa** — the Extra Month, also called *Purushottama Māsa*. This happens roughly once every 2–3 years, following the actual astronomy rather than a fixed arithmetic schedule. The extra month is considered auspicious for spiritual practice but inauspicious for ceremonies and new endeavors — weddings and important events are deferred to the regular month that follows.
+
+**Nakshatras:** The Hindu calendar is inseparable from the 27 **nakshatras** — lunar mansions that mark the Moon's path through the sky. Each nakshatra spans roughly 13°20′ of the ecliptic; the Moon moves through one per day. The sky panel in **Jyotisha mode** labels constellations with nakshatra names, their presiding deities, and lore drawn from the Rig Veda and the Brihat Samhita.
+
+*Jyotisha* (ज्योतिष) — the Vedic science of light and time — is the tradition that unifies all of this: astronomy, mythology, and the measurement of sacred intervals.
+
+---
+
+## The Cherokee Calendar
+
+The Cherokee people (ᏣᎳᎩ, *Tsalagi*) have maintained a lunisolar calendar tied to the ecological rhythms of the southern Appalachians, the land where they lived for thousands of years before removal. The year begins with the first new moon after the winter solstice — the same anchor as this calendar.
+
+**The moons:**
+
+| # | ᏣᎳᎩ | Romanized | Meaning |
+|---|---|---|---|
+| 1 | ᎤᏃᎸᏔᎾ | Unolvtana | Snow Moon |
+| 2 | ᎧᎦᎵ | Kagali | Bony Moon |
+| 3 | ᎠᏅᏱ | Anvyi | Windy Moon |
+| 4 | ᎧᏬᏂ | Kawoni | Flower Moon |
+| 5 | ᎠᏂᏍᎬᏘ | Anisgvti | Planting Moon |
+| 6 | ᏕᎭᎷᏱ | Dehaluyi | Mulberry Moon |
+| 7 | ᎫᏰᏉᏂ | Guyequoni | Raccoon Moon |
+| 8 | ᎦᎶᏂ | Galoni | Corn Moon |
+| 9 | ᏚᎵᏍᏗ | Dulisdi | Nut Moon |
+| 10 | ᏚᏂᏃᏗ | Duninodi | Chestnut Moon |
+| 11 | ᏅᏓᏕᏆ | Nvdadequa | Trading Moon |
+| 12 | ᎥᏍᎩᏱ | Vsgiyi | Cold Moon |
+| 13 | ᏅᎩᏓᏥ | Nvgidatsi | Extra Moon |
+
+The Cherokee syllabary was created in the early 19th century by **Sequoyah** (ᏎᏉᏯ), a silversmith who had never been taught to read or write. He spent roughly twelve years developing the script entirely from his own observation — watching literate people and grasping the underlying concept of representing speech as marks. By 1825, the majority of Cherokees were literate in their own language, a feat without parallel in recorded history.
+
+---
+
+## The Haudenosaunee (Iroquois) Calendar
+
+The **Haudenosaunee** — the People of the Longhouse — organized their year entirely around a cycle of ceremonies, each bound to a specific moon and the seasonal work it brought. The confederacy united six nations: Mohawk, Oneida, Onondaga, Cayuga, Seneca, and Tuscarora. Their calendar begins with the first new moon after the winter solstice.
+
+**The ceremonial moons:**
+
+| # | Moon | Ceremony | Character |
+|---|---|---|---|
+| 1 | Midwinter Moon | **Midwinter Ceremony** | New Year and renewal; ~8 days of ritual |
+| 2 | Maple Moon | Maple Ceremony | First sap run; welcome to spring |
+| 3 | Thunder Moon | Thunder Dance | The Thunderers return; spring storms honored |
+| 4 | Planting Moon | Planting Ceremony | Blessing of seeds |
+| 5 | Strawberry Moon | Strawberry Ceremony | First fruits of the season |
+| 6 | Green Bean Moon | Green Bean Ceremony | Growing food celebrated |
+| 7 | Green Corn Moon | Green Corn Ceremony | Gratitude for maturing corn |
+| 8 | Harvest Moon | Harvest Ceremony | ~4 days; thanksgiving for abundance |
+| 9 | Hunting Moon | Giving Thanks Ceremony | Preparation for winter |
+| 10 | Resting Moon | Bush Dance | The quieter season |
+| 11 | Long Night Moon | Long Night Ceremony | Winter solstice honored |
+| 12 | Cold Moon | — | Deep winter |
+| 13 | Extra Moon | — | Intercalary; 13-moon years only |
+
+---
+
+## A Note on Native American Intercalation
+
+The Cherokee and Haudenosaunee calendars — like most Native American lunar calendars — do not insert leap months by fixed arithmetic. The decision to add an extra moon was traditionally made by **ceremonial leaders and elders** when observed drift between the moon and the season threatened to move a sacred ceremony into the wrong time of year.
+
+This is a fundamentally different philosophy from the scheduled arithmetic of the Hebrew calendar or the astronomical trigger used by this calendar. The month was not added because a formula required it — it was added because a ceremony required it.
+
+**Examples of when a moon would be inserted:**
+
+- The **Green Corn Ceremony** is sacred to the moment when the new crop first becomes ready to eat — an act of profound thanksgiving that cannot happen before the corn is actually ripe. If the moons had run fast and Green Corn Moon arrived while the stalks were still forming, elders might add an extra moon and let the season catch up. To hold the ceremony early would be hollow; the ceremony names the moment, not the other way around.
+
+- The **Midwinter Ceremony** marks the true turning of the year in deep cold. If the moons had drifted so that Midwinter arrived before the ground had frozen and the longest nights had settled in, an extra moon could be inserted to preserve the ceremony's meaning. Midwinter held in the wrong darkness is not Midwinter.
+
+- The **Strawberry Ceremony** celebrates the first wild strawberries. If Strawberry Moon came while the hillsides were still bare, the calendar — not the strawberries — needed to change. The ceremony follows the land, not the count.
+
+This approach places the living relationship between ceremony and season above calendar consistency. The calendar is a tool in service of the people and the land; when the tool drifts, the tool is adjusted.
+
+**A note on sources and accuracy:** The moon names and ceremonial associations here are drawn from published sources and from the nations' own educational materials. Native American calendrical traditions are living practices that vary by nation, community, and generation — the representations here are respectful approximations, not authoritative accounts. The 13th-month names in particular (Nvgidatsi for Cherokee) require verification from community cultural authorities. If you are Haudenosaunee, Cherokee, or a member of a related nation, the traditions of your own elders and knowledge-keepers take precedence over anything written here.
+
+---
+
+## Sky Cultures in the Night Sky Panel
+
+The sky view can overlay two cultural lenses on the same physical sky. Toggle them from the toolbar in sky mode.
+
+### Skidi Pawnee Sky Culture
+
+The **Skidi Pawnee** were a confederacy of villages on the Great Plains (present-day Nebraska and Kansas) whose cosmology was more astronomically elaborate than almost any other Plains culture. Their villages were laid out to mirror specific star patterns; their sacred bundle system was tied to the stars; and their ceremonial calendar was regulated not by months but by the appearance of particular stars at dusk and dawn.
+
+The Skidi recognized the **Evening Star** (Venus in the west) as the mother of all life and the **Morning Star** (Mars) as her husband and the force of creation. Every spring the Morning Star ceremony marked the beginning of the planting cycle. The star **Canopus** (south of Scorpius, visible on the southern horizon) was especially sacred — one of the few stars bright enough to watch rise in the south.
+
+Their star knowledge was encoded in star charts painted on tanned elk and buffalo hide — some of the oldest surviving astronomical documents from North America. The **Pawnee** toggle labels the sky with Skidi star names and lore, giving the same stars their Great Plains names.
+
+### Jyotisha (Hindu) Sky Culture
+
+**Jyotisha** (ज्योतिष, *the science of light*) is the Vedic tradition of astronomy and timekeeping, one of the oldest continuous scientific traditions in the world. It underpins the Hindu Panchanga calendar and structures Hindu sacred time at every scale — from the 30-second *muhurta* to the 4.32-billion-year *kalpa*.
+
+Central to Jyotisha is the system of **27 nakshatras** — lunar mansions that divide the ecliptic into equal 13°20′ arcs. The Moon moves through roughly one nakshatra per day, so the nakshatra occupied by the Moon at any moment is as significant to Hindu timekeeping as the phase. Each nakshatra has a presiding deity (*devata*), a sacred syllable, a body of lore from the Rig Veda and the Brihat Samhita, and auspicious or inauspicious associations for undertaking different kinds of work.
+
+The **Jyotisha** toggle labels the sky with nakshatra names and boundaries, their presiding deities, and selected Vedic lore — so the same stars that a modern observer sees as Scorpius or Sagittarius reveal themselves as *Jyestha* (the eldest, presided over by Indra) and *Purvashadha* (the undefeated, presided over by the Waters).

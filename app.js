@@ -35,6 +35,7 @@ let state = {
   calendarType: 'fairy', // 'fairy' | 'greg' | 'hebrew'
   calendarSpan: 'month', // 'month' | 'week'
   skyShowMoon: true,
+  skyCulture: 'western', // 'western' | 'pawnee' | 'hindu'
   theme: 'fairy',
   variant: 'a',
   colorScheme: 'dark',
@@ -63,9 +64,10 @@ try {
       else { state.calendarType = saved.viewMode; } // 'fairy', 'greg', 'hebrew'
     }
   }
-  if (saved.calendarType && ['fairy','greg','hebrew'].includes(saved.calendarType)) state.calendarType = saved.calendarType;
+  if (saved.calendarType && ['fairy','greg','hebrew','cherokee','iroquois','hindu'].includes(saved.calendarType)) state.calendarType = saved.calendarType;
   if (saved.calendarSpan && ['month','week'].includes(saved.calendarSpan)) state.calendarSpan = saved.calendarSpan;
   if (saved.skyShowMoon !== undefined) state.skyShowMoon = saved.skyShowMoon;
+  if (saved.skyCulture && ['western','pawnee','hindu'].includes(saved.skyCulture)) state.skyCulture = saved.skyCulture;
   if (saved.theme) state.theme = saved.theme;
   // Variant + color scheme: load saved, or migrate from old palette
   if (saved.variant && 'abcde'.includes(saved.variant)) state.variant = saved.variant;
@@ -82,9 +84,9 @@ try {
   if (saved.showBirthdays  !== undefined) state.showBirthdays  = saved.showBirthdays;
   // calendarType2: load saved, or migrate from old showOtherDate
   if ('calendarType2' in saved) {
-    state.calendarType2 = (saved.calendarType2 === null || ['fairy','greg','hebrew'].includes(saved.calendarType2)) ? saved.calendarType2 : 'greg';
+    state.calendarType2 = (saved.calendarType2 === null || ['fairy','greg','hebrew','cherokee','iroquois','hindu'].includes(saved.calendarType2)) ? saved.calendarType2 : 'greg';
   } else if (saved.showOtherDate !== undefined) {
-    const _defSec = { fairy: 'greg', greg: 'fairy', hebrew: 'greg' };
+    const _defSec = { fairy: 'greg', greg: 'fairy', hebrew: 'greg', cherokee: 'fairy', iroquois: 'fairy', hindu: 'greg' };
     state.calendarType2 = saved.showOtherDate ? (_defSec[state.calendarType] ?? 'greg') : null;
   }
   if (saved.language && I18N[saved.language]) state.language = saved.language;
@@ -183,6 +185,7 @@ function initHelpModal() {
 
 function showHelp() {
   document.getElementById('help-modal-body').innerHTML = getHelpHtml();
+  document.querySelector('#help-modal #modal-title').textContent = t('help_title');
   document.getElementById('help-modal').removeAttribute('hidden');
 }
 
@@ -335,7 +338,7 @@ function showSettings() {
   const lang2Btn = document.getElementById('lang2-current-btn');
   lang2Btn.textContent = lang2Meta ? lang2Meta.native : '+ tips';
   lang2Btn.classList.toggle('active', !!state.language2);
-  const _calNames = { fairy: 'Fairy', greg: 'Greg', hebrew: 'Hebrew' };
+  const _calNames = { fairy: 'Fairy', greg: 'Greg', hebrew: 'Hebrew', cherokee: 'Cherokee', iroquois: 'Iroquois', hindu: 'Hindu' };
   const cpBtn = document.getElementById('cal-primary-btn');
   cpBtn.textContent = _calNames[state.calendarType] || state.calendarType;
   cpBtn.classList.add('active');
@@ -568,9 +571,12 @@ function closeLanguageModal() {
 let _calSlot = 'primary'; // 'primary' | 'secondary'
 
 const CAL_OPTIONS = [
-  { key: 'fairy',  label: 'Fairy'  },
-  { key: 'greg',   label: 'Greg'   },
-  { key: 'hebrew', label: 'Hebrew' },
+  { key: 'fairy',    label: 'Fairy'    },
+  { key: 'greg',     label: 'Greg'     },
+  { key: 'hebrew',   label: 'Hebrew'   },
+  { key: 'cherokee', label: 'Cherokee' },
+  { key: 'iroquois', label: 'Iroquois' },
+  { key: 'hindu',    label: 'Hindu'    },
 ];
 
 function initCalendarModal() {
@@ -733,13 +739,18 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
   }
 
   // Constellation labels — clipped to sky circle
+  const _SKY_CULTURE_MAPS = { pawnee: SKIDI_PAWNEE, hindu: HINDU_SKY };
+  const _cultureMap = _SKY_CULTURE_MAPS[state.skyCulture] || null;
   if (data.constellations) {
     svg += `<g clip-path="url(#skyBound)">`;
     for (const c of data.constellations) {
+      const cd = _cultureMap?.[c.name] || null;
+      if (_cultureMap && !cd) continue;
       const cpt = _projectAltAz(c.centroidAz, c.centroidAlt, cx, cy, R, rotDeg);
       const anchor = cpt.x >= cx ? 'start' : 'end';
       const dx = cpt.x >= cx ? 16 : -16;
-      svg += `<text class="sky-const-label" data-cname="${c.name}" x="${(cpt.x+dx).toFixed(1)}" y="${(cpt.y+3).toFixed(1)}" font-size="8" fill="#ccd8ee" font-family="sans-serif" text-anchor="${anchor}" cursor="pointer" opacity="0.85">${c.name}</text>`;
+      const _dispName = cd ? cd.name : c.name;
+      svg += `<text class="sky-const-label" data-cname="${c.name}" x="${(cpt.x+dx).toFixed(1)}" y="${(cpt.y+3).toFixed(1)}" font-size="8" fill="#ccd8ee" font-family="sans-serif" text-anchor="${anchor}" cursor="pointer" opacity="0.85">${_dispName}</text>`;
     }
     svg += `</g>`;
   }
@@ -767,7 +778,9 @@ function renderSkyChart(catalogData, planets = [], rotDeg = 0, moonData = null) 
     }
     const anchor = pp.x >= cx ? 'start' : 'end';
     const dx = pp.x >= cx ? 5 : -5;
-    svg += `<text class="sky-label" x="${(pp.x+dx).toFixed(1)}" y="${(pp.y-4).toFixed(1)}" font-size="8" fill="${col}" font-family="sans-serif" text-anchor="${anchor}" opacity="0.75">${p.symbol} ${p.name}</text>`;
+    const _SKY_PLANET_LABELS = { pawnee: { Venus: 'Evening Star' }, hindu: HINDU_PLANET_NAMES };
+    const _pLabel = _SKY_PLANET_LABELS[state.skyCulture]?.[p.name] || p.name;
+    svg += `<text class="sky-label" x="${(pp.x+dx).toFixed(1)}" y="${(pp.y-4).toFixed(1)}" font-size="8" fill="${col}" font-family="sans-serif" text-anchor="${anchor}" opacity="0.75">${p.symbol} ${_pLabel}</text>`;
   }
 
   // Moon
@@ -1129,9 +1142,11 @@ function showConstellationDetail(name) {
   };
 
   const svgEl = _buildConstellationSVG(name);
-  const lore = CONSTELLATION_LORE[name] || '';
+  const _cMaps = { pawnee: SKIDI_PAWNEE, hindu: HINDU_SKY };
+  const pd = _cMaps[state.skyCulture]?.[name] || null;
+  const lore = pd?.lore || CONSTELLATION_LORE[name] || '';
   const loreEl = lore ? `<p class="const-lore">${lore}</p>` : '';
-  document.getElementById('modal-title').textContent = name;
+  document.getElementById('modal-title').textContent = pd ? `${pd.name}  ·  ${name}` : name;
   document.getElementById('modal-close').style.display = 'none';
   document.getElementById('modal-header-left').style.flexDirection = 'row';
   document.getElementById('modal-header-left').style.alignItems = 'center';
@@ -1163,11 +1178,13 @@ function showConstellationDetailStandalone(name) {
   if (!CONSTELLATIONS[name]) return;
 
   const svgEl = _buildConstellationSVG(name);
-  const lore = CONSTELLATION_LORE[name] || '';
+  const _cMaps2 = { pawnee: SKIDI_PAWNEE, hindu: HINDU_SKY };
+  const pd = _cMaps2[state.skyCulture]?.[name] || null;
+  const lore = pd?.lore || CONSTELLATION_LORE[name] || '';
   const loreEl = lore ? `<p class="const-lore">${lore}</p>` : '';
 
   // Use the existing modal
-  document.getElementById('modal-title').textContent = name;
+  document.getElementById('modal-title').textContent = pd ? `${pd.name}  ·  ${name}` : name;
 
   document.getElementById('modal-body').innerHTML = svgEl + loreEl;
   _attachConstellationControls();
@@ -1391,6 +1408,16 @@ function refresh() {
   document.getElementById('toggle-meteors').textContent     = t('toggle_meteors');
   document.getElementById('toggle-comets').textContent      = t('toggle_comets');
   document.getElementById('sky-labels-btn').textContent     = t('sky_labels');
+  // Icon-only toolbar buttons — primary-language titles (all icon, no text)
+  document.getElementById('prev-year').title      = t('btn_prev_year');
+  document.getElementById('next-year').title      = t('btn_next_year');
+  document.getElementById('date-input').title     = t('btn_pick_date');
+  document.getElementById('sky-back').title       = t('btn_reverse');
+  document.getElementById('sky-play').title       = t('btn_play');
+  document.getElementById('toolbar-toggle').title = t('btn_options');
+  document.getElementById('settings-btn').title   = t('settings_title');
+  document.getElementById('help-btn').title       = t('btn_about');
+  document.getElementById('print-btn').title      = t('btn_print');
   // Secondary-language tooltips on toolbar controls
   _tip2(document.getElementById('today-btn'), 'today');
   _tip2(document.getElementById('toggle-mythic-week'), 'toggle_mythic');
@@ -1402,6 +1429,7 @@ function refresh() {
   document.querySelectorAll('.theme-btn[data-theme]').forEach(b => {
     b.classList.toggle('active', b.dataset.theme === state.theme);
     b.textContent = t('theme_' + b.dataset.theme);
+    _tip2(b, 'theme_' + b.dataset.theme);
   });
   { const el = document.getElementById('label-theme'); if (el) el.textContent = t('label_theme'); }
   { const el = document.getElementById('label-color'); if (el) el.textContent = t('label_color'); }
@@ -1414,7 +1442,11 @@ function refresh() {
   document.getElementById('sky-inline-controls').hidden = !isSky;
   // Sky moon button active state
   const moonBtn = document.getElementById('sky-moon-btn');
-  if (moonBtn) { moonBtn.classList.toggle('active', state.skyShowMoon); _tip2(moonBtn, 'moon_label'); }
+  if (moonBtn) { moonBtn.textContent = t('moon_label'); moonBtn.classList.toggle('active', state.skyShowMoon); _tip2(moonBtn, 'moon_label'); }
+  const pawneeBtn = document.getElementById('sky-pawnee-btn');
+  if (pawneeBtn) { pawneeBtn.textContent = t('sky_pawnee'); _tip2(pawneeBtn, 'sky_pawnee'); }
+  const jyotishaBtn = document.getElementById('sky-hindu-btn');
+  if (jyotishaBtn) { jyotishaBtn.textContent = t('sky_jyotisha'); _tip2(jyotishaBtn, 'sky_jyotisha'); }
   // Moon phase in toolbar (cal-only, but update content regardless — CSS hides in sky)
   const moonDate = new Date(_skyViewDate + 'T00:00:00Z');
   const phase = moonPhaseInfo(moonDate);
@@ -1445,7 +1477,7 @@ document.getElementById('today-btn').addEventListener('click', () => {
   selectedDate = _skyViewDate;
   scrollToTodayAfterRender = true;
   refresh();
-  _showT2Toast('today');
+  _showLabelToast('today');
 });
 document.getElementById('date-input').addEventListener('change', e => {
   if (!e.target.value) return;
@@ -1517,6 +1549,25 @@ let _skyLabelsOn = false;
   btn.addEventListener('click', () => { _skyLabelsOn = !_skyLabelsOn; apply(); _showT2Toast('sky_labels'); });
   apply();
 }
+// Sky culture toggles (Pawnee / Jyotisha — mutually exclusive)
+{ const pBtn = document.getElementById('sky-pawnee-btn');
+  const hBtn = document.getElementById('sky-hindu-btn');
+  const apply = () => {
+    pBtn.classList.toggle('active', state.skyCulture === 'pawnee');
+    hBtn.classList.toggle('active', state.skyCulture === 'hindu');
+  };
+  apply();
+  pBtn.addEventListener('click', () => {
+    state.skyCulture = state.skyCulture === 'pawnee' ? 'western' : 'pawnee';
+    _saveState(); apply();
+    if (state.mode === 'sky') renderSky();
+  });
+  hBtn.addEventListener('click', () => {
+    state.skyCulture = state.skyCulture === 'hindu' ? 'western' : 'hindu';
+    _saveState(); apply();
+    if (state.mode === 'sky') renderSky();
+  });
+}
 // Sky moon toggle
 { const btn = document.getElementById('sky-moon-btn');
   const apply = () => { btn.classList.toggle('active', state.skyShowMoon); };
@@ -1542,7 +1593,7 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.addEventListene
   state.mode = b.dataset.mode;
   _skyReturnState = null;
   refresh();
-  _showT2Toast(b.dataset.mode === 'sky' ? 'view_sky' : 'mode_calendar');
+  _showLabelToast(b.dataset.mode === 'sky' ? 'view_sky' : 'mode_calendar');
 }));
 
 document.querySelectorAll('.span-btn[data-span]').forEach(b => b.addEventListener('click', () => {
@@ -1609,6 +1660,12 @@ function _showT2Toast(key) {
   if (!window.matchMedia('(hover: none)').matches) return;
   const v = t2(key);
   if (v) showToast(v);
+}
+// For icon-only buttons: always show primary lang label on mobile (+ secondary if set)
+function _showLabelToast(key) {
+  if (!window.matchMedia('(hover: none)').matches) return;
+  const sec = t2(key);
+  showToast(sec ? `${t(key)} \u00b7 ${sec}` : t(key));
 }
 
 function _saveState() {
