@@ -89,29 +89,23 @@ function _hebrewDateStr(date) {
   return '';
 }
 
-function _cherokeeMonthStr(gregDate) {
-  const ds = utcDateStr(gregDate);
-  const fd = (currentFY && currentFY.dayMap.get(ds));
-  if (!fd) return '';
-  const moonIdx = currentFY.moons.findIndex(m => m.name === fd.fairyMonth);
+function _cherokeeMonthStr(fd) {
+  if (!fd || !fd.fairyMonth) return '';
+  const moonIdx = I18N.en.moons.indexOf(fd.fairyMonth);
   if (moonIdx < 0) return '';
   return CHEROKEE_MONTHS[moonIdx] ? `${_cherokeeName(moonIdx)} ${fd.fairyDay}` : '';
 }
 
-function _iroquoisMonthStr(gregDate) {
-  const ds = utcDateStr(gregDate);
-  const fd = (currentFY && currentFY.dayMap.get(ds));
-  if (!fd) return '';
-  const moonIdx = currentFY.moons.findIndex(m => m.name === fd.fairyMonth);
+function _iroquoisMonthStr(fd) {
+  if (!fd || !fd.fairyMonth) return '';
+  const moonIdx = I18N.en.moons.indexOf(fd.fairyMonth);
   if (moonIdx < 0) return '';
   return IROQUOIS_MONTHS[moonIdx] ? `${_iroquoisName(moonIdx)} ${fd.fairyDay}` : '';
 }
 
-function _hinduMonthStr(gregDate) {
-  const ds = utcDateStr(gregDate);
-  const fd = (currentFY && currentFY.dayMap.get(ds));
-  if (!fd) return '';
-  const moonIdx = currentFY.moons.findIndex(m => m.name === fd.fairyMonth);
+function _hinduMonthStr(fd) {
+  if (!fd || !fd.fairyMonth) return '';
+  const moonIdx = I18N.en.moons.indexOf(fd.fairyMonth);
   if (moonIdx < 0) return '';
   const hm = HINDU_MONTHS[moonIdx];
   return hm ? `${hm.dev} ${fd.fairyDay}` : '';
@@ -123,9 +117,9 @@ function _secondaryStr(fd, primaryType) {
   if (sec === 'greg')     return fmtGreg(fd.gregDate);
   if (sec === 'fairy')    return `${tMoonShort(fd.fairyMonth)} ${fd.fairyDay}`;
   if (sec === 'hebrew')   return _hebrewDateStr(fd.gregDate);
-  if (sec === 'cherokee') return _cherokeeMonthStr(fd.gregDate);
-  if (sec === 'iroquois') return _iroquoisMonthStr(fd.gregDate);
-  if (sec === 'hindu')    return _hinduMonthStr(fd.gregDate);
+  if (sec === 'cherokee') return _cherokeeMonthStr(fd);
+  if (sec === 'iroquois') return _iroquoisMonthStr(fd);
+  if (sec === 'hindu')    return _hinduMonthStr(fd);
   return null;
 }
 

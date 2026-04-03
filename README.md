@@ -22,6 +22,12 @@ Please don't be dismayed by the custom month and weekday names. You can select t
 </td>
 </tr>
 <tr>
+<td valign="top" colspan="2">
+<img src="image/screenshot/top_collapsable_bar_wiz.png" alt="Collapsible toolbar"><br>
+<sub><b>Collapsible toolbar</b> — Month/Week toggle · Mythic week toggle · Day-box content toggles (Holidays, Birthdays, Meteors, Comets) · Theme switcher (each theme has a unique icon: fairy, palantír, clover, footprints, flowers) · Palette: light/dark toggle + color picker</sub>
+</td>
+</tr>
+<tr>
 <td valign="top">
 <img src="image/screenshot/sky_wiz.png" alt="Night sky view"><br>
 <sub><b>Night sky</b> — full-screen star chart calculated for your location; all label overlays off</sub>
@@ -52,13 +58,6 @@ Please don't be dismayed by the custom month and weekday names. You can select t
 </td>
 </tr>
 </table>
-
-<details>
-<summary><b>Collapsible toolbar</b></summary>
-<br>
-<img src="image/screenshot/top_collapsable_bar_wiz.png" alt="Collapsible toolbar"><br>
-<sub>Month/Week toggle · Mythic week toggle · Day-box content toggles (Holidays, Birthdays, Meteors, Comets) · Theme switcher (each theme has a unique icon: fairy, palantír, clover, footprints, flowers) · Palette: light/dark toggle + color picker</sub>
-</details>
 
 ---
 
