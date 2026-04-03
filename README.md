@@ -10,22 +10,53 @@ Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript
 
 <table>
 <tr>
-<td><img src="image/screenshot/top_bar_wiz.png" alt="Main toolbar"></td>
-<td><img src="image/screenshot/sample_day_wiz.png" alt="Calendar day with event icons"></td>
+<td valign="top">
+<img src="image/screenshot/top_bar_wiz.png" alt="Main toolbar"><br>
+<sub><b>Main toolbar</b> — Sky/Calendar toggles, reverse play / date picker / sky play, Today button, moon phase, show/hide collapsible toggle, settings, help, print</sub>
+</td>
+<td valign="top">
+<img src="image/screenshot/sample_day_wiz.png" alt="Calendar day with event icons"><br>
+<sub><b>Calendar day</b> — mythic week name, day of month in primary calendar, click the unique theme icon for the day/night info screen, secondary calendar month name and day, icons for new moon / partial solar eclipse / Mars near moon</sub>
+</td>
 </tr>
 <tr>
-<td><img src="image/screenshot/sky_wiz.png" alt="Night sky view"></td>
-<td><img src="image/screenshot/sky_labels_wiz.png" alt="Sky view with labels and constellation list"></td>
+<td valign="top">
+<img src="image/screenshot/sky_wiz.png" alt="Night sky view"><br>
+<sub><b>Night sky</b> — full-screen star chart calculated for your location; all label overlays off</sub>
+</td>
+<td valign="top">
+<img src="image/screenshot/sky_labels_wiz.png" alt="Sky view with labels and constellation list"><br>
+<sub><b>Sky with labels</b> — sun/moon rise/set and astronomical twilight times, visible constellation list with links, clickable view orientation (N, NW, W, etc.)</sub>
+</td>
 </tr>
 <tr>
-<td><img src="image/screenshot/ursa_major_wiz.png" alt="Constellation detail — Ursa Major"></td>
-<td><img src="image/screenshot/day_info_wiz.png" alt="Day info panel with planet positions and sky times"></td>
+<td valign="top">
+<img src="image/screenshot/ursa_major_wiz.png" alt="Constellation detail — Ursa Major"><br>
+<sub><b>Constellation detail</b> — line/drawing toggles, labeled stars, faint real background stars, mythology</sub>
+</td>
+<td valign="top">
+<img src="image/screenshot/day_info_wiz.png" alt="Day info panel"><br>
+<sub><b>Day info panel</b> — notable icons explained, night sky times (sunset, astronomical twilight, moonrise, moonset, sunrise), planet positions, visible constellations, View Sky button, upcoming calendar events</sub>
+</td>
 </tr>
 <tr>
-<td><img src="image/screenshot/calendar_picker_wiz.png" alt="Calendar picker dialog"></td>
-<td><img src="image/screenshot/settings_wiz.png" alt="Settings dialog"></td>
+<td valign="top">
+<img src="image/screenshot/calendar_picker_wiz.png" alt="Calendar picker dialog"><br>
+<sub><b>Calendar picker</b> — toggle secondary calendars alongside the Fairy calendar</sub>
+</td>
+<td valign="top">
+<img src="image/screenshot/settings_wiz.png" alt="Settings dialog"><br>
+<sub><b>Settings</b> — location, language, birthdays, save/share birthdays using link or file</sub>
+</td>
 </tr>
 </table>
+
+<details>
+<summary><b>Collapsible toolbar</b></summary>
+<br>
+<img src="image/screenshot/top_collapsable_bar_wiz.png" alt="Collapsible toolbar"><br>
+<sub>Month/Week toggle · Mythic week toggle · Day-box content toggles (Holidays, Birthdays, Meteors, Comets) · Theme switcher (each theme has a unique icon: fairy, palantír, clover, footprints, flowers) · Palette: light/dark toggle + color picker</sub>
+</details>
 
 ---
 
