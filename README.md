@@ -41,10 +41,12 @@ Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript
 
 **Night Sky**
 - Interactive star chart accurate to your location — zoom, pan, rotate by compass direction
+- Star positions drawn from the **Gaia DR3** catalog — one of the most precise stellar surveys ever made
 - Moon phase display with accurate position in sky
 - Planetary positions and elongations
-- Constellation art with star labels, mythology, and lore
-- Skidi Pawnee sky culture constellation names (optional overlay)
+- Constellation art with star labels, mythology, and lore — 88 constellations with hand-drawn artwork
+- **Skidi Pawnee** sky culture constellation names (optional overlay) — a pre-Columbian tradition tied closely to the same stars
+- **Hindu/Jyotisha** nakshatra overlay — the 27-division lunar mansion system used in Vedic astronomy
 - Rise/set times for sun and moon, astronomical twilight
 
 **Astronomical Events**
@@ -56,6 +58,10 @@ Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript
 
 **Other Calendars** (toggle on/off alongside the Fairy calendar)
 - Hebrew, Cherokee, Iroquois, Hindu/Jyotisha
+
+**Languages**
+- Display the calendar in 8 languages: English, Deutsch, Français, Italiano, Español, Kiswahili, Latina, संस्कृतम्
+- Optional secondary language overlay — show moon names, weekdays, and events in two languages simultaneously
 
 **Location**
 - Browser geolocation ("find my city") for sky calculations
