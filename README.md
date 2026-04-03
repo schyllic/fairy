@@ -87,12 +87,15 @@ Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript
 - Visible comet windows with brightness estimates
 - Planetary conjunctions and notable close approaches
 
-**Other Calendars** (toggle on/off alongside the Fairy calendar)
+**Other Calendars**
+- primary calendar determines calendar structure
+- secondary calendar month name and day number appear in day boxes
 - Hebrew, Cherokee, Iroquois, Hindu/Jyotisha
+- Gregorian
 
 **Languages**
 - Display the calendar in 8 languages: English, Deutsch, Français, Italiano, Español, Kiswahili, Latina, संस्कृतम्
-- Optional secondary language overlay — show moon names, weekdays, and events in two languages simultaneously
+- Optional secondary language overlay — appears in tooltips
 
 **Location**
 - Browser geolocation ("find my city") for sky calculations
@@ -129,7 +132,7 @@ The Fairy Calendar counts years from the beginning of the Human Era — add 10,0
 
 Weeks run Heimday through Sunday — the familiar seven days, with Norse mythological names restored.
 
-**→ See [help.md](help.md) for the full calendar guide**: moon names and meanings, Bluemoon intercalation rules, year animal table, weekday mythology, icons legend, and multi-calendar comparisons.
+**→ See [help.md](help.md) for the full calendar guide**: moon names and meanings, Bluemoon intercalation rules, year animal table, weekday mythology, icons legend, and multi-calendar comparisons. This is the in-app help which is also translated into the primary language.
 
 ---
 
