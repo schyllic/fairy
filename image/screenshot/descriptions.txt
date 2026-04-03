@@ -1,0 +1,71 @@
+# screenshot list (taken in dark wizard theme / purple)
+
+## sky_wiz.png
+- full screen of the night sky calculated for 4/1/2027
+- All toggles are off
+
+## sky_labels_wiz.png
+- full screen night sky with labels on
+- sun/moon rise/set and astronomical twilight times
+- visible constellation list/links
+- clickable view orientation (N, NW, W, etc)
+
+## ursa_major_wiz.png
+- example constellation screen
+- lines / drawing toggles
+- labeled stars
+- faint real background stars
+- mythology
+
+## settings_wiz.png
+- the settings dialog
+
+## language_wiz.png
+- Language picker
+
+## calendar_picker_wiz.png
+- Calendar picker
+
+## top_bar_wiz.png
+- Top main toolbar (desktop)
+- Sky/Calendar toggles
+- reverse play / date picker / sky play
+- Today button
+- Moon phase
+- Show/hide collapsible toggle
+- Settings (map icon)
+- Help
+- Print
+
+## top_collapsable_bar_wiz.png
+- Collapsible toolbar (desktop)
+- Month / Week toggle
+- Mythic week toggle (uncheck for standard Mon/Tue/etc)
+- Toggles for what is rendered in calendar day boxes (Holidays/Birthdays/Meteors/Comets)
+- Theme (unique info icons and art work)
+* Fairy - fairy
+* Wizard - dark mode only. Palantir icon
+* Celtic - clover
+* Animal - foot prints
+* Flower - flowers
+- Palette - light/dark toggle plus color picker
+
+## sample_day_wiz.png
+- An example day
+- mythic week name shown
+- day of month in primary calendar
+- click unique theme icon for day/night info screen
+- secondary calendar month name and day
+- icons for
+* new moon
+* partial solar eclipse
+* mars near moon
+
+## day_info_wiz.png
+- info screen for the sample day
+- notable icons explained
+- Night sky times (sunset, astronomical twilight, moon rise, moon set, sun rise)
+- Planet positions
+- Visible constellations
+- View sky button
+- Upcoming calendar events
