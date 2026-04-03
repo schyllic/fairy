@@ -4,6 +4,8 @@
 
 Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript — no dependencies, no build step. Open `index.html` and it just works.
 
+Please don't be dismayed by the custom month and weekday names. You can select the standard (Gregorian) calendar, or one of the other lunar calendars if you prefer.
+
 ---
 
 ## Screenshots
