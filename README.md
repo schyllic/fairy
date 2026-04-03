@@ -44,7 +44,7 @@ Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript
 - Star positions drawn from the **Gaia DR3** catalog — one of the most precise stellar surveys ever made
 - Moon phase display with accurate position in sky
 - Planetary positions and elongations
-- Constellation art with star labels, mythology, and lore — 88 constellations with hand-drawn artwork
+- Constellation art with star labels, mythology, and lore — 88 constellations with artwork from the [Stellarium](https://stellarium.org) project
 - **Skidi Pawnee** sky culture constellation names (optional overlay) — a pre-Columbian tradition tied closely to the same stars
 - **Hindu/Jyotisha** nakshatra overlay — the 27-division lunar mansion system used in Vedic astronomy
 - Rise/set times for sun and moon, astronomical twilight
