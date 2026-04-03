@@ -220,6 +220,7 @@ function initSettingsModal() {
           `<label for="settings-lon" id="settings-lon-lbl">Lon</label>` +
           `<input type="number" id="settings-lon" min="-180" max="180" step="0.1" placeholder="-80.0">` +
           `<span class="settings-unit">° E</span>` +
+          `<button id="settings-loc-detect" class="btn">Detect</button>` +
         `</div>` +
         `<p class="settings-hint">Used for sky calculations. Negative lon = West.</p>` +
         `<hr class="settings-divider">` +
@@ -259,6 +260,27 @@ function initSettingsModal() {
   };
   modal.querySelector('#settings-lat').addEventListener('change', _applyLocation);
   modal.querySelector('#settings-lon').addEventListener('change', _applyLocation);
+  modal.querySelector('#settings-loc-detect').addEventListener('click', () => {
+    if (!navigator.geolocation) return;
+    const btn = modal.querySelector('#settings-loc-detect');
+    btn.disabled = true;
+    btn.textContent = '…';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = Math.round(pos.coords.latitude  * 10) / 10;
+        const lon = Math.round(pos.coords.longitude * 10) / 10;
+        document.getElementById('settings-lat').value = lat;
+        document.getElementById('settings-lon').value = lon;
+        _applyLocation();
+        btn.disabled = false;
+        btn.textContent = 'Detect';
+      },
+      () => {
+        btn.disabled = false;
+        btn.textContent = 'Detect';
+      }
+    );
+  });
   modal.querySelector('#bday-add-btn').addEventListener('click', () => {
     const name  = modal.querySelector('#bday-name').value.trim();
     const month = parseInt(modal.querySelector('#bday-month').value, 10);

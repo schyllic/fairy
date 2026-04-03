@@ -705,7 +705,6 @@ function renderSky(resetZoom = false) {
       planetInfo +
       conList +
       `<div class="sky-view-chart">${chartHTML}</div>` +
-      `<div class="sky-view-hint">${t('scroll_hint')}</div>` +
     `</div>`;
 
   // Attach zoom — skip during play (no interaction possible, saves AbortController churn)
