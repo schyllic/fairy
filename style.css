@@ -167,7 +167,7 @@ body {
 
 /* Toast notification */
 #toast {
-  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%);
   background: var(--color-surface); color: var(--color-text-primary);
   border: 1px solid var(--color-border); border-radius: 6px;
   padding: 0.4rem 1rem; font-size: 0.85rem; z-index: 2000;
@@ -907,6 +907,31 @@ body.sky-playing .sky-view-constellations { display: none; }
 .location-row label { width: auto; }
 .location-row input[type="number"] { width: 5.5rem; }
 .location-row { margin-bottom: 0.25rem; }
+.city-search-wrap { position: relative; width: 100%; margin-bottom: 0.5rem; }
+.city-search-input {
+  width: 100%; box-sizing: border-box;
+  padding: 0.28rem 0.5rem;
+  background: var(--color-bg); color: var(--color-text-primary);
+  border: 1px solid var(--color-border); border-radius: 4px;
+  font-size: 0.88rem; font-family: var(--font-family-body);
+}
+.city-search-input:focus { outline: none; border-color: var(--color-accent); }
+.city-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 20;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  max-height: 200px; overflow-y: auto;
+}
+.city-dropdown[hidden] { display: none; }
+.city-dropdown-item {
+  padding: 0.35rem 0.6rem; font-size: 0.88rem; cursor: pointer;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border);
+}
+.city-dropdown-item:last-child { border-bottom: none; }
+.city-dropdown-item:hover { background: var(--color-bg-alt); color: var(--color-accent); }
 .settings-row input[type="number"] {
   width: 6rem; padding: 0.25rem 0.4rem;
   background: var(--color-bg); color: var(--color-text-primary);

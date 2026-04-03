@@ -24,6 +24,8 @@ try {
   const obs = JSON.parse(localStorage.getItem(STORAGE.OBSERVER) || '{}');
   if (obs.lat !== undefined) OBSERVER.lat = Number(obs.lat);
   if (obs.lon !== undefined) OBSERVER.lon = Number(obs.lon);
+  if (obs.tz)       OBSERVER.tz = obs.tz;
+  if (obs.cityName) OBSERVER.cityName = obs.cityName;
 } catch(_) {}
 
 let state = {
@@ -212,6 +214,11 @@ function initSettingsModal() {
         `</div>` +
       `</div>` +
       `<div id="modal-body">` +
+        `<div class="city-search-wrap">` +
+          `<input type="text" id="settings-city-search" autocomplete="off" ` +
+                 `placeholder="Search city / state / country ..." class="city-search-input">` +
+          `<div id="city-dropdown" class="city-dropdown" hidden></div>` +
+        `</div>` +
         `<h3 class="settings-section-head" id="settings-loc-head">Location</h3>` +
         `<div class="settings-row location-row">` +
           `<label for="settings-lat" id="settings-lat-lbl">Lat</label>` +
@@ -255,11 +262,46 @@ function initSettingsModal() {
     const lon = parseFloat(document.getElementById('settings-lon').value);
     if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lon) || lon < -180 || lon > 180) return;
     OBSERVER.lat = lat; OBSERVER.lon = lon;
-    try { localStorage.setItem(STORAGE.OBSERVER, JSON.stringify({ lat, lon })); } catch(_) {}
+    try { localStorage.setItem(STORAGE.OBSERVER, JSON.stringify({ lat, lon, tz: OBSERVER.tz || '', cityName: OBSERVER.cityName || '' })); } catch(_) {}
     refresh();
   };
-  modal.querySelector('#settings-lat').addEventListener('change', _applyLocation);
-  modal.querySelector('#settings-lon').addEventListener('change', _applyLocation);
+  const _cityInput    = modal.querySelector('#settings-city-search');
+  const _cityDropdown = modal.querySelector('#city-dropdown');
+  const _cityLabel = c => c[0] + (c[4] ? ', ' + c[4] : '') + ', ' + c[5];
+  const _selectCity = city => {
+    document.getElementById('settings-lat').value = city[1];
+    document.getElementById('settings-lon').value = city[2];
+    OBSERVER.tz = city[3];
+    OBSERVER.cityName = _cityLabel(city);
+    _cityInput.value = _cityLabel(city);
+    _cityDropdown.setAttribute('hidden', '');
+    _applyLocation();
+  };
+  _cityInput.addEventListener('input', () => {
+    const q = _cityInput.value.trim().toLowerCase();
+    _cityDropdown.innerHTML = '';
+    if (q.length < 1) { _cityDropdown.setAttribute('hidden', ''); return; }
+    const matches = (typeof CITIES !== 'undefined' ? CITIES : [])
+      .filter(c => (c[0] + ' ' + c[4] + ' ' + c[5]).toLowerCase().includes(q)).slice(0, 8);
+    if (!matches.length) { _cityDropdown.setAttribute('hidden', ''); return; }
+    matches.forEach(city => {
+      const item = document.createElement('div');
+      item.className = 'city-dropdown-item';
+      item.textContent = _cityLabel(city);
+      item.addEventListener('mousedown', e => { e.preventDefault(); _selectCity(city); });
+      _cityDropdown.appendChild(item);
+    });
+    _cityDropdown.removeAttribute('hidden');
+  });
+  _cityInput.addEventListener('blur', () => {
+    setTimeout(() => _cityDropdown.setAttribute('hidden', ''), 150);
+  });
+  modal.querySelector('#settings-lat').addEventListener('change', () => {
+    OBSERVER.cityName = ''; _cityInput.value = ''; _applyLocation();
+  });
+  modal.querySelector('#settings-lon').addEventListener('change', () => {
+    OBSERVER.cityName = ''; _cityInput.value = ''; _applyLocation();
+  });
   modal.querySelector('#settings-loc-detect').addEventListener('click', () => {
     if (!navigator.geolocation) return;
     const btn = modal.querySelector('#settings-loc-detect');
@@ -271,7 +313,19 @@ function initSettingsModal() {
         const lon = Math.round(pos.coords.longitude * 10) / 10;
         document.getElementById('settings-lat').value = lat;
         document.getElementById('settings-lon').value = lon;
+        OBSERVER.cityName = '';
+        modal.querySelector('#settings-city-search').value = '';
         _applyLocation();
+        if (typeof CITIES !== 'undefined' && CITIES.length) {
+          let best = CITIES[0], bestD = Infinity;
+          for (const c of CITIES) {
+            const d = (c[1] - lat) ** 2 + (c[2] - lon) ** 2;
+            if (d < bestD) { bestD = d; best = c; }
+          }
+          const dKm = Math.round(111 * Math.sqrt((best[1] - lat) ** 2 + (best[2] - lon) ** 2));
+          const warn = dKm > 400 ? ' ⚠ may be IP-based' : '';
+          showToast(`Nearest city: ${_cityLabel(best)} (${dKm} km away)${warn}`);
+        }
         btn.disabled = false;
         btn.textContent = 'Detect';
       },
@@ -344,6 +398,8 @@ function initSettingsModal() {
 function showSettings() {
   document.getElementById('settings-lat').value = OBSERVER.lat;
   document.getElementById('settings-lon').value = OBSERVER.lon;
+  const _cityEl = document.getElementById('settings-city-search');
+  if (_cityEl) _cityEl.value = OBSERVER.cityName || '';
   // Update language button + translated section heads
   const langMeta = LANGS.find(l => l.code === state.language) || LANGS[0];
   const langBtn = document.getElementById('lang-current-btn');
@@ -1661,7 +1717,7 @@ function showToast(msg, msg2) {
   t.classList.remove('toast-hide');
   t.classList.add('toast-show');
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-hide'); }, 1800);
+  t._timer = setTimeout(() => { t.classList.remove('toast-show'); t.classList.add('toast-hide'); }, 4000);
 }
 function _showT2Toast(key) {
   if (!state.language2) return;
