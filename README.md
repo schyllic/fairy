@@ -12,19 +12,35 @@ Please don't be dismayed by the custom month and weekday names. You can select t
 
 <table>
 <tr>
-<td valign="top">
+<td valign="top" colspan="2">
 <img src="image/screenshot/top_bar_wiz.png" alt="Main toolbar"><br>
 <sub><b>Main toolbar</b> — Sky/Calendar toggles, reverse play / date picker / sky play, Today button, moon phase, show/hide collapsible toggle, settings, help, print</sub>
-</td>
-<td valign="top">
-<img src="image/screenshot/sample_day_wiz.png" alt="Calendar day with event icons"><br>
-<sub><b>Calendar day</b> — mythic week name, day of month in primary calendar, click the unique theme icon for the day/night info screen, secondary calendar month name and day, icons for new moon / partial solar eclipse / Mars near moon</sub>
 </td>
 </tr>
 <tr>
 <td valign="top" colspan="2">
 <img src="image/screenshot/top_collapsable_bar_wiz.png" alt="Collapsible toolbar"><br>
 <sub><b>Collapsible toolbar</b> — Month/Week toggle · Mythic week toggle · Day-box content toggles (Holidays, Birthdays, Meteors, Comets) · Theme switcher (each theme has a unique icon: fairy, palantír, clover, footprints, flowers) · Palette: light/dark toggle + color picker</sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="image/screenshot/moon_cherokee_fairy.png" alt="Cherokee calendar — Fairy theme"><br>
+<sub><b>Cherokee calendar</b> — Tsalagi lunar months with syllabary names, Fairy theme</sub>
+</td>
+<td valign="top">
+<img src="image/screenshot/moon_hindu_flower.png" alt="Hindu calendar — Flower theme"><br>
+<sub><b>Hindu/Jyotisha calendar</b> — Devanagari month names, Flower theme</sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="image/screenshot/moon_greg_spanish_celtic.png" alt="Gregorian calendar in Spanish — Celtic theme"><br>
+<sub><b>Gregorian calendar</b> — Spanish language, Celtic theme</sub>
+</td>
+<td valign="top">
+<img src="image/screenshot/moon_kiswahili_greg_week_animal_iroquois.png" alt="Week view in Kiswahili — Animal theme with Iroquois secondary"><br>
+<sub><b>Week view</b> — Kiswahili language, Gregorian primary with Iroquois secondary, Animal theme</sub>
 </td>
 </tr>
 <tr>
