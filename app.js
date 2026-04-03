@@ -896,6 +896,8 @@ let _skyZoomBaseW = 0; // original width of the wrap container
 
 function _resetSkyZoom() {
   _skyZoom = { level: 1, tx: 0, ty: 0 };
+  const resetBtn = document.getElementById('sky-zoom-reset');
+  if (resetBtn) resetBtn.hidden = true;
 }
 
 function _applySkyZoom(svgEl) {
@@ -910,6 +912,8 @@ function _applySkyZoom(svgEl) {
     const opacity = z < 1.5 ? 0 : Math.min(0.85, (z - 1.5) * 1.7);
     bgGroup.setAttribute('opacity', opacity.toFixed(2));
   }
+  const resetBtn = document.getElementById('sky-zoom-reset');
+  if (resetBtn) resetBtn.hidden = z <= 1.05;
 }
 
 function _clampPan() {
@@ -930,6 +934,8 @@ function _attachSkyZoom(svgEl) {
 
   const wrap = svgEl.parentElement;
   _skyZoomBaseW = wrap.getBoundingClientRect().width;
+  const resetBtn = document.getElementById('sky-zoom-reset');
+  if (resetBtn) resetBtn.addEventListener('click', () => { _resetSkyZoom(); _applySkyZoom(svgEl); }, { signal });
 
   // Mouse wheel zoom toward cursor
   svgEl.addEventListener('wheel', e => {
@@ -1794,6 +1800,9 @@ initLanguageModal();
 initCalendarModal();
 document.getElementById('help-btn').addEventListener('click', showHelp);
 document.getElementById('settings-btn').addEventListener('click', showSettings);
+document.getElementById('help-btn-m').addEventListener('click', showHelp);
+document.getElementById('settings-btn-m').addEventListener('click', showSettings);
+document.getElementById('print-btn-m').addEventListener('click', () => document.getElementById('print-btn').click());
 document.getElementById('print-btn').addEventListener('click', () => {
   const fy = yearCache.get(state.holYear) || buildFairyYear(state.holYear);
   const pt = document.createElement('div');

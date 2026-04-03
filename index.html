@@ -33,6 +33,7 @@
       <button class="btn toggle-btn" id="sky-moon-btn" title="Toggle moon">Moon</button>
       <button class="btn toggle-btn" id="sky-pawnee-btn" title="Skidi Pawnee sky culture">Pawnee</button>
       <button class="btn toggle-btn" id="sky-hindu-btn" title="Jyotisha Hindu sky culture">Jyotisha</button>
+      <button class="btn" id="sky-zoom-reset" hidden title="Reset zoom">⊙</button>
     </div>
     <div id="toolbar-utils">
       <button class="btn" id="settings-btn" title="Settings">🗺</button>
@@ -41,10 +42,17 @@
     </div>
   </div>
   <div id="toolbar-collapsible" hidden>
-<div class="toolbar-group cal-only" id="cal-span-group">
-      <span class="toolbar-label" id="label-view">View:</span>
-      <button class="btn span-btn" data-span="month">Month</button>
-      <button class="btn span-btn" data-span="week">Week</button>
+    <div id="collapsible-row1">
+      <div class="toolbar-group cal-only" id="cal-span-group">
+        <span class="toolbar-label" id="label-view">View:</span>
+        <button class="btn span-btn" data-span="month">Month</button>
+        <button class="btn span-btn" data-span="week">Week</button>
+      </div>
+      <div class="toolbar-group" id="utils-mobile">
+        <button class="btn" id="settings-btn-m">🗺</button>
+        <button class="btn" id="help-btn-m">?</button>
+        <button class="btn" id="print-btn-m">⎙</button>
+      </div>
     </div>
     <div class="toolbar-group">
       <button class="btn toggle-btn" id="toggle-mythic-week" title="Use Norse mythological weekday names">Mythic Week</button>
