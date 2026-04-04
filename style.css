@@ -671,7 +671,9 @@ body {
   color: var(--color-accent);
   font-weight: bold;
   line-height: 1.0;
+  cursor: pointer;
 }
+.birthday-label:hover { text-decoration: underline; }
 
 /* ─── 10. Perigee / Apogee / Eclipse icons ───────────── */
 .perigee-icon { color: var(--color-moon-icon); font-style: normal; font-weight: bold; }

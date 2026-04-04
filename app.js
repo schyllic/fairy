@@ -1500,7 +1500,7 @@ function refresh() {
   // Mode buttons
   document.querySelectorAll('.mode-btn[data-mode]').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === state.mode);
-    if (b.dataset.mode === 'sky') { b.textContent = t('view_sky'); _tip2(b, 'view_sky'); }
+    if (b.dataset.mode === 'sky') { b.querySelector('.label-long').textContent = t('view_sky'); b.querySelector('.label-short').textContent = t('sky_short'); _tip2(b, 'view_sky'); }
     else if (b.dataset.mode === 'calendar') { b.innerHTML = `<span class="label-long">${t('mode_calendar')}</span><span class="label-short">${t('mode_calendar_short')}</span>`; _tip2(b, 'mode_calendar'); }
   });
   // Calendar span buttons
@@ -1813,6 +1813,26 @@ document.addEventListener('keydown', e => {
 document.body.addEventListener('click', e => {
   const btn = e.target.closest('.info-btn');
   if (btn && btn.dataset.from && currentFY) { showModal(btn.dataset.from, btn.dataset.label, currentFY); return; }
+
+  const cake = e.target.closest('.birthday-label');
+  if (cake && currentFY) {
+    const name = cake.dataset.bdayName;
+    const month = parseInt(cake.dataset.bdayMonth);
+    const day   = parseInt(cake.dataset.bdayDay);
+    const yearStr = prompt(`Which year was ${name} born?`);
+    if (!yearStr) return;
+    const birthYear = parseInt(yearStr.trim());
+    if (isNaN(birthYear) || birthYear < 1800 || birthYear > new Date().getFullYear()) return;
+    const dateStr = `${birthYear}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    state.holYear = birthYear + 10000;
+    selectedDate = dateStr;
+    scrollToSelectedAfterRender = true;
+    refresh();
+    const gd = new Date(dateStr + 'T00:00:00Z');
+    const dateFmt = `${getGregMonths()[gd.getUTCMonth()]} ${gd.getUTCDate()}, ${birthYear}`;
+    showModal(dateStr, `${dateFmt} · 🎂 ${name} — born today`, buildFairyYear(birthYear + 10000));
+    return;
+  }
 
   const cell = e.target.closest('[data-date]');
   if (cell) {

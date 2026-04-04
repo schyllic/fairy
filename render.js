@@ -61,7 +61,7 @@ function moonIcons(fd) {
   }
   if (state.showMeteors && fd.meteor) { for (const m of fd.meteor) { if (m.isNearPeak) h+=`<span class="icon meteor-icon" title="${m.name}${m.isPeak?' peak':''} — ZHR ~${m.zhr}, ${m.note}">🌠</span>`; } }
   if (state.showComets  && fd.comet)  { for (const c of fd.comet) h+=`<span class="icon comet-icon" title="${c.name}${c.note?' — '+c.note:''}">☄</span>`; }
-  if (state.showBirthdays && fd.birthday) { for (const b of fd.birthday) h+=`<span class="birthday-label">🎂 ${b.name}</span>`; }
+  if (state.showBirthdays && fd.birthday) { for (const b of fd.birthday) h+=`<span class="birthday-label" data-bday-name="${b.name}" data-bday-month="${b.month}" data-bday-day="${b.day}">🎂 ${b.name}</span>`; }
   if (state.showHolidays && fd.holiday) { for (const hol of fd.holiday) h+=`<span class="holiday-label">${hol.name}</span>`; }
   return h;
 }
