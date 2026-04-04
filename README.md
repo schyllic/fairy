@@ -4,9 +4,12 @@
 
 Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript — no dependencies, no build step. Open `index.html` and it just works.
 
-Please don't be dismayed by the custom month and weekday names. You can select the standard (Gregorian) calendar, or one of the other lunar calendars if you prefer.
+My original calendar is the default, but you can choose the standard (Gregorian) calendar, or one of the other included lunar calendars if you prefer.
 
 ---
+
+## About the Implementation
+This project was created with the assistance of Claude, an A.I. coding agent. My complements to the team at Anthropic for building the amazing [Claude.AI](https://claude.ai).
 
 ## Screenshots
 
