@@ -1823,7 +1823,7 @@ document.body.addEventListener('click', e => {
     const name = cake.dataset.bdayName;
     const month = parseInt(cake.dataset.bdayMonth);
     const day   = parseInt(cake.dataset.bdayDay);
-    const yearStr = prompt(`Which year was ${name} born?`);
+    const yearStr = prompt(`Which year was ${name} born? (this will not be stored)`);
     if (!yearStr) return;
     const birthYear = parseInt(yearStr.trim());
     if (isNaN(birthYear) || birthYear < 1800 || birthYear > new Date().getFullYear()) return;
