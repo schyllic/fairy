@@ -84,6 +84,9 @@ const CITIES = [
   ['Santo Domingo',             18.5,  -69.9, 'America/Santo_Domingo',          '',    'Dominican Republic'],
 
   // ── UTC-4 ──
+  ['San Juan',                  18.5,  -66.1, 'America/Puerto_Rico',            'PR',  'USA'],
+  ['Ponce',                     18.0,  -66.6, 'America/Puerto_Rico',            'PR',  'USA'],
+  ['Charlotte Amalie',          18.3,  -64.9, 'America/St_Thomas',              'VI',  'USA'],
   ['Halifax',                   44.6,  -63.6, 'America/Halifax',                'NS',  'Canada'],
   ['Montreal',                  45.5,  -73.6, 'America/Toronto',                'QC',  'Canada'],
   ['Caracas',                   10.5,  -66.9, 'America/Caracas',                '',    'Venezuela'],
@@ -306,6 +309,8 @@ const CITIES = [
   ['Sydney',                   -33.9,  151.2, 'Australia/Sydney',               'NSW', 'Australia'],
   ['Melbourne',                -37.8,  145.0, 'Australia/Melbourne',            'VIC', 'Australia'],
   ['Port Moresby',              -9.4,  147.2, 'Pacific/Port_Moresby',           '',    'Papua New Guinea'],
+  ['Hagåtña',                   13.5,  144.8, 'Pacific/Guam',                   'GU',  'USA'],
+  ['Saipan',                    15.2,  145.7, 'Pacific/Saipan',                 'MP',  'USA'],
   ['Palikir',                    6.9,  158.2, 'Pacific/Pohnpei',                '',    'Micronesia'],
 
   // ── UTC+11 ──
