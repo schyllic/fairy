@@ -13,6 +13,7 @@ let scrollToTodayAfterRender     = false;
 let scrollToSelectedAfterRender  = false;
 let restoreScrollFracAfterRender = null;
 let _skyReturnState = null; // {mode, calendarType, calendarSpan, scrollY, selectedDate}
+let _bdaySkyObs    = null; // saved OBSERVER fields during a birthday sky view
 let _updateLocHint = null;  // set by initSettingsModal, called by showSettings
 let runtimeBirthdays = (typeof BIRTHDAYS !== 'undefined') ? [...BIRTHDAYS] : [];
 
@@ -429,6 +430,130 @@ function initSettingsModal() {
     };
     reader.readAsText(file);
     fileInput.value = '';
+  });
+}
+
+function initBirthdayDialog() {
+  const dialog = document.createElement('div');
+  dialog.id = 'bday-sky-dialog';
+  dialog.setAttribute('hidden', '');
+  dialog.innerHTML = `
+    <div id="bday-sky-backdrop"></div>
+    <div id="bday-sky-box">
+      <div id="bday-sky-header">
+        <h2 id="bday-sky-title"></h2>
+        <button id="bday-sky-close" class="btn" aria-label="Close">✕</button>
+      </div>
+      <div class="settings-row">
+        <label for="bday-sky-year">Birth year</label>
+        <input type="number" id="bday-sky-year" min="1800" max="${new Date().getFullYear()}" step="1" placeholder="1990" style="width:6rem">
+      </div>
+      <hr class="settings-divider">
+      <div class="city-search-wrap">
+        <input type="text" id="bday-sky-city-search" autocomplete="off"
+               placeholder="Search city / state / country …" class="city-search-input">
+        <div id="bday-sky-city-dropdown" class="city-dropdown" hidden></div>
+      </div>
+      <div class="settings-row location-row">
+        <label for="bday-sky-lat">Lat</label>
+        <input type="number" id="bday-sky-lat" min="-90" max="90" step="0.1" placeholder="37.0">
+        <span class="settings-unit">° N</span>
+        <label for="bday-sky-lon">Lon</label>
+        <input type="number" id="bday-sky-lon" min="-180" max="180" step="0.1" placeholder="-80.0">
+        <span class="settings-unit">° E</span>
+      </div>
+      <button id="bday-sky-submit" class="btn" disabled>View Birth Sky</button>
+    </div>`;
+  document.body.appendChild(dialog);
+
+  const _cityLabel = c => c[0] + (c[4] ? ', ' + c[4] : '') + ', ' + c[5];
+
+  const _validate = () => {
+    const year = parseInt(dialog.querySelector('#bday-sky-year').value);
+    const lat  = parseFloat(dialog.querySelector('#bday-sky-lat').value);
+    const lon  = parseFloat(dialog.querySelector('#bday-sky-lon').value);
+    const ok = year >= 1800 && year <= new Date().getFullYear()
+            && lat >= -90 && lat <= 90
+            && lon >= -180 && lon <= 180;
+    dialog.querySelector('#bday-sky-submit').disabled = !ok;
+  };
+
+  const _selectCity = city => {
+    dialog.querySelector('#bday-sky-lat').value = city[1];
+    dialog.querySelector('#bday-sky-lon').value = city[2];
+    dialog.querySelector('#bday-sky-city-search').value = _cityLabel(city);
+    dialog.querySelector('#bday-sky-city-dropdown').setAttribute('hidden', '');
+    dialog.dataset.bdaySkyTz   = city[3];
+    dialog.dataset.bdaySkyCity = _cityLabel(city);
+    _validate();
+  };
+
+  dialog.querySelector('#bday-sky-city-search').addEventListener('input', () => {
+    const q = dialog.querySelector('#bday-sky-city-search').value.trim().toLowerCase();
+    const dd = dialog.querySelector('#bday-sky-city-dropdown');
+    dd.innerHTML = '';
+    if (q.length < 1) { dd.setAttribute('hidden', ''); return; }
+    const matches = (typeof CITIES !== 'undefined' ? CITIES : [])
+      .filter(c => (c[0] + ' ' + c[4] + ' ' + c[5]).toLowerCase().includes(q))
+      .slice(0, 8);
+    if (!matches.length) { dd.setAttribute('hidden', ''); return; }
+    matches.forEach(city => {
+      const item = document.createElement('div');
+      item.className = 'city-dropdown-item';
+      item.textContent = _cityLabel(city);
+      item.addEventListener('mousedown', e => { e.preventDefault(); _selectCity(city); });
+      dd.appendChild(item);
+    });
+    dd.removeAttribute('hidden');
+  });
+
+  dialog.querySelector('#bday-sky-city-search').addEventListener('blur', () => {
+    setTimeout(() => dialog.querySelector('#bday-sky-city-dropdown').setAttribute('hidden', ''), 150);
+  });
+
+  dialog.querySelector('#bday-sky-lat').addEventListener('input', () => {
+    dialog.dataset.bdaySkyCity = '';
+    dialog.dataset.bdaySkyTz   = '';
+    dialog.querySelector('#bday-sky-city-search').value = '';
+    _validate();
+  });
+  dialog.querySelector('#bday-sky-lon').addEventListener('input', () => {
+    dialog.dataset.bdaySkyCity = '';
+    dialog.dataset.bdaySkyTz   = '';
+    dialog.querySelector('#bday-sky-city-search').value = '';
+    _validate();
+  });
+  dialog.querySelector('#bday-sky-year').addEventListener('input', _validate);
+
+  const _close = () => dialog.setAttribute('hidden', '');
+  dialog.querySelector('#bday-sky-close').addEventListener('click', _close);
+  dialog.querySelector('#bday-sky-backdrop').addEventListener('click', _close);
+
+  dialog.querySelector('#bday-sky-submit').addEventListener('click', () => {
+    const name  = dialog.dataset.bdayName;
+    const month = parseInt(dialog.dataset.bdayMonth);
+    const day   = parseInt(dialog.dataset.bdayDay);
+    const year  = parseInt(dialog.querySelector('#bday-sky-year').value);
+    const lat   = parseFloat(dialog.querySelector('#bday-sky-lat').value);
+    const lon   = parseFloat(dialog.querySelector('#bday-sky-lon').value);
+    const tz    = dialog.dataset.bdaySkyTz   || OBSERVER.tz;
+    const city  = dialog.dataset.bdaySkyCity || '';
+
+    _bdaySkyObs = { lat: OBSERVER.lat, lon: OBSERVER.lon, tz: OBSERVER.tz, cityName: OBSERVER.cityName || '' };
+    OBSERVER.lat = lat; OBSERVER.lon = lon; OBSERVER.tz = tz; OBSERVER.cityName = city;
+
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    state.holYear = year + 10000;
+    selectedDate  = dateStr;
+    scrollToSelectedAfterRender = true;
+
+    _close();
+    _skyReturnState = { mode: state.mode, calendarType: state.calendarType,
+                        calendarSpan: state.calendarSpan, scrollY: window.scrollY,
+                        selectedDate: dateStr, isBirthdaySky: true };
+    _skyViewDate = dateStr;
+    state.mode = 'sky';
+    refresh();
   });
 }
 
@@ -1707,6 +1832,7 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.addEventListene
     restoreScrollFracAfterRender = sh > 0 ? window.scrollY / sh : 0;
   }
   state.mode = b.dataset.mode;
+  if (_bdaySkyObs) { Object.assign(OBSERVER, _bdaySkyObs); _bdaySkyObs = null; }
   _skyReturnState = null;
   refresh();
   _showLabelToast(b.dataset.mode === 'sky' ? 'view_sky' : 'mode_calendar');
@@ -1721,6 +1847,7 @@ document.querySelectorAll('.span-btn[data-span]').forEach(b => b.addEventListene
   }
   state.mode = 'calendar';
   state.calendarSpan = b.dataset.span;
+  if (_bdaySkyObs) { Object.assign(OBSERVER, _bdaySkyObs); _bdaySkyObs = null; }
   _skyReturnState = null;
   refresh();
   _showT2Toast(b.dataset.span === 'month' ? 'span_month' : 'view_week');
@@ -1814,27 +1941,30 @@ document.addEventListener('keydown', e => {
   if (e.key==='Escape')     { closeModal(); closeHelp(); closeSettings(); closeLanguageModal(); }
 });
 
+function _openBirthdayDialog(name, month, day) {
+  const dialog = document.getElementById('bday-sky-dialog');
+  dialog.querySelector('#bday-sky-title').textContent = `View Birth Sky — ${name}`;
+  dialog.querySelector('#bday-sky-year').value  = '';
+  dialog.querySelector('#bday-sky-lat').value   = OBSERVER.lat;
+  dialog.querySelector('#bday-sky-lon').value   = OBSERVER.lon;
+  dialog.querySelector('#bday-sky-city-search').value = OBSERVER.cityName || '';
+  dialog.dataset.bdayName  = name;
+  dialog.dataset.bdayMonth = month;
+  dialog.dataset.bdayDay   = day;
+  dialog.dataset.bdaySkyTz   = OBSERVER.tz;
+  dialog.dataset.bdaySkyCity = OBSERVER.cityName || '';
+  dialog.querySelector('#bday-sky-submit').disabled = true;
+  dialog.removeAttribute('hidden');
+}
+
 document.body.addEventListener('click', e => {
   const btn = e.target.closest('.info-btn');
   if (btn && btn.dataset.from && currentFY) { showModal(btn.dataset.from, btn.dataset.label, currentFY); return; }
 
   const cake = e.target.closest('.birthday-label');
   if (cake && currentFY) {
-    const name = cake.dataset.bdayName;
-    const month = parseInt(cake.dataset.bdayMonth);
-    const day   = parseInt(cake.dataset.bdayDay);
-    const yearStr = prompt(`Which year was ${name} born? (this will not be stored)`);
-    if (!yearStr) return;
-    const birthYear = parseInt(yearStr.trim());
-    if (isNaN(birthYear) || birthYear < 1800 || birthYear > new Date().getFullYear()) return;
-    const dateStr = `${birthYear}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    state.holYear = birthYear + 10000;
-    selectedDate = dateStr;
-    scrollToSelectedAfterRender = true;
-    refresh();
-    const gd = new Date(dateStr + 'T00:00:00Z');
-    const dateFmt = `${getGregMonths()[gd.getUTCMonth()]} ${gd.getUTCDate()}, ${birthYear}`;
-    showModal(dateStr, `${dateFmt} · 🎂 ${name} — born today`, buildFairyYear(birthYear + 10000));
+    _openBirthdayDialog(cake.dataset.bdayName,
+      parseInt(cake.dataset.bdayMonth), parseInt(cake.dataset.bdayDay));
     return;
   }
 
@@ -1863,6 +1993,7 @@ initHelpModal();
 initSettingsModal();
 initLanguageModal();
 initCalendarModal();
+initBirthdayDialog();
 document.getElementById('help-btn').addEventListener('click', showHelp);
 document.getElementById('settings-btn').addEventListener('click', showSettings);
 document.getElementById('help-btn-m').addEventListener('click', showHelp);

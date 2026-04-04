@@ -781,7 +781,7 @@ body {
   padding: 0.3rem 0.5rem 0.2rem; text-align: center;
   display: flex; flex-wrap: nowrap; justify-content: center; gap: 0.8rem;
 }
-.sky-info-sun, .sky-info-moon { white-space: nowrap; }
+.sky-info-sun, .sky-info-moon, .sky-info-loc { white-space: nowrap; }
 @media (max-width: 600px) {
   .sky-view-info { flex-direction: column; gap: 0.1rem; }
 }
@@ -911,6 +911,19 @@ body.sky-playing .sky-view-constellations { display: none; }
 #settings-modal[hidden] { display: none; }
 #settings-modal #modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
 #settings-modal #modal-box { max-width: min(500px, 99vw); }
+/* ─── Birthday Sky Dialog ─────────────────────────────── */
+#bday-sky-dialog { position: fixed; inset: 0; z-index: 1050; display: flex; align-items: center; justify-content: center; }
+#bday-sky-dialog[hidden] { display: none; }
+#bday-sky-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+#bday-sky-box {
+  position: relative; z-index: 1; background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 10px; padding: 1rem;
+  max-width: min(480px, 99vw); width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+#bday-sky-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+#bday-sky-header h2 { margin: 0; font-size: 1rem; }
+#bday-sky-submit { margin-top: 0.75rem; width: 100%; }
+#bday-sky-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 .settings-hint { font-size: 0.82rem; color: var(--color-text-secondary); margin: 0.2rem 0 0.7rem; min-height: 1.2em; }
 .input-error { border-color: #c0392b !important; outline: none; box-shadow: 0 0 0 2px rgba(192,57,43,0.25); }
 .settings-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap; }

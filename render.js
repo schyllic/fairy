@@ -695,7 +695,7 @@ function renderSky(resetZoom = false) {
 
   root.innerHTML =
     `<div class="sky-view${_skyLabelsOn ? '' : ' sky-labels-hidden'}">` +
-      `<div class="sky-view-info"><span class="sky-info-sun">${sunParts.join(' · ')}</span><span class="sky-info-moon">${moonParts.join(' · ')}</span></div>` +
+      `<div class="sky-view-info"><span class="sky-info-sun">${sunParts.join(' · ')}</span><span class="sky-info-moon">${moonParts.join(' · ')}</span><span class="sky-info-loc">📍 ${OBSERVER.cityName || (Math.abs(OBSERVER.lat).toFixed(1) + '°' + (OBSERVER.lat >= 0 ? 'N' : 'S') + ', ' + Math.abs(OBSERVER.lon).toFixed(1) + '°' + (OBSERVER.lon >= 0 ? 'E' : 'W'))}</span></div>` +
       planetInfo +
       conList +
       `<div class="sky-view-chart">${chartHTML}</div>` +
@@ -717,6 +717,7 @@ function renderSky(resetZoom = false) {
       const ret = _skyReturnState;
       _skyReturnState = null;
       backEl.remove();
+      if (ret.isBirthdaySky && _bdaySkyObs) { Object.assign(OBSERVER, _bdaySkyObs); _bdaySkyObs = null; }
       selectedDate = ret.selectedDate;
       scrollToSelectedAfterRender = true;
       state.mode = ret.mode;
