@@ -956,6 +956,7 @@ body.sky-playing .sky-view-constellations { display: none; }
 }
 .city-dropdown-item:last-child { border-bottom: none; }
 .city-dropdown-item:hover { background: var(--color-bg-alt); color: var(--color-accent); }
+.city-dropdown-tz { margin-left: 0.5em; font-size: 0.78rem; opacity: 0.55; }
 .settings-row input[type="number"] {
   width: 6rem; padding: 0.25rem 0.4rem;
   background: var(--color-bg); color: var(--color-text-primary);

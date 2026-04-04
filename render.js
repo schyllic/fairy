@@ -639,7 +639,6 @@ function renderSky(resetZoom = false) {
   const isPlaying = document.body.classList.contains('sky-playing');
   const catalogData = (typeof getVisibleCatalogStars === 'function') ? getVisibleCatalogStars(skyDate, { skipTier2: isPlaying }) : null;
   const constellations = catalogData ? catalogData.constellations : [];
-  const visPlans = getVisiblePlanets(skyDate);
   const planetPositions = getPlanetAltAz(skyDate);
   const phase = moonPhaseInfo(skyDate);
   const moonIllum = Math.round(phase.illum * 100);
@@ -663,7 +662,7 @@ function renderSky(resetZoom = false) {
   // Planet list + constellation list — always rendered at fixed height to prevent layout jump
   const _cMap = { pawnee: SKIDI_PAWNEE, hindu: HINDU_SKY }[state.skyCulture] || null;
   const _planetLabels = { pawnee: { Venus: 'Evening Star' }, hindu: HINDU_PLANET_NAMES }[state.skyCulture] || {};
-  const planetInfo = `<div class="sky-view-planets">${visPlans.length > 0 ? visPlans.map(p => {
+  const planetInfo = `<div class="sky-view-planets">${planetPositions.length > 0 ? planetPositions.map(p => {
     const label = _planetLabels[p.name] || p.name;
     return `${PLANET_SYMBOLS[p.name]} ${label} (${p.elong}°)`;
   }).join(' · ') : ''}</div>`;

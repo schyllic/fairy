@@ -903,10 +903,11 @@ function getPlanetAltAz(gregDate) {
   const sun = _sunRADecT(T);
   return PLANET_NAMES_VIS.map(name => {
     const p = _geocentricRADec(name, T);
-    if (_angSep(p.ra, p.dec, sun.ra, sun.dec) < 15) return null;
+    const elong = _angSep(p.ra, p.dec, sun.ra, sun.dec);
+    if (elong < 15) return null;
     const pos = _altAz(norm24(p.ra * R2H), p.dec * R2D, LST, latR);
     if (!pos || pos.alt < 5) return null;
-    return { name, az: pos.az, alt: pos.alt, symbol: PLANET_SYMBOLS[name] };
+    return { name, az: pos.az, alt: pos.alt, symbol: PLANET_SYMBOLS[name], elong: Math.round(elong) };
   }).filter(Boolean);
 }
 

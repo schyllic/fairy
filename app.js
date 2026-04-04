@@ -320,12 +320,16 @@ function initSettingsModal() {
     _cityDropdown.innerHTML = '';
     if (q.length < 1) { _cityDropdown.setAttribute('hidden', ''); return; }
     const matches = (typeof CITIES !== 'undefined' ? CITIES : [])
-      .filter(c => (c[0] + ' ' + c[4] + ' ' + c[5]).toLowerCase().includes(q)).slice(0, 8);
+      .filter(c => (c[0] + ' ' + c[3] + ' ' + c[4] + ' ' + c[5]).toLowerCase().includes(q)).slice(0, 8);
     if (!matches.length) { _cityDropdown.setAttribute('hidden', ''); return; }
     matches.forEach(city => {
       const item = document.createElement('div');
       item.className = 'city-dropdown-item';
       item.textContent = _cityLabel(city);
+      const _tzSpan = document.createElement('span');
+      _tzSpan.className = 'city-dropdown-tz';
+      _tzSpan.textContent = '· tz: ' + city[3];
+      item.appendChild(_tzSpan);
       item.addEventListener('mousedown', e => { e.preventDefault(); _selectCity(city); });
       _cityDropdown.appendChild(item);
     });
@@ -494,13 +498,17 @@ function initBirthdayDialog() {
     dd.innerHTML = '';
     if (q.length < 1) { dd.setAttribute('hidden', ''); return; }
     const matches = (typeof CITIES !== 'undefined' ? CITIES : [])
-      .filter(c => (c[0] + ' ' + c[4] + ' ' + c[5]).toLowerCase().includes(q))
+      .filter(c => (c[0] + ' ' + c[3] + ' ' + c[4] + ' ' + c[5]).toLowerCase().includes(q))
       .slice(0, 8);
     if (!matches.length) { dd.setAttribute('hidden', ''); return; }
     matches.forEach(city => {
       const item = document.createElement('div');
       item.className = 'city-dropdown-item';
       item.textContent = _cityLabel(city);
+      const _tzSpan = document.createElement('span');
+      _tzSpan.className = 'city-dropdown-tz';
+      _tzSpan.textContent = '· tz: ' + city[3];
+      item.appendChild(_tzSpan);
       item.addEventListener('mousedown', e => { e.preventDefault(); _selectCity(city); });
       dd.appendChild(item);
     });
@@ -1446,7 +1454,7 @@ function showModal(fromDateStr, label, fy) {
   );
   const catalogData = (typeof getVisibleCatalogStars === 'function') ? getVisibleCatalogStars(skyDate) : null;
   const constellationData = catalogData ? catalogData.constellations : getVisibleConstellationPositions(skyDate);
-  const visPlans = getVisiblePlanets(skyDate);
+  const visPlans = getPlanetAltAz(skyDate);
   const activeMeteors = fy.eventTimeline.filter(e =>
     e.kind === 'meteorShower' && e.dateStr >= fromDateStr && e.dateStr <= toStr
   );
