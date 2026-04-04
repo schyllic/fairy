@@ -57,6 +57,7 @@ en: `
 <hr>
 <h3>The Night Sky Panel</h3>
 <p>Click any <strong>ⓘ</strong> button to open the events panel. When viewing today, the <strong>Tonight</strong> section shows sunset time, astronomical twilight (when the sky is truly dark — sun 18° below horizon, roughly 1.5–2 hours after sunset), visible planets, active meteor showers, and evening constellations visible from your location.</p>
+<p><strong>Northern vs Southern Hemisphere:</strong> The sky you see depends entirely on where you are on Earth. Observers in the Southern Hemisphere see a completely different set of constellations overhead — the Southern Cross, Centaurus, and Scorpius dominate the south, while Orion appears upside-down and the familiar northern pole star Polaris is below the horizon. The sky panel shows constellations calculated for your set location, so make sure your coordinates in Settings are correct. If you move to a new place, update them.</p>
 <hr>
 <h3>Other Lunar Calendars</h3>
 <p>Many cultures have tracked time by the moon. The most widely used today is the <strong>Hebrew calendar</strong>, which shares some features with this one — and differs in revealing ways.</p>
@@ -221,6 +222,7 @@ de: `
 <hr>
 <h3>Das Nachthimmel-Fenster</h3>
 <p>Klicke auf eine beliebige <strong>ⓘ</strong>-Schaltfläche, um das Ereignispanel zu öffnen. Beim heutigen Tag zeigt der <strong>Heute Nacht</strong>-Bereich Sonnenuntergangszeit, astronomische Dämmerung (wenn der Himmel wirklich dunkel ist — Sonne 18° unter dem Horizont), sichtbare Planeten, aktive Meteorschauer und abendliche Sternbilder von deinem Standort.</p>
+<p><strong>Nordhimmel vs. Südhimmel:</strong> Der Himmel, den du siehst, hängt vollständig davon ab, wo du dich auf der Erde befindest. Beobachter auf der Südhalbkugel sehen eine völlig andere Sammlung von Sternbildern — das Südliche Kreuz, Zentaurus und Skorpion dominieren den Süden, während Orion auf dem Kopf erscheint und der vertraute Nordstern Polaris unter dem Horizont liegt. Das Himmels-Panel zeigt Sternbilder berechnet für deinen eingestellten Standort — stelle sicher, dass deine Koordinaten in den Einstellungen korrekt sind.</p>
 <hr>
 <h3>Andere Mondkalender</h3>
 <p>Viele Kulturen haben die Zeit nach dem Mond gemessen. Der heute verbreitetste ist der <strong>Hebräische Kalender</strong>. <strong>Gemeinsamkeiten:</strong> Beide sind <em>lunisolarer</em> Natur — sie folgen dem Mond für Monate, fügen aber einen Schaltmonat ein, um mit dem Sonnenjahr in Einklang zu bleiben. Beide beginnen jeden Monat mit dem Neumond.</p>
@@ -358,6 +360,7 @@ fr: `
 <hr>
 <h3>Le Panneau Ciel Nocturne</h3>
 <p>Cliquez sur n'importe quel bouton <strong>ⓘ</strong> pour ouvrir le panneau d'événements. Pour aujourd'hui, la section <strong>Ce Soir</strong> indique l'heure du coucher du soleil, le crépuscule astronomique (soleil à 18° sous l'horizon), les planètes visibles, les pluies de météores actives et les constellations du soir depuis votre position.</p>
+<p><strong>Hémisphère Nord vs. Sud :</strong> Le ciel que vous voyez dépend entièrement de votre position sur Terre. Les observateurs de l'hémisphère sud voient un ensemble de constellations complètement différent — la Croix du Sud, le Centaure et le Scorpion dominent le sud, tandis qu'Orion apparaît à l'envers et l'étoile polaire Polaris est sous l'horizon. Le panneau céleste affiche les constellations calculées pour votre emplacement configuré — vérifiez que vos coordonnées dans Paramètres sont correctes.</p>
 <hr>
 <h3>Autres Calendriers Lunaires</h3>
 <p>Le <strong>calendrier hébreu</strong> est le plus utilisé parmi les calendriers lunisolaires. <strong>Points communs :</strong> les deux suivent la lune pour les mois mais ajoutent un mois intercalaire pour rester alignés sur l'année solaire ; les deux commencent chaque mois à la nouvelle lune.</p>
@@ -495,6 +498,7 @@ it: `
 <hr>
 <h3>Il Pannello del Cielo Notturno</h3>
 <p>Clicca qualsiasi pulsante <strong>ⓘ</strong> per aprire il pannello eventi. Per oggi, la sezione <strong>Stasera</strong> mostra l'orario del tramonto, il crepuscolo astronomico (sole a 18° sotto l'orizzonte), i pianeti visibili, gli sciami meteorici attivi e le costellazioni serali dalla tua posizione.</p>
+<p><strong>Emisfero Nord vs. Sud:</strong> Il cielo che vedi dipende interamente da dove ti trovi sulla Terra. Gli osservatori nell'emisfero australe vedono un insieme completamente diverso di costellazioni — la Croce del Sud, il Centauro e lo Scorpione dominano il sud, mentre Orione appare capovolto e la familiare stella polare Polaris è sotto l'orizzonte. Il pannello del cielo mostra le costellazioni calcolate per la tua posizione impostata — assicurati che le tue coordinate in Impostazioni siano corrette.</p>
 <hr>
 <h3>Altri Calendari Lunari</h3>
 <p>Il <strong>calendario ebraico</strong> è il più diffuso tra i calendari lunisolari. <strong>Punti in comune:</strong> entrambi seguono la luna per i mesi ma aggiungono un mese intercalare; entrambi iniziano ogni mese con la luna nuova.</p>
@@ -632,6 +636,7 @@ es: `
 <hr>
 <h3>El Panel del Cielo Nocturno</h3>
 <p>Haz clic en cualquier botón <strong>ⓘ</strong> para abrir el panel de eventos. Para hoy, la sección <strong>Esta Noche</strong> muestra la hora de la puesta de sol, el crepúsculo astronómico (sol a 18° bajo el horizonte), los planetas visibles, las lluvias de meteoros activas y las constelaciones vespertinas desde tu ubicación.</p>
+<p><strong>Hemisferio Norte vs. Sur:</strong> El cielo que ves depende completamente de dónde estés en la Tierra. Los observadores en el hemisferio sur ven un conjunto completamente diferente de constelaciones — la Cruz del Sur, el Centauro y el Escorpión dominan el sur, mientras que Orión aparece invertido y la familiar estrella polar Polaris está bajo el horizonte. El panel del cielo muestra constelaciones calculadas para tu ubicación configurada — asegúrate de que tus coordenadas en Configuración sean correctas.</p>
 <hr>
 <h3>Otros Calendarios Lunares</h3>
 <p>El <strong>calendario hebreo</strong> es el más utilizado entre los lunisolares. <strong>Puntos en común:</strong> ambos siguen la luna para los meses pero añaden un mes intercalar; ambos comienzan cada mes en luna nueva.</p>
@@ -767,6 +772,7 @@ sw: `
 <hr>
 <h3>Paneli ya Anga ya Usiku</h3>
 <p>Bonyeza kitufe chochote cha <strong>ⓘ</strong> kufungua paneli ya matukio. Kwa leo, sehemu ya <strong>Usiku Huu</strong> inaonyesha wakati wa jua kutua, machweo ya astronomia, sayari zinazoonekana, mvua za vimondo amilifu na nyota za usiku kutoka mahali pako.</p>
+<p><strong>Ulimwengu wa Kaskazini dhidi ya Kusini:</strong> Anga unayoona inategemea kabisa uko wapi duniani. Waangalizi katika ulimwengu wa kusini wanaona mkusanyiko tofauti kabisa wa nyota — Msalaba wa Kusini, Centaurus na Scorpius vinatawala kusini, huku Orion akionekana kichwa chini na nyota ya kaskazini inayojulikana Polaris iko chini ya upeo wa macho. Paneli ya anga inaonyesha nyota zilizohesabiwa kwa mahali pako ulioweka — hakikisha kuratibu zako katika Mipangilio ni sahihi.</p>
 <hr>
 <h3>Kalenda Nyingine za Mwezi</h3>
 <p><strong>Kalenda ya Kiebrania</strong> ni ya lunisolari. Miezi yake 12 (au 13 katika mwaka wa kurukaruka) huanza na mwandamo. Mwaka wa Kiebrania unaanza vuli; huu unaanza majira ya baridi. Kalenda ya Kiebrania hufuata ratiba ya miaka 19 iliyopangwa; hii hutumia kianzio cha astronomia halisi. Anno Mundi inaweka 2026 BK katika mwaka <strong>5786</strong>.</p>
@@ -903,6 +909,7 @@ la: `
 <hr>
 <h3>Tabula Caeli Nocturni</h3>
 <p>Elige quodcumque pittacium <strong>ⓘ</strong> ut tabulam eventuum aperias. Pro die hodierno, sectio <strong>Hac Nocte</strong> ostendit horam occasus solis, crepusculum astronomicum (sole XVIII gradibus sub horizonte), planetas visibiles, imbres meteororum activos et constellationes vespertinas ex loco tuo visibiles.</p>
+<p><strong>Caelum Boreale et Australe:</strong> Caelum quod vides omnino ex loco tuo in terra pendet. Observatores in hemisphaerio australi omnino diversam collectionem constellationum vident — Crux Australis, Centaurus et Scorpius meridiem dominantur, dum Orion inversus apparet et stella borealis nota Polaris infra horizontem iacet. Tabula caeli constellationes pro loco tuo constituto computat — cura ut coordinatae tuae in Optionibus rectae sint.</p>
 <hr>
 <h3>Alia Calendaria Lunaria</h3>
 <p><strong>Calendarium Hebraicum</strong> lunisolarium est. Mensibus XII (vel XIII anno intercalari) utitur, singulis a luna nova incipientibus. Annus Hebraicus autumno incipit; hic hieme. Calendarium Hebraicum cyclo XIX annorum fixo utitur; hoc causa astronomica pura. Anno Mundi computato, 2026 p. Chr. n. anno <strong>5786</strong> respondet. Calendarium Hebraicum mensem lunarem saeculo IV fixum adhibet; hoc lunas novas veras algorithmis Meeus computat.</p>
@@ -1039,6 +1046,7 @@ sa: `
 <hr>
 <h3>रात्रि आकाश पैनल</h3>
 <p>घटनाओं का पैनल खोलने के लिए किसी भी <strong>ⓘ</strong> बटन पर क्लिक करें। आज का दिन देखते समय <strong>आज रात</strong> अनुभाग में सूर्यास्त का समय, खगोलीय गोधूलि (जब आकाश वास्तव में अंधकारमय हो जाता है — सूर्य क्षितिज से 18° नीचे, सूर्यास्त के लगभग 1.5–2 घंटे बाद), दृश्यमान ग्रह, सक्रिय उल्का वर्षाएँ और आपके स्थान से दिखने वाले संध्याकालीन नक्षत्रमंडल दिखाई देते हैं।</p>
+<p><strong>उत्तरी बनाम दक्षिणी आकाश:</strong> आप जो आकाश देखते हैं वह पूरी तरह इस बात पर निर्भर करता है कि आप पृथ्वी पर कहाँ हैं। दक्षिणी गोलार्ध के दर्शक नक्षत्रमंडलों का एक बिल्कुल अलग समूह देखते हैं — दक्षिणी क्रॉस, सेंटॉरस और वृश्चिक दक्षिण पर हावी हैं, जबकि मृगशिरा (Orion) उल्टा दिखाई देता है और परिचित उत्तरी ध्रुव तारा Polaris क्षितिज के नीचे होता है। आकाश पैनल आपके निर्धारित स्थान के लिए परिकलित नक्षत्रमंडल दिखाता है — सुनिश्चित करें कि सेटिंग्स में आपके निर्देशांक सही हों।</p>
 <hr>
 <h3>अन्य चंद्र पंचांग</h3>
 <p>अनेक सभ्यताओं ने चंद्रमा के अनुसार समय की गणना की है। आज सर्वाधिक प्रचलित <strong>हिब्रू पंचांग</strong> है, जो इससे कुछ विशेषताएँ साझा करता है — और कुछ महत्वपूर्ण अंतर भी रखता है।</p>

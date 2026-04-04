@@ -912,7 +912,8 @@ body.sky-playing .sky-view-constellations { display: none; }
 #settings-modal[hidden] { display: none; }
 #settings-modal #modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
 #settings-modal #modal-box { max-width: min(500px, 99vw); }
-.settings-hint { font-size: 0.82rem; color: var(--color-text-secondary); margin: 0.2rem 0 0.7rem; }
+.settings-hint { font-size: 0.82rem; color: var(--color-text-secondary); margin: 0.2rem 0 0.7rem; min-height: 1.2em; }
+.input-error { border-color: #c0392b !important; outline: none; box-shadow: 0 0 0 2px rgba(192,57,43,0.25); }
 .settings-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
 .settings-row label { font-size: 0.88rem; flex-shrink: 0; }
 .location-row label { width: auto; }

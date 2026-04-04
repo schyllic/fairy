@@ -13,6 +13,7 @@ let scrollToTodayAfterRender     = false;
 let scrollToSelectedAfterRender  = false;
 let restoreScrollFracAfterRender = null;
 let _skyReturnState = null; // {mode, calendarType, calendarSpan, scrollY, selectedDate}
+let _updateLocHint = null;  // set by initSettingsModal, called by showSettings
 let runtimeBirthdays = (typeof BIRTHDAYS !== 'undefined') ? [...BIRTHDAYS] : [];
 
 try {
@@ -214,12 +215,12 @@ function initSettingsModal() {
         `</div>` +
       `</div>` +
       `<div id="modal-body">` +
+        `<h3 class="settings-section-head" id="settings-loc-head">Location</h3>` +
         `<div class="city-search-wrap">` +
           `<input type="text" id="settings-city-search" autocomplete="off" ` +
                  `placeholder="Search city / state / country ..." class="city-search-input">` +
           `<div id="city-dropdown" class="city-dropdown" hidden></div>` +
         `</div>` +
-        `<h3 class="settings-section-head" id="settings-loc-head">Location</h3>` +
         `<div class="settings-row location-row">` +
           `<label for="settings-lat" id="settings-lat-lbl">Lat</label>` +
           `<input type="number" id="settings-lat" min="-90" max="90" step="0.1" placeholder="37.0">` +
@@ -229,7 +230,7 @@ function initSettingsModal() {
           `<span class="settings-unit">° E</span>` +
           `<button id="settings-loc-detect" class="btn">Detect</button>` +
         `</div>` +
-        `<p class="settings-hint">Used for sky calculations. Negative lon = West.</p>` +
+        `<p class="settings-hint" id="settings-loc-hint"></p>` +
         `<hr class="settings-divider">` +
         `<h3 class="settings-section-head" id="settings-bday-head">Birthdays</h3>` +
         `<div class="settings-row bday-add-row">` +
@@ -268,6 +269,38 @@ function initSettingsModal() {
   const _cityInput    = modal.querySelector('#settings-city-search');
   const _cityDropdown = modal.querySelector('#city-dropdown');
   const _cityLabel = c => c[0] + (c[4] ? ', ' + c[4] : '') + ', ' + c[5];
+  _updateLocHint = () => {
+    const hint = document.getElementById('settings-loc-hint');
+    if (!hint) return;
+    const latEl = document.getElementById('settings-lat');
+    const lonEl = document.getElementById('settings-lon');
+    const lat = parseFloat(latEl.value);
+    const lon = parseFloat(lonEl.value);
+    const latOk = !isNaN(lat) && lat >= -90 && lat <= 90;
+    const lonOk = !isNaN(lon) && lon >= -180 && lon <= 180;
+    latEl.classList.toggle('input-error', !!latEl.value && !latOk);
+    lonEl.classList.toggle('input-error', !!lonEl.value && !lonOk);
+    if (!latOk || !lonOk) {
+      const msgs = [];
+      if (latEl.value && !latOk) msgs.push('Latitude must be −90 to 90.');
+      if (lonEl.value && !lonOk) msgs.push('Longitude must be −180 to 180.');
+      hint.textContent = msgs.join(' ');
+      return;
+    }
+    const ns = lat >= 0 ? 'Northern Hemisphere' : 'Southern Hemisphere';
+    const ew = lon >= 0 ? 'Eastern Longitude' : 'Western Longitude';
+    let cityPart = '';
+    if (typeof CITIES !== 'undefined' && CITIES.length) {
+      let best = CITIES[0], bestD = Infinity;
+      for (const c of CITIES) {
+        const d = (c[1] - lat) ** 2 + (c[2] - lon) ** 2;
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      const dKm = Math.round(111 * Math.sqrt((best[1] - lat) ** 2 + (best[2] - lon) ** 2));
+      cityPart = ` · near: ${_cityLabel(best)} (${dKm} km)`;
+    }
+    hint.textContent = `${ns}, ${ew}${cityPart}`;
+  };
   const _selectCity = city => {
     document.getElementById('settings-lat').value = city[1];
     document.getElementById('settings-lon').value = city[2];
@@ -297,10 +330,10 @@ function initSettingsModal() {
     setTimeout(() => _cityDropdown.setAttribute('hidden', ''), 150);
   });
   modal.querySelector('#settings-lat').addEventListener('change', () => {
-    OBSERVER.cityName = ''; _cityInput.value = ''; _applyLocation();
+    OBSERVER.cityName = ''; _cityInput.value = ''; _applyLocation(); _updateLocHint();
   });
   modal.querySelector('#settings-lon').addEventListener('change', () => {
-    OBSERVER.cityName = ''; _cityInput.value = ''; _applyLocation();
+    OBSERVER.cityName = ''; _cityInput.value = ''; _applyLocation(); _updateLocHint();
   });
   modal.querySelector('#settings-loc-detect').addEventListener('click', () => {
     if (!navigator.geolocation) return;
@@ -316,6 +349,7 @@ function initSettingsModal() {
         OBSERVER.cityName = '';
         modal.querySelector('#settings-city-search').value = '';
         _applyLocation();
+        _updateLocHint();
         if (typeof CITIES !== 'undefined' && CITIES.length) {
           let best = CITIES[0], bestD = Infinity;
           for (const c of CITIES) {
@@ -323,8 +357,7 @@ function initSettingsModal() {
             if (d < bestD) { bestD = d; best = c; }
           }
           const dKm = Math.round(111 * Math.sqrt((best[1] - lat) ** 2 + (best[2] - lon) ** 2));
-          const warn = dKm > 400 ? ' ⚠ may be IP-based' : '';
-          showToast(`Nearest city: ${_cityLabel(best)} (${dKm} km away)${warn}`);
+          if (dKm > 400) showToast('⚠ Location may be IP-based');
         }
         btn.disabled = false;
         btn.textContent = 'Detect';
@@ -423,7 +456,7 @@ function showSettings() {
   document.getElementById('bday-add-btn').textContent = t('add');
   document.getElementById('bday-share-btn').textContent = t('share_link');
   document.querySelector('#settings-modal #modal-title').textContent = t('settings_title');
-  document.querySelector('.settings-hint').textContent = t('sky_hint');
+  if (_updateLocHint) _updateLocHint();
   document.getElementById('bday-name').placeholder = t('name_ph');
   document.getElementById('bday-day').placeholder  = t('day_ph');
   _renderBirthdayList();
