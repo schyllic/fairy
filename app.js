@@ -206,12 +206,16 @@ function initSettingsModal() {
         `<button id="modal-close" aria-label="Close">✕</button>` +
         `<h2 id="modal-title">Settings</h2>` +
         `<div id="modal-header-row">` +
-          `<span class="settings-picker-label" id="label-lang">Language</span>` +
-          `<button id="lang-current-btn" class="btn lang-current-btn" title="Primary language"></button>` +
-          `<button id="lang2-current-btn" class="btn lang-current-btn lang2-btn" title="Tooltip language"></button>` +
-          `<span class="settings-picker-label" id="label-cal">Calendar</span>` +
-          `<button class="btn lang-current-btn" id="cal-primary-btn" title="Primary calendar"></button>` +
-          `<button class="btn lang-current-btn" id="cal2-btn" title="Other date calendar"></button>` +
+          `<span class="settings-picker-group">` +
+            `<span class="settings-picker-label" id="label-lang">Language</span>` +
+            `<button id="lang-current-btn" class="btn lang-current-btn" title="Primary language"></button>` +
+            `<button id="lang2-current-btn" class="btn lang-current-btn lang2-btn" title="Tooltip language"></button>` +
+          `</span>` +
+          `<span class="settings-picker-group">` +
+            `<span class="settings-picker-label" id="label-cal">Calendar</span>` +
+            `<button class="btn lang-current-btn" id="cal-primary-btn" title="Primary calendar"></button>` +
+            `<button class="btn lang-current-btn" id="cal2-btn" title="Other date calendar"></button>` +
+          `</span>` +
         `</div>` +
       `</div>` +
       `<div id="modal-body">` +
