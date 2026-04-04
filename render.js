@@ -791,7 +791,10 @@ function render(holYear, viewMode) {
           if (todayEl) {
             const monthBlock = todayEl.closest('.fairy-moon, .greg-month, .hebrew-month');
             if (monthBlock) {
-              monthBlock.scrollIntoView({behavior:'smooth', block:'start'});
+              const toolbar = document.getElementById('toolbar');
+              const offset = toolbar ? toolbar.offsetHeight + 12 : 60;
+              const top = window.scrollY + monthBlock.getBoundingClientRect().top - offset;
+              window.scrollTo({top: Math.max(0, top), behavior: 'smooth'});
             } else {
               (todayEl.closest('tr') || todayEl).scrollIntoView({behavior:'smooth', block:'center'});
             }

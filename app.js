@@ -1552,6 +1552,9 @@ document.getElementById('today-btn').addEventListener('click', () => {
   _skyViewDate = localTodayStr();
   selectedDate = _skyViewDate;
   scrollToTodayAfterRender = true;
+  _toolbarCollapsible.setAttribute('hidden', '');
+  _toolbarToggle.classList.remove('open');
+  try { localStorage.setItem(STORAGE.TOOLBAR, JSON.stringify(false)); } catch(_) {}
   refresh();
   _showLabelToast('today');
 });
