@@ -774,7 +774,7 @@ function render(holYear, viewMode) {
       if (state.theme === 'animal') {
         const wp = ANIMAL_PATTERNS[fy.yearAnimal] || PATTERNS.animal;
         document.documentElement.style.setProperty('--pattern-bg-header', wp);
-        document.documentElement.style.setProperty('--pattern-bg', animalPatternDark(wp));
+        document.documentElement.style.setProperty('--pattern-bg', state.colorScheme === 'dark' ? wp : animalPatternDark(wp));
         document.documentElement.style.setProperty('--pattern-bg-size', '120px 120px');
       }
       if      (viewMode==='greg')   renderGreg(fy);

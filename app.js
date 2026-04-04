@@ -1699,6 +1699,10 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
   btn.addEventListener('click', () => {
     state.colorScheme = state.colorScheme === 'dark' ? 'light' : 'dark';
     applyVariant(state.theme, state.variant, state.colorScheme);
+    if (state.theme === 'animal' && currentFY) {
+      const wp = ANIMAL_PATTERNS[currentFY.yearAnimal] || PATTERNS.animal;
+      document.documentElement.style.setProperty('--pattern-bg', state.colorScheme === 'dark' ? wp : animalPatternDark(wp));
+    }
     buildSwatches();
     _saveState();
   });

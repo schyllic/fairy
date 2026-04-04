@@ -697,6 +697,7 @@ body {
 [data-theme="animal"] .info-btn { font-size: 0; }
 [data-theme="animal"] .info-btn::after { content: "🐾"; font-size: 0.9rem; }
 [data-theme="animal"] .today-info-btn::after { font-size: 0.75rem; }
+[data-color-scheme="dark"][data-theme="animal"] .info-btn { filter: invert(1); }
 [data-theme="flower"] .info-btn { font-size: 0; }
 [data-theme="flower"] .info-btn::after { content: "🌸"; font-size: 0.9rem; }
 [data-theme="flower"] .today-info-btn::after { font-size: 0.75rem; }

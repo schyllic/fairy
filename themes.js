@@ -593,8 +593,9 @@ function applyTheme(themeName) {
   e.dataset.theme = themeName;
   if (themeName === 'animal' && currentFY) {
     const wp = ANIMAL_PATTERNS[currentFY.yearAnimal] || PATTERNS.animal;
+    const _isDark = document.documentElement.dataset.colorScheme === 'dark';
     e.style.setProperty('--pattern-bg-header', wp);
-    e.style.setProperty('--pattern-bg', animalPatternDark(wp));
+    e.style.setProperty('--pattern-bg', _isDark ? wp : animalPatternDark(wp));
     e.style.setProperty('--pattern-bg-size', '120px 120px');
   } else if (themeName === 'flower') {
     e.style.setProperty('--pattern-bg-header', 'none');
