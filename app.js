@@ -1472,9 +1472,9 @@ function refresh() {
   });
   // Calendar span buttons
   document.querySelectorAll('.span-btn[data-span]').forEach(b => {
-    b.classList.toggle('active', b.dataset.span === state.calendarSpan);
-    if (b.dataset.span === 'month') { b.textContent = t('span_month'); _tip2(b, 'span_month'); }
-    else if (b.dataset.span === 'week') { b.textContent = t('view_week'); _tip2(b, 'view_week'); }
+    b.classList.toggle('active', state.mode === 'calendar' && b.dataset.span === state.calendarSpan);
+    if (b.dataset.span === 'month') { b.querySelector('.label-long').textContent = t('span_month'); _tip2(b, 'span_month'); }
+    else if (b.dataset.span === 'week') { b.querySelector('.label-long').textContent = t('view_week'); _tip2(b, 'view_week'); }
   });
   { const el = document.getElementById('label-view'); if (el) el.textContent = t('label_view') + ':'; }
   document.getElementById('today-btn').textContent = t('today');
@@ -1682,6 +1682,7 @@ document.querySelectorAll('.span-btn[data-span]').forEach(b => b.addEventListene
     const sh = document.documentElement.scrollHeight - window.innerHeight;
     restoreScrollFracAfterRender = sh > 0 ? window.scrollY / sh : 0;
   }
+  state.mode = 'calendar';
   state.calendarSpan = b.dataset.span;
   _skyReturnState = null;
   refresh();
