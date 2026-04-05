@@ -1,10 +1,10 @@
 # Fairy Calendar
 
-**A mythic lunar calendar for the Human Era** — track time by moonlight, navigate the night sky, and mark the turning of the year by solstice and season.
+**A personal calendar app featuring an original lunar calendar system** — a custom 12-moon year anchored to the winter solstice, with invented moon names, weekday names, and a year-animal tradition.
 
 Built as a personal project for my wife and me. Pure vanilla HTML/CSS/JavaScript — no dependencies, no build step. Open `index.html` and it just works.
 
-My original calendar is the default, but you can choose the standard (Gregorian) calendar, or one of the other included lunar calendars if you prefer.
+The original calendar is the default, but it's entirely optional — you can use the standard Gregorian calendar, or any of the other included lunar calendars: Hebrew, Hindu, Cherokee, and Iroquois.
 
 ---
 

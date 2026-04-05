@@ -13,7 +13,8 @@
       "Bash(curl -s \"https://simbad.cds.unistra.fr/simbad/sim-tap/tables\")",
       "Bash(grep:*)",
       "Bash(ls -lh /c/Users/schyl/repos/fairy/*.js)",
-      "Bash(python3 /tmp/write_wiki.py)"
+      "Bash(python3 /tmp/write_wiki.py)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
