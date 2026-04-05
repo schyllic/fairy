@@ -132,6 +132,7 @@ function initModal() {
       `<div id="modal-header">` +
         `<div id="modal-header-left">` +
           `<h2 id="modal-title"></h2>` +
+          `<div id="modal-location"></div>` +
         `</div>` +
         `<button id="modal-close" aria-label="Close">✕</button>` +
       `</div>` +
@@ -1219,7 +1220,7 @@ function _buildConstellationSVG(name) {
   let svg = `<rect width="${size}" height="${size}" fill="#0a0a1a" rx="6"/>`;
 
   // Gnomonic projection center from curated stars
-  const meanRA = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
+  const meanRA = _circularMeanRA(con.stars);
   const meanDec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
   const cRA = meanRA * Math.PI / 12, cDec = meanDec * Math.PI / 180;
 
@@ -1272,9 +1273,17 @@ function _buildConstellationSVG(name) {
         const c  = ((s0.sy*(p1[1]-p2[1]) + s1.sy*(p2[1]-p0[1]) + s2.sy*(p0[1]-p1[1])) / det);
         const d  = ((s0.sy*(p2[0]-p1[0]) + s1.sy*(p0[0]-p2[0]) + s2.sy*(p1[0]-p0[0])) / det);
         const ty = ((s0.sy*(p1[0]*p2[1]-p2[0]*p1[1]) + s1.sy*(p2[0]*p0[1]-p0[0]*p2[1]) + s2.sy*(p0[0]*p1[1]-p1[0]*p0[1])) / det);
-        const tf = [a, c, b, d, tx, ty].map(v => v.toFixed(4)).join(',');
         const display = showDrawing ? '' : ' style="display:none"';
-        svg += `<image href="constellations/${imgData.img}" width="512" height="512" transform="matrix(${tf})" opacity="0.22" class="const-drawing"${display}/>`;
+        const iW = imgData.w || 512, iH = imgData.h || 512;
+        // If the transform would magnify the illustration too much (tight star field),
+        // fall back to simple fit-to-viewport display instead.
+        const scaleMax = Math.max(Math.sqrt(a*a + c*c), Math.sqrt(b*b + d*d));
+        if (scaleMax > 1.5) {
+          svg += `<image href="constellations/${imgData.img}" x="0" y="0" width="300" height="300" preserveAspectRatio="xMidYMid meet" opacity="0.22" class="const-drawing"${display}/>`;
+        } else {
+          const tf = [a, c, b, d, tx, ty].map(v => v.toFixed(4)).join(',');
+          svg += `<image href="constellations/${imgData.img}" width="${iW}" height="${iH}" transform="matrix(${tf})" opacity="0.22" class="const-drawing"${display}/>`;
+        }
       }
     }
   }
@@ -1533,6 +1542,10 @@ function showModal(fromDateStr, label, fy) {
   _savedModal = null;
 
   document.getElementById('modal-title').textContent = label;
+  const _locEl = document.getElementById('modal-location');
+  if (_locEl) _locEl.textContent = '📍 ' + (OBSERVER.cityName ||
+    (Math.abs(OBSERVER.lat).toFixed(1) + '°' + (OBSERVER.lat >= 0 ? 'N' : 'S') +
+     ', ' + Math.abs(OBSERVER.lon).toFixed(1) + '°' + (OBSERVER.lon >= 0 ? 'E' : 'W')));
   document.getElementById('modal-body').innerHTML = body;
   document.getElementById('cal-modal').removeAttribute('hidden');
 
@@ -1952,7 +1965,7 @@ document.addEventListener('keydown', e => {
 function _openBirthdayDialog(name, month, day) {
   const dialog = document.getElementById('bday-sky-dialog');
   dialog.querySelector('#bday-sky-title').textContent = `View Birth Sky — ${name}`;
-  dialog.querySelector('#bday-sky-year').value  = '';
+  dialog.querySelector('#bday-sky-year').value  = '1990';
   dialog.querySelector('#bday-sky-lat').value   = OBSERVER.lat;
   dialog.querySelector('#bday-sky-lon').value   = OBSERVER.lon;
   dialog.querySelector('#bday-sky-city-search').value = OBSERVER.cityName || '';

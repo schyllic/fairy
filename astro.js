@@ -642,6 +642,14 @@ function _eveningSky(gregDate) {
   return { T, LST, latR: OBSERVER.lat * DEG };
 }
 
+// Circular mean of RA (hours) — correct across the 0h/24h wrap boundary
+function _circularMeanRA(stars) {
+  let sx = 0, sy = 0;
+  for (const st of stars) { const a = st[0] * Math.PI / 12; sx += Math.cos(a); sy += Math.sin(a); }
+  const m = Math.atan2(sy, sx) * 12 / Math.PI;
+  return m < 0 ? m + 24 : m;
+}
+
 // ─── Get visible constellation positions (per-star) ─────────────────
 function getVisibleConstellationPositions(gregDate) {
   const { T, LST, latR } = _eveningSky(gregDate);
@@ -665,7 +673,7 @@ function getVisibleConstellationPositions(gregDate) {
     if (visCount < minStars) continue;
 
     // Filter constellations too close to sun (twilight washout)
-    const meanRA  = con.stars.reduce((s, st) => s + st[0], 0) / con.stars.length;
+    const meanRA  = _circularMeanRA(con.stars);
     const meanDec = con.stars.reduce((s, st) => s + st[1], 0) / con.stars.length;
     const meanP   = _precessJ2000(meanRA, meanDec, T);
     if (_angSep(meanP.ra * HOURS, meanP.dec * DEG, sunRD.ra, sunRD.dec) < 30) continue;
