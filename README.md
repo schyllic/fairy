@@ -9,7 +9,7 @@ My original calendar is the default, but you can choose the standard (Gregorian)
 ---
 
 ## About the Implementation
-This project was created with the assistance of Claude, an A.I. coding agent. My complements to the team at Anthropic for building the amazing [Claude.AI](https://claude.ai).
+This project was created with the assistance of an A.I. coding agent. My complements to the team at Anthropic for building the amazing [Claude.AI](https://claude.ai).
 
 ## Screenshots
 
@@ -152,7 +152,7 @@ The Fairy Calendar counts years from the beginning of the Human Era — add 10,0
 
 Weeks run Heimday through Sunday — the familiar seven days, with Norse mythological names restored.
 
-**→ See [help.md](help.md) for the full calendar guide**: moon names and meanings, Bluemoon intercalation rules, year animal table, weekday mythology, icons legend, and multi-calendar comparisons. This is the in-app help which is also translated into the primary language.
+**→ See the [Wiki](https://github.com/schyllic/fairy/wiki) for the full guide**: moon names and meanings, Bluemoon intercalation rules, year animal table, weekday mythology, icons legend, and multi-calendar comparisons (Hebrew, Hindu, Cherokee, Haudenosaunee).
 
 ---
 
