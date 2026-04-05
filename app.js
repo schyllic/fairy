@@ -766,8 +766,8 @@ function initLanguageModal() {
       `</div>` +
     `</div>`;
   document.body.appendChild(modal);
-  modal.querySelector('#lang-modal-backdrop').addEventListener('click', closeLanguageModal);
-  modal.querySelector('#lang-modal-close').addEventListener('click', closeLanguageModal);
+  modal.querySelector('#lang-modal-backdrop').addEventListener('click', () => { closeLanguageModal(); showSettings(); });
+  modal.querySelector('#lang-modal-close').addEventListener('click', () => { closeLanguageModal(); showSettings(); });
   const _applyLang = () => {
     _saveState();
     closeLanguageModal();
@@ -846,8 +846,8 @@ function initCalendarModal() {
       `</div>` +
     `</div>`;
   document.body.appendChild(modal);
-  modal.querySelector('#cal-modal-backdrop').addEventListener('click', closeCalendarModal);
-  modal.querySelector('#cal-modal-close').addEventListener('click', closeCalendarModal);
+  modal.querySelector('#cal-modal-backdrop').addEventListener('click', () => { closeCalendarModal(); showSettings(); });
+  modal.querySelector('#cal-modal-close').addEventListener('click', () => { closeCalendarModal(); showSettings(); });
   const _applyCal = () => { _saveState(); closeCalendarModal(); refresh(); showSettings(); };
   modal.querySelector('#cal-none-btn').addEventListener('click', () => {
     state.calendarType2 = null;
