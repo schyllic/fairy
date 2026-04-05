@@ -9,7 +9,7 @@ The original calendar is the default, but it's entirely optional — you can use
 ---
 
 ## About the Implementation
-This project was created with the assistance of an A.I. coding agent. My complements to the team at Anthropic for building the amazing [Claude.AI](https://claude.ai).
+This project was created with the assistance of an A.I. coding agent. My complements to the team at Anthropic for building the amazing [Claude.AI](https://claude.ai). 
 
 ## Screenshots
 
@@ -74,6 +74,12 @@ This project was created with the assistance of an A.I. coding agent. My complem
 <td valign="top">
 <img src="image/screenshot/settings_wiz.png" alt="Settings dialog"><br>
 <sub><b>Settings</b> — location, language, birthdays, save/share birthdays using link or file</sub>
+</td>
+</tr>
+<tr>
+<td valign="top" colspan="2">
+<img src="image/screenshot/birthday_modal_wiz.png" alt="Birthday sky modal"><br>
+<sub><b>Birthday sky</b> — enter a birth year and location to view the night sky as it appeared on a birthday</sub>
 </td>
 </tr>
 </table>
