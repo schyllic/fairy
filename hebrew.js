@@ -164,23 +164,23 @@ function toHebrewYear(hy) {
 // Each entry: month m (1=Nisan), day d, name, optional dur (multi-day),
 // leapOnly / nonLeap flags for Purim month disambiguation.
 const HEBREW_HOLIDAYS = [
-  { m: 7,  d: 1,  name: 'Rosh Hashanah', dur: 2 },
-  { m: 7,  d: 10, name: 'Yom Kippur' },
-  { m: 7,  d: 15, name: 'Sukkot',         dur: 7 },
-  { m: 7,  d: 22, name: 'Shemini Atzeret' },
-  { m: 7,  d: 23, name: 'Simchat Torah' },
-  { m: 9,  d: 25, name: 'Hanukkah',       dur: 8 },
-  { m: 10, d: 10, name: 'Fast of Tevet' },
-  { m: 11, d: 15, name: "Tu B'Shevat" },
-  { m: 12, d: 14, name: 'Purim',          nonLeap: true },
-  { m: 13, d: 14, name: 'Purim',          leapOnly: true },
-  { m: 1,  d: 15, name: 'Passover',       dur: 8 },
-  { m: 3,  d: 6,  name: 'Shavuot',        dur: 2 },
-  { m: 4,  d: 17, name: 'Fast of Tammuz' },
-  { m: 5,  d: 9,  name: "Tisha B'Av" },
+  { m: 7,  d: 1,  name: 'Rosh Hashanah', dur: 2, url: 'https://en.wikipedia.org/wiki/Rosh_Hashanah' },
+  { m: 7,  d: 10, name: 'Yom Kippur',             url: 'https://en.wikipedia.org/wiki/Yom_Kippur' },
+  { m: 7,  d: 15, name: 'Sukkot',         dur: 7, url: 'https://en.wikipedia.org/wiki/Sukkot' },
+  { m: 7,  d: 22, name: 'Shemini Atzeret',        url: 'https://en.wikipedia.org/wiki/Shemini_Atzeret' },
+  { m: 7,  d: 23, name: 'Simchat Torah',          url: 'https://en.wikipedia.org/wiki/Simchat_Torah' },
+  { m: 9,  d: 25, name: 'Hanukkah',       dur: 8, url: 'https://en.wikipedia.org/wiki/Hanukkah' },
+  { m: 10, d: 10, name: 'Fast of Tevet',          url: 'https://en.wikipedia.org/wiki/Tenth_of_Tevet' },
+  { m: 11, d: 15, name: "Tu B'Shevat",            url: 'https://en.wikipedia.org/wiki/Tu_BiShvat' },
+  { m: 12, d: 14, name: 'Purim',          nonLeap: true, url: 'https://en.wikipedia.org/wiki/Purim' },
+  { m: 13, d: 14, name: 'Purim',          leapOnly: true, url: 'https://en.wikipedia.org/wiki/Purim' },
+  { m: 1,  d: 15, name: 'Passover',       dur: 8, url: 'https://en.wikipedia.org/wiki/Passover' },
+  { m: 3,  d: 6,  name: 'Shavuot',        dur: 2, url: 'https://en.wikipedia.org/wiki/Shavuot' },
+  { m: 4,  d: 17, name: 'Fast of Tammuz',         url: 'https://en.wikipedia.org/wiki/Seventeenth_of_Tammuz' },
+  { m: 5,  d: 9,  name: "Tisha B'Av",             url: 'https://en.wikipedia.org/wiki/Tisha_B%27Av' },
 ];
 
-// Build Map<"YYYY-MM-DD", string[]> of Hebrew holiday names for year hy
+// Build Map<"YYYY-MM-DD", {name, url?}[]> of Hebrew holidays for year hy
 function buildHebrewHolidayMap(hy) {
   const isLeap = _hLeap(hy);
   const nyElapsed = _hNewYear(hy);
@@ -207,8 +207,10 @@ function buildHebrewHolidayMap(hy) {
     for (let i = 0; i < dur; i++) {
       const ds = utcDateStr(_hDayToDate(mStart + (hol.d - 1) + i));
       const label = (dur > 1 && i > 0) ? `${hol.name} (day ${i + 1})` : hol.name;
+      const entry = { name: label };
+      if (i === 0 && hol.url) entry.url = hol.url;
       if (!map.has(ds)) map.set(ds, []);
-      map.get(ds).push(label);
+      map.get(ds).push(entry);
     }
   }
   return map;

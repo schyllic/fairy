@@ -761,6 +761,8 @@ body {
 .modal-event-icon { font-size: 0.9rem; flex-shrink: 0; width: 1.4rem; text-align: center; }
 .modal-event-date { color: var(--color-text-secondary); font-size: 0.78rem; flex-shrink: 0; width: 4.4rem; }
 .modal-event-desc { color: var(--color-text-primary); }
+.modal-event-desc a { color: var(--color-accent); text-decoration: none; }
+.modal-event-desc a:hover { text-decoration: underline; }
 .modal-event:has(+ .modal-today-marker) { border-bottom: none; }
 .modal-today-marker {
   text-align: center; font-size: 0.75rem; font-weight: bold;

@@ -977,7 +977,7 @@ function _formatEvent(ev) {
   if (ev.kind === 'lunarEclipse')  return {icon:'🌑✕', text:`Lunar Eclipse (${ev.subtype})`};
   if (ev.kind === 'solarEclipse')  return {icon:'☀✕', text:`Solar Eclipse (${ev.subtype})`};
   if (ev.kind === 'birthday')      return {icon:'🎂', text:`${ev.names.join(', ')}'s Birthday`};
-  if (ev.kind === 'holiday')       return {icon:'🗓', text:ev.name};
+  if (ev.kind === 'holiday')       return {icon:'🗓', text: ev.url ? `<a href="${ev.url}" target="_blank" rel="noopener">${ev.name}</a>` : ev.name};
   if (ev.kind==='opposition')    return {icon:PLANET_SYMBOLS[ev.planet], text:`${ev.planet} at Opposition — up all night`};
   if (ev.kind==='greatElongation') return {icon:PLANET_SYMBOLS[ev.planet], text:`${ev.planet} — Greatest Elongation (${ev.isEvening?'Evening':'Morning'} Star, ${ev.elong}°)`};
   if (ev.kind==='moonConj')      return {icon:`${PLANET_SYMBOLS[ev.planet]}🌙`, text:`Moon near ${ev.planet} (${ev.sep}°)`};
@@ -1959,6 +1959,7 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.addEventListene
 }));
 
 document.querySelectorAll('.span-btn[data-span]').forEach(b => b.addEventListener('click', () => {
+  _skyPlayStop();
   if (selectedDate) {
     scrollToSelectedAfterRender = true;
   } else {
