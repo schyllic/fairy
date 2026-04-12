@@ -123,7 +123,7 @@ function _dayLabel(dateStr, fy) {
   }
   if (!fd) return dateStr;
   const gd = fd.gregDate;
-  return `${getWeekdays()[fd.fairyWeekdayIndex]} · ${getGregMonths()[gd.getUTCMonth()]} ${gd.getUTCDate()} / ${tMoon(fd.fairyMonth)} ${fd.fairyDay}`;
+  return `${tWeekday(fd.fairyWeekdayIndex)} · ${getGregMonths()[gd.getUTCMonth()]} ${gd.getUTCDate()} / ${tMoon(fd.fairyMonth)} ${fd.fairyDay}`;
 }
 
 function initModal() {
@@ -972,22 +972,22 @@ function closeHolidayPackModal() {
 function _formatEvent(ev) {
   if (ev.kind === 'phase')         { const p=PHASE_LABELS[ev.phase];  return {icon:p.icon, text:tPhase(ev.phase)}; }
   if (ev.kind === 'solar')         { const s=SOLAR_LABELS[ev.solar];  return {icon:s.icon, text:tSolar(ev.solar)}; }
-  if (ev.kind === 'perigee')       return {icon:'Ⓟ', text:'Lunar Perigee — Moon closest to Earth'};
-  if (ev.kind === 'apogee')        return {icon:'@', text:'Lunar Apogee — Moon farthest from Earth'};
-  if (ev.kind === 'lunarEclipse')  return {icon:'🌑✕', text:`Lunar Eclipse (${ev.subtype})`};
-  if (ev.kind === 'solarEclipse')  return {icon:'☀✕', text:`Solar Eclipse (${ev.subtype})`};
-  if (ev.kind === 'birthday')      return {icon:'🎂', text:`${ev.names.join(', ')}'s Birthday`};
-  if (ev.kind === 'holiday')       return {icon:'🗓', text: ev.url ? `<a href="${ev.url}" target="_blank" rel="noopener">${ev.name}</a>` : ev.name};
-  if (ev.kind==='opposition')    return {icon:PLANET_SYMBOLS[ev.planet], text:`${ev.planet} at Opposition — up all night`};
-  if (ev.kind==='greatElongation') return {icon:PLANET_SYMBOLS[ev.planet], text:`${ev.planet} — Greatest Elongation (${ev.isEvening?'Evening':'Morning'} Star, ${ev.elong}°)`};
-  if (ev.kind==='moonConj')      return {icon:`${PLANET_SYMBOLS[ev.planet]}🌙`, text:`Moon near ${ev.planet} (${ev.sep}°)`};
-  if (ev.kind==='planetConj')    return {icon:`${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}`, text:`${ev.planets[0]} & ${ev.planets[1]} conjunction (${ev.sep}°)`};
+  if (ev.kind === 'perigee')       return {icon:'Ⓟ', text:t('evt_perigee')};
+  if (ev.kind === 'apogee')        return {icon:'@', text:t('evt_apogee')};
+  if (ev.kind === 'lunarEclipse')  return {icon:'🌑✕', text:t('evt_lunar_eclipse', t('eclipse_'+ev.subtype))};
+  if (ev.kind === 'solarEclipse')  return {icon:'☀✕', text:t('evt_solar_eclipse', t('eclipse_'+ev.subtype))};
+  if (ev.kind === 'birthday')      return {icon:'🎂', text:t('evt_birthday', ev.names.join(', '))};
+  if (ev.kind === 'holiday')       { const n = tHoliday(ev); return {icon:'🗓', text: ev.url ? `<a href="${ev.url}" target="_blank" rel="noopener">${n}</a>` : n}; }
+  if (ev.kind==='opposition')    return {icon:PLANET_SYMBOLS[ev.planet], text:t('evt_opposition', ev.planet)};
+  if (ev.kind==='greatElongation') return {icon:PLANET_SYMBOLS[ev.planet], text:t(ev.isEvening?'evt_elongation_evening':'evt_elongation_morning', ev.planet, ev.elong)};
+  if (ev.kind==='moonConj')      return {icon:`${PLANET_SYMBOLS[ev.planet]}🌙`, text:t('evt_moon_conj', ev.planet, ev.sep)};
+  if (ev.kind==='planetConj')    return {icon:`${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}`, text:t('evt_planet_conj', ev.planets[0], ev.planets[1], ev.sep)};
   if (ev.kind==='meteorShower') {
     const fmtDs = ds => { const d=new Date(ds); return `${getGregMonths()[d.getUTCMonth()].slice(0,3)} ${d.getUTCDate()}`; };
-    const range = ev.windowStart && ev.windowEnd ? ` · active ${fmtDs(ev.windowStart)}–${fmtDs(ev.windowEnd)}` : '';
-    return {icon:'🌠', text:`${ev.name} meteor shower peak — ZHR ~${ev.zhr}${range}`};
+    if (ev.windowStart && ev.windowEnd) return {icon:'🌠', text:t('evt_meteor_peak', ev.name, ev.zhr, `${fmtDs(ev.windowStart)}\u2013${fmtDs(ev.windowEnd)}`)};
+    return {icon:'🌠', text:t('evt_meteor_peak_short', ev.name, ev.zhr)};
   }
-  if (ev.kind==='cometStart')   return {icon:'☄',  text:`${ev.name}${ev.note?' — '+ev.note:''} (visible now)`};
+  if (ev.kind==='cometStart')   return {icon:'☄',  text:t('evt_comet', ev.name+(ev.note?' \u2014 '+ev.note:''))};
   return {icon:'•', text:ev.kind};
 }
 

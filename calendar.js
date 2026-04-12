@@ -251,7 +251,7 @@ function _buildFairyYear(holYear) {
     }
   }
   for (const [ds, hols] of holidayMap) {
-    for (const h of hols) eventTimeline.push({dateStr:ds, kind:'holiday', name:h.name, url:h.url});
+    for (const h of hols) eventTimeline.push({dateStr:ds, kind:'holiday', name:h.name, url:h.url, i18n:h.i18n});
   }
   eventTimeline.sort((a,b) => a.dateStr.localeCompare(b.dateStr));
 

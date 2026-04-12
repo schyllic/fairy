@@ -48,21 +48,21 @@ function moonIcons(fd) {
   let h = '';
   if (fd.moonPhase)  { const p=PHASE_LABELS[fd.moonPhase];  const _p1=tPhase(fd.moonPhase);  const _p2=tPhase2(fd.moonPhase);  h+=`<span class="icon" title="${_p1}${_p2&&_p2!==_p1?' · '+_p2:''}">${p.icon}</span>`; }
   if (fd.solarEvent) { const s=SOLAR_LABELS[fd.solarEvent]; const _s1=tSolar(fd.solarEvent); const _s2=tSolar2(fd.solarEvent); h+=`<span class="icon" title="${_s1}${_s2&&_s2!==_s1?' · '+_s2:''}">${s.icon}</span>`; }
-  if (fd.perigee)    { const _pi=moonIllumPct(fd.gregDate); h+=`<span class="icon perigee-icon" title="Lunar Perigee">Ⓟ\u202f${_pi}%</span>`; }
-  if (fd.apogee)     h+=`<span class="icon apogee-icon"  title="Lunar Apogee">@</span>`;
-  if (fd.eclipse)    { const ei=fd.eclipse.type==='lunarEclipse'?'🌑':'☀'; h+=`<span class="icon eclipse-icon" title="${fd.eclipse.type} (${fd.eclipse.subtype})">${ei}✕</span>`; }
+  if (fd.perigee)    { const _pi=moonIllumPct(fd.gregDate); h+=`<span class="icon perigee-icon" title="${t('evt_perigee')}">Ⓟ\u202f${_pi}%</span>`; }
+  if (fd.apogee)     h+=`<span class="icon apogee-icon"  title="${t('evt_apogee')}">@</span>`;
+  if (fd.eclipse)    { const ei=fd.eclipse.type==='lunarEclipse'?'🌑':'☀'; const etip=fd.eclipse.type==='lunarEclipse'?t('evt_lunar_eclipse',t('eclipse_'+fd.eclipse.subtype)):t('evt_solar_eclipse',t('eclipse_'+fd.eclipse.subtype)); h+=`<span class="icon eclipse-icon" title="${etip}">${ei}✕</span>`; }
   if (fd.planets) {
     for (const ev of fd.planets) {
       if (ev.kind==='moonConj')
-        h+=`<span class="icon planet-icon" title="${ev.planet} near Moon (${ev.sep}°)">${PLANET_SYMBOLS[ev.planet]}🌙</span>`;
+        h+=`<span class="icon planet-icon" title="${t('evt_moon_conj', ev.planet, ev.sep)}">${PLANET_SYMBOLS[ev.planet]}🌙</span>`;
       if (ev.kind==='planetConj')
-        h+=`<span class="icon planet-icon" title="${ev.planets.join(' & ')} conjunction (${ev.sep}°)">${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}</span>`;
+        h+=`<span class="icon planet-icon" title="${t('evt_planet_conj', ev.planets[0], ev.planets[1], ev.sep)}">${PLANET_SYMBOLS[ev.planets[0]]}${PLANET_SYMBOLS[ev.planets[1]]}</span>`;
     }
   }
-  if (state.showMeteors && fd.meteor) { for (const m of fd.meteor) { if (m.isNearPeak) h+=`<span class="icon meteor-icon" title="${m.name}${m.isPeak?' peak':''} — ZHR ~${m.zhr}, ${m.note}">🌠</span>`; } }
+  if (state.showMeteors && fd.meteor) { for (const m of fd.meteor) { if (m.isNearPeak) h+=`<span class="icon meteor-icon" title="${t('evt_meteor_peak_short', m.name, m.zhr)}">🌠</span>`; } }
   if (state.showComets  && fd.comet)  { for (const c of fd.comet) h+=`<span class="icon comet-icon" title="${c.name}${c.note?' — '+c.note:''}">☄</span>`; }
   if (state.showBirthdays && fd.birthday) { for (const b of fd.birthday) h+=`<span class="birthday-label" data-bday-name="${b.name}" data-bday-month="${b.month}" data-bday-day="${b.day}">🎂 ${b.name}</span>`; }
-  if (state.showHolidays && fd.holiday) { for (const hol of fd.holiday) h+=`<span class="holiday-label">${hol.name}</span>`; }
+  if (state.showHolidays && fd.holiday) { for (const hol of fd.holiday) h+=`<span class="holiday-label">${tHoliday(hol)}</span>`; }
   return h;
 }
 

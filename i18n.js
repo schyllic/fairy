@@ -76,6 +76,21 @@ const I18N = {
     btn_options: 'Options', btn_about: 'About', btn_print: 'Print',
     btn_reverse: 'Reverse', btn_play: 'Play', sky_pawnee: 'Pawnee', sky_jyotisha: 'Jyotisha',
     help_title: 'About This Calendar',
+    evt_perigee: 'Lunar Perigee \u2014 Moon closest to Earth',
+    evt_apogee: 'Lunar Apogee \u2014 Moon farthest from Earth',
+    evt_lunar_eclipse: 'Lunar Eclipse ({0})',
+    evt_solar_eclipse: 'Solar Eclipse ({0})',
+    evt_birthday: '{0}\u2019s Birthday',
+    evt_opposition: '{0} at Opposition \u2014 up all night',
+    evt_elongation_evening: '{0} \u2014 Greatest Elongation (Evening Star, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 Greatest Elongation (Morning Star, {1}\u00b0)',
+    evt_moon_conj: 'Moon near {0} ({1}\u00b0)',
+    evt_planet_conj: '{0} & {1} conjunction ({2}\u00b0)',
+    evt_meteor_peak: '{0} meteor shower peak \u2014 ZHR ~{1} \u00b7 active {2}',
+    evt_meteor_peak_short: '{0} meteor shower peak \u2014 ZHR ~{1}',
+    evt_comet: '{0} (visible now)',
+    eclipse_umbral: 'umbral', eclipse_penumbral: 'penumbral',
+    eclipse_central: 'central', eclipse_partial: 'partial',
   },
 
   de: {
@@ -140,6 +155,21 @@ const I18N = {
     btn_reverse: 'Rückwärts', btn_play: 'Abspielen', sky_pawnee: 'Pawnee', sky_jyotisha: 'Jyotisha',
     help_title: 'Über diesen Kalender',
     review_bdays: '{0} Geburtstag{1} ansehen', bdays_added: '{0} Geburtstag{1} hinzugefügt',
+    evt_perigee: 'Mondperigäum \u2014 Mond erdnächst',
+    evt_apogee: 'Mondapogäum \u2014 Mond erdfernst',
+    evt_lunar_eclipse: 'Mondfinsternis ({0})',
+    evt_solar_eclipse: 'Sonnenfinsternis ({0})',
+    evt_birthday: 'Geburtstag von {0}',
+    evt_opposition: '{0} in Opposition \u2014 ganze Nacht sichtbar',
+    evt_elongation_evening: '{0} \u2014 Größte Elongation (Abendstern, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 Größte Elongation (Morgenstern, {1}\u00b0)',
+    evt_moon_conj: 'Mond nahe {0} ({1}\u00b0)',
+    evt_planet_conj: '{0} & {1} Konjunktion ({2}\u00b0)',
+    evt_meteor_peak: '{0} Meteorschauer-Höhepunkt \u2014 ZHR ~{1} \u00b7 aktiv {2}',
+    evt_meteor_peak_short: '{0} Meteorschauer-Höhepunkt \u2014 ZHR ~{1}',
+    evt_comet: '{0} (jetzt sichtbar)',
+    eclipse_umbral: 'total', eclipse_penumbral: 'Halbschatten',
+    eclipse_central: 'zentral', eclipse_partial: 'partiell',
   },
 
   fr: {
@@ -204,6 +234,21 @@ const I18N = {
     btn_reverse: 'Reculer', btn_play: 'Lancer', sky_pawnee: 'Pawnee', sky_jyotisha: 'Jyotisha',
     help_title: 'À propos de ce Calendrier',
     review_bdays: 'Voir {0} anniversaire{1}', bdays_added: '{0} anniversaire{1} ajouté{1}',
+    evt_perigee: 'Périgée lunaire \u2014 Lune au plus proche de la Terre',
+    evt_apogee: 'Apogée lunaire \u2014 Lune au plus loin de la Terre',
+    evt_lunar_eclipse: 'Éclipse lunaire ({0})',
+    evt_solar_eclipse: 'Éclipse solaire ({0})',
+    evt_birthday: 'Anniversaire de {0}',
+    evt_opposition: '{0} en opposition \u2014 visible toute la nuit',
+    evt_elongation_evening: '{0} \u2014 Plus grande élongation (étoile du soir, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 Plus grande élongation (étoile du matin, {1}\u00b0)',
+    evt_moon_conj: 'Lune près de {0} ({1}\u00b0)',
+    evt_planet_conj: '{0} & {1} conjonction ({2}\u00b0)',
+    evt_meteor_peak: '{0} pic de pluie de météores \u2014 ZHR ~{1} \u00b7 actif {2}',
+    evt_meteor_peak_short: '{0} pic de pluie de météores \u2014 ZHR ~{1}',
+    evt_comet: '{0} (visible maintenant)',
+    eclipse_umbral: 'totale', eclipse_penumbral: 'pénombrale',
+    eclipse_central: 'centrale', eclipse_partial: 'partielle',
   },
 
   it: {
@@ -268,6 +313,21 @@ const I18N = {
     btn_reverse: 'Indietro', btn_play: 'Riproduci', sky_pawnee: 'Pawnee', sky_jyotisha: 'Jyotisha',
     help_title: 'Informazioni su questo Calendario',
     review_bdays: 'Vedi {0} compleanno{1}', bdays_added: '{0} compleanno{1} aggiunto{1}',
+    evt_perigee: 'Perigeo lunare \u2014 Luna più vicina alla Terra',
+    evt_apogee: 'Apogeo lunare \u2014 Luna più lontana dalla Terra',
+    evt_lunar_eclipse: 'Eclissi lunare ({0})',
+    evt_solar_eclipse: 'Eclissi solare ({0})',
+    evt_birthday: 'Compleanno di {0}',
+    evt_opposition: '{0} in opposizione \u2014 visibile tutta la notte',
+    evt_elongation_evening: '{0} \u2014 Massima elongazione (stella della sera, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 Massima elongazione (stella del mattino, {1}\u00b0)',
+    evt_moon_conj: 'Luna vicino a {0} ({1}\u00b0)',
+    evt_planet_conj: '{0} & {1} congiunzione ({2}\u00b0)',
+    evt_meteor_peak: '{0} picco sciame meteorico \u2014 ZHR ~{1} \u00b7 attivo {2}',
+    evt_meteor_peak_short: '{0} picco sciame meteorico \u2014 ZHR ~{1}',
+    evt_comet: '{0} (visibile ora)',
+    eclipse_umbral: 'totale', eclipse_penumbral: 'penombrale',
+    eclipse_central: 'centrale', eclipse_partial: 'parziale',
   },
 
   es: {
@@ -332,6 +392,21 @@ const I18N = {
     btn_reverse: 'Retroceder', btn_play: 'Reproducir', sky_pawnee: 'Pawnee', sky_jyotisha: 'Jyotisha',
     help_title: 'Acerca de este Calendario',
     review_bdays: 'Ver {0} cumpleaño{1}', bdays_added: '{0} cumpleaño{1} añadido{1}',
+    evt_perigee: 'Perigeo lunar \u2014 Luna más cercana a la Tierra',
+    evt_apogee: 'Apogeo lunar \u2014 Luna más lejana de la Tierra',
+    evt_lunar_eclipse: 'Eclipse lunar ({0})',
+    evt_solar_eclipse: 'Eclipse solar ({0})',
+    evt_birthday: 'Cumpleaños de {0}',
+    evt_opposition: '{0} en oposición \u2014 visible toda la noche',
+    evt_elongation_evening: '{0} \u2014 Mayor elongación (lucero vespertino, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 Mayor elongación (lucero matutino, {1}\u00b0)',
+    evt_moon_conj: 'Luna cerca de {0} ({1}\u00b0)',
+    evt_planet_conj: '{0} & {1} conjunción ({2}\u00b0)',
+    evt_meteor_peak: '{0} pico de lluvia de meteoros \u2014 ZHR ~{1} \u00b7 activo {2}',
+    evt_meteor_peak_short: '{0} pico de lluvia de meteoros \u2014 ZHR ~{1}',
+    evt_comet: '{0} (visible ahora)',
+    eclipse_umbral: 'total', eclipse_penumbral: 'penumbral',
+    eclipse_central: 'central', eclipse_partial: 'parcial',
   },
 
   sw: {
@@ -396,6 +471,21 @@ const I18N = {
     btn_reverse: 'Kurudi', btn_play: 'Cheza', sky_pawnee: 'Pawnee', sky_jyotisha: 'Jyotisha',
     help_title: 'Kuhusu Kalenda Hii',
     review_bdays: 'Angalia siku {0} za kuzaliwa', bdays_added: 'Siku {0} za kuzaliwa zimeongezwa',
+    evt_perigee: 'Mwezi Karibu \u2014 Mwezi karibu zaidi na Dunia',
+    evt_apogee: 'Mwezi Mbali \u2014 Mwezi mbali zaidi na Dunia',
+    evt_lunar_eclipse: 'Kupatwa kwa Mwezi ({0})',
+    evt_solar_eclipse: 'Kupatwa kwa Jua ({0})',
+    evt_birthday: 'Siku ya kuzaliwa ya {0}',
+    evt_opposition: '{0} katika upinzani \u2014 inaonekana usiku wote',
+    evt_elongation_evening: '{0} \u2014 Elongesheni kubwa (nyota ya jioni, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 Elongesheni kubwa (nyota ya asubuhi, {1}\u00b0)',
+    evt_moon_conj: 'Mwezi karibu na {0} ({1}\u00b0)',
+    evt_planet_conj: '{0} & {1} muungano ({2}\u00b0)',
+    evt_meteor_peak: '{0} kilele cha mvua ya vimondo \u2014 ZHR ~{1} \u00b7 hai {2}',
+    evt_meteor_peak_short: '{0} kilele cha mvua ya vimondo \u2014 ZHR ~{1}',
+    evt_comet: '{0} (inaonekana sasa)',
+    eclipse_umbral: 'kamili', eclipse_penumbral: 'nusu-kivuli',
+    eclipse_central: 'kati', eclipse_partial: 'sehemu',
   },
 
   la: {
@@ -460,6 +550,21 @@ const I18N = {
     btn_reverse: 'Retro', btn_play: 'Incipe', sky_pawnee: 'Pawnee', sky_jyotisha: 'Jyotisha',
     help_title: 'De Hoc Calendario',
     review_bdays: 'Recense {0} diem{1} natalem', bdays_added: '{0} dies natales additi{1}',
+    evt_perigee: 'Perigaeum Lunae \u2014 Luna Terrae proxima',
+    evt_apogee: 'Apogaeum Lunae \u2014 Luna a Terra remotissima',
+    evt_lunar_eclipse: 'Eclipsis Lunae ({0})',
+    evt_solar_eclipse: 'Eclipsis Solis ({0})',
+    evt_birthday: 'Dies natalis {0}',
+    evt_opposition: '{0} in oppositione \u2014 tota nocte visibilis',
+    evt_elongation_evening: '{0} \u2014 Maxima elongatio (stella vespertina, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 Maxima elongatio (stella matutina, {1}\u00b0)',
+    evt_moon_conj: 'Luna prope {0} ({1}\u00b0)',
+    evt_planet_conj: '{0} & {1} coniunctio ({2}\u00b0)',
+    evt_meteor_peak: '{0} culmen imbris meteororum \u2014 ZHR ~{1} \u00b7 activum {2}',
+    evt_meteor_peak_short: '{0} culmen imbris meteororum \u2014 ZHR ~{1}',
+    evt_comet: '{0} (nunc visibilis)',
+    eclipse_umbral: 'totalis', eclipse_penumbral: 'penumbralis',
+    eclipse_central: 'centralis', eclipse_partial: 'partialis',
   },
 
   // Sanskrit — Devanagari script, classical terms where possible
@@ -525,6 +630,21 @@ const I18N = {
     sky_labels: 'नामपट्टाः', moon_label: 'चन्द्रः',
     btn_reverse: 'प्रतिगतिः', btn_play: 'प्रारम्भः', sky_pawnee: 'पावनी', sky_jyotisha: 'ज्योतिष',
     help_title: 'इस पंचांग के बारे में',
+    evt_perigee: 'चन्द्र-भूनिकटम् \u2014 चन्द्रः पृथिव्याः समीपतमः',
+    evt_apogee: 'चन्द्र-भूदूरम् \u2014 चन्द्रः पृथिव्याः दूरतमः',
+    evt_lunar_eclipse: 'चन्द्रग्रहणम् ({0})',
+    evt_solar_eclipse: 'सूर्यग्रहणम् ({0})',
+    evt_birthday: '{0} जन्मदिनम्',
+    evt_opposition: '{0} प्रतियोगे \u2014 सर्वरात्रं दृश्यम्',
+    evt_elongation_evening: '{0} \u2014 महत्तमा दीर्घता (सन्ध्यातारा, {1}\u00b0)',
+    evt_elongation_morning: '{0} \u2014 महत्तमा दीर्घता (प्रातस्तारा, {1}\u00b0)',
+    evt_moon_conj: 'चन्द्रः {0} समीपे ({1}\u00b0)',
+    evt_planet_conj: '{0} {1} च युतिः ({2}\u00b0)',
+    evt_meteor_peak: '{0} उल्कावृष्टि-शिखरम् \u2014 ZHR ~{1} \u00b7 सक्रियम् {2}',
+    evt_meteor_peak_short: '{0} उल्कावृष्टि-शिखरम् \u2014 ZHR ~{1}',
+    evt_comet: '{0} (अधुना दृश्यम्)',
+    eclipse_umbral: 'पूर्णम्', eclipse_penumbral: 'उपच्छायम्',
+    eclipse_central: 'केन्द्रीयम्', eclipse_partial: 'आंशिकम्',
   },
 };
 
@@ -668,4 +788,19 @@ function tWeekday2(idx) {
   const tr = I18N[lang2];
   const arr = (tr && Array.isArray(tr[key])) ? tr[key] : null;
   return (arr && arr[idx]) || null;
+}
+
+/** Translate a holiday name. Holiday objects may carry an i18n map: { de:'...', fr:'...' }.
+ *  Falls back to hol.name (English). */
+function tHoliday(hol) {
+  if (!hol) return '';
+  const lang = _lang();
+  return (lang !== 'en' && hol.i18n && hol.i18n[lang]) || hol.name;
+}
+
+/** Translate a holiday name using the secondary language. Returns null if no secondary set. */
+function tHoliday2(hol) {
+  const lang2 = _lang2();
+  if (!lang2 || !hol) return null;
+  return (hol.i18n && hol.i18n[lang2]) || null;
 }

@@ -164,20 +164,34 @@ function toHebrewYear(hy) {
 // Each entry: month m (1=Nisan), day d, name, optional dur (multi-day),
 // leapOnly / nonLeap flags for Purim month disambiguation.
 const HEBREW_HOLIDAYS = [
-  { m: 7,  d: 1,  name: 'Rosh Hashanah', dur: 2, url: 'https://en.wikipedia.org/wiki/Rosh_Hashanah' },
-  { m: 7,  d: 10, name: 'Yom Kippur',             url: 'https://en.wikipedia.org/wiki/Yom_Kippur' },
-  { m: 7,  d: 15, name: 'Sukkot',         dur: 7, url: 'https://en.wikipedia.org/wiki/Sukkot' },
-  { m: 7,  d: 22, name: 'Shemini Atzeret',        url: 'https://en.wikipedia.org/wiki/Shemini_Atzeret' },
-  { m: 7,  d: 23, name: 'Simchat Torah',          url: 'https://en.wikipedia.org/wiki/Simchat_Torah' },
-  { m: 9,  d: 25, name: 'Hanukkah',       dur: 8, url: 'https://en.wikipedia.org/wiki/Hanukkah' },
-  { m: 10, d: 10, name: 'Fast of Tevet',          url: 'https://en.wikipedia.org/wiki/Tenth_of_Tevet' },
-  { m: 11, d: 15, name: "Tu B'Shevat",            url: 'https://en.wikipedia.org/wiki/Tu_BiShvat' },
-  { m: 12, d: 14, name: 'Purim',          nonLeap: true, url: 'https://en.wikipedia.org/wiki/Purim' },
-  { m: 13, d: 14, name: 'Purim',          leapOnly: true, url: 'https://en.wikipedia.org/wiki/Purim' },
-  { m: 1,  d: 15, name: 'Passover',       dur: 8, url: 'https://en.wikipedia.org/wiki/Passover' },
-  { m: 3,  d: 6,  name: 'Shavuot',        dur: 2, url: 'https://en.wikipedia.org/wiki/Shavuot' },
-  { m: 4,  d: 17, name: 'Fast of Tammuz',         url: 'https://en.wikipedia.org/wiki/Seventeenth_of_Tammuz' },
-  { m: 5,  d: 9,  name: "Tisha B'Av",             url: 'https://en.wikipedia.org/wiki/Tisha_B%27Av' },
+  { m: 7,  d: 1,  name: 'Rosh Hashanah', dur: 2, url: 'https://en.wikipedia.org/wiki/Rosh_Hashanah',
+    i18n: { de:'Rosch ha-Schana', fr:'Roch Hachana', it:'Rosh haShanà', es:'Rosh Hashaná', la:'Rosh Hashanah' } },
+  { m: 7,  d: 10, name: 'Yom Kippur', url: 'https://en.wikipedia.org/wiki/Yom_Kippur',
+    i18n: { de:'Jom Kippur', fr:'Yom Kippour', it:'Yom Kippur', es:'Yom Kipur' } },
+  { m: 7,  d: 15, name: 'Sukkot', dur: 7, url: 'https://en.wikipedia.org/wiki/Sukkot',
+    i18n: { de:'Sukkot', fr:'Souccot', it:'Sukkot', es:'Sucot', la:'Sukkot' } },
+  { m: 7,  d: 22, name: 'Shemini Atzeret', url: 'https://en.wikipedia.org/wiki/Shemini_Atzeret',
+    i18n: { de:'Schmini Azeret', fr:'Chemini Atseret', it:'Shemini Atzeret', es:'Sheminí Atzéret' } },
+  { m: 7,  d: 23, name: 'Simchat Torah', url: 'https://en.wikipedia.org/wiki/Simchat_Torah',
+    i18n: { de:'Simchat Tora', fr:'Sim\'hat Torah', it:'Simchat Torah', es:'Simjat Torá' } },
+  { m: 9,  d: 25, name: 'Hanukkah', dur: 8, url: 'https://en.wikipedia.org/wiki/Hanukkah',
+    i18n: { de:'Chanukka', fr:'Hanouka', it:'Chanukkah', es:'Janucá' } },
+  { m: 10, d: 10, name: 'Fast of Tevet', url: 'https://en.wikipedia.org/wiki/Tenth_of_Tevet',
+    i18n: { de:'Fasten von Tevet', fr:'Jeûne du 10 Tevet', it:'Digiuno di Tevet', es:'Ayuno de Tevet' } },
+  { m: 11, d: 15, name: "Tu B'Shevat", url: 'https://en.wikipedia.org/wiki/Tu_BiShvat',
+    i18n: { de:"Tu biSchwa", fr:"Tou BiChvat", it:"Tu BiShvat", es:"Tu Bishvat" } },
+  { m: 12, d: 14, name: 'Purim', nonLeap: true, url: 'https://en.wikipedia.org/wiki/Purim',
+    i18n: { de:'Purim', fr:'Pourim', it:'Purim', es:'Purim' } },
+  { m: 13, d: 14, name: 'Purim', leapOnly: true, url: 'https://en.wikipedia.org/wiki/Purim',
+    i18n: { de:'Purim', fr:'Pourim', it:'Purim', es:'Purim' } },
+  { m: 1,  d: 15, name: 'Passover', dur: 8, url: 'https://en.wikipedia.org/wiki/Passover',
+    i18n: { de:'Pessach', fr:'Pessa\'h', it:'Pesach', es:'Pésaj', la:'Pascha' } },
+  { m: 3,  d: 6,  name: 'Shavuot', dur: 2, url: 'https://en.wikipedia.org/wiki/Shavuot',
+    i18n: { de:'Schawuot', fr:'Chavouot', it:'Shavuot', es:'Shavuot' } },
+  { m: 4,  d: 17, name: 'Fast of Tammuz', url: 'https://en.wikipedia.org/wiki/Seventeenth_of_Tammuz',
+    i18n: { de:'Fasten von Tammus', fr:'Jeûne du 17 Tammouz', it:'Digiuno di Tammuz', es:'Ayuno de Tamuz' } },
+  { m: 5,  d: 9,  name: "Tisha B'Av", url: 'https://en.wikipedia.org/wiki/Tisha_B%27Av',
+    i18n: { de:"Tischa beAw", fr:"Ticha BeAv", it:"Tisha B'Av", es:"Tishá B'Av" } },
 ];
 
 // Build Map<"YYYY-MM-DD", {name, url?}[]> of Hebrew holidays for year hy
@@ -206,9 +220,14 @@ function buildHebrewHolidayMap(hy) {
     const dur = hol.dur || 1;
     for (let i = 0; i < dur; i++) {
       const ds = utcDateStr(_hDayToDate(mStart + (hol.d - 1) + i));
-      const label = (dur > 1 && i > 0) ? `${hol.name} (day ${i + 1})` : hol.name;
-      const entry = { name: label };
+      const suffix = (dur > 1 && i > 0) ? ` (day ${i + 1})` : '';
+      const entry = { name: hol.name + suffix };
       if (i === 0 && hol.url) entry.url = hol.url;
+      if (hol.i18n) {
+        const ti = {};
+        for (const [lang, val] of Object.entries(hol.i18n)) ti[lang] = val + suffix;
+        entry.i18n = ti;
+      }
       if (!map.has(ds)) map.set(ds, []);
       map.get(ds).push(entry);
     }
