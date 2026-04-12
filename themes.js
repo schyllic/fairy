@@ -606,12 +606,17 @@ function applyTheme(themeName) {
   }
 }
 
+const _DP_DARK  = { '--dp-robin':'#1e6635', '--dp-rabbit':'#0e3870', '--dp-turkey':'#504008', '--dp-bear':'#583010', '--dp-fox':'#581818' };
+const _DP_LIGHT = { '--dp-robin':'#d4edda', '--dp-rabbit':'#d0e8ff', '--dp-turkey':'#fef9c3', '--dp-bear':'#ffe0cc', '--dp-fox':'#ffd6d6' };
+
 function applyVariant(themeName, variantName, colorScheme) {
   const themeKey = colorScheme === 'dark' ? 'wizard' : themeName;
   const vars = THEMES[themeKey]?.variants?.[variantName];
   if (!vars) return;
   const e = document.documentElement;
   for (const [k, v] of Object.entries(vars)) e.style.setProperty(k, v);
+  const dpVars = colorScheme === 'dark' ? _DP_DARK : _DP_LIGHT;
+  for (const [k, v] of Object.entries(dpVars)) e.style.setProperty(k, v);
   e.dataset.variant = variantName;
   e.dataset.colorScheme = colorScheme;
 }

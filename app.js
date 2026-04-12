@@ -1680,10 +1680,19 @@ function buildSwatches() {
     group.appendChild(btn);
   });
   const sb = document.getElementById('scheme-toggle');
-  if (sb) sb.textContent = state.colorScheme === 'dark' ? '🌙' : '☀';
+  if (sb) {
+    if (state.theme === 'wizard') {
+      state.colorScheme = 'dark';
+      sb.style.display = 'none';
+    } else {
+      sb.style.display = '';
+      sb.textContent = state.colorScheme === 'dark' ? '🌙' : '☀';
+    }
+  }
 }
 
 function _applyThemeSwitch(themeName) {
+  if (themeName === 'wizard') state.colorScheme = 'dark';
   applyTheme(themeName);
   applyVariant(themeName, state.variant, state.colorScheme);
   if (currentFY) document.querySelectorAll('.year-hero-wrap').forEach(w => {
