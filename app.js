@@ -47,6 +47,8 @@ let state = {
   showMeteors: true,
   showComets: true,
   showBirthdays: true,
+  holidayPack1: 'us',   // null | pack ID from HOLIDAY_PACKS
+  holidayPack2: null,
   calendarType2: 'greg', // null | 'fairy' | 'greg' | 'hebrew'
 };
 
@@ -83,6 +85,8 @@ try {
   if (saved.showMeteors    !== undefined) state.showMeteors    = saved.showMeteors;
   if (saved.showComets     !== undefined) state.showComets     = saved.showComets;
   if (saved.showBirthdays  !== undefined) state.showBirthdays  = saved.showBirthdays;
+  if ('holidayPack1' in saved) state.holidayPack1 = saved.holidayPack1;
+  if ('holidayPack2' in saved) state.holidayPack2 = saved.holidayPack2;
   // calendarType2: load saved, or migrate from old showOtherDate
   if ('calendarType2' in saved) {
     state.calendarType2 = (saved.calendarType2 === null || ['fairy','greg','hebrew','cherokee','iroquois','hindu'].includes(saved.calendarType2)) ? saved.calendarType2 : 'greg';
@@ -218,6 +222,11 @@ function initSettingsModal() {
             `<button class="btn lang-current-btn" id="cal-primary-btn" title="Primary calendar"></button>` +
             `<button class="btn lang-current-btn" id="cal2-btn" title="Other date calendar"></button>` +
           `</span>` +
+          `<span class="settings-picker-group">` +
+            `<span class="settings-picker-label" id="label-holpacks">Holidays</span>` +
+            `<button class="btn lang-current-btn" id="hol-pack1-btn" title="Primary holiday pack"></button>` +
+            `<button class="btn lang-current-btn" id="hol-pack2-btn" title="Secondary holiday pack"></button>` +
+          `</span>` +
         `</div>` +
       `</div>` +
       `<div id="modal-body">` +
@@ -264,6 +273,8 @@ function initSettingsModal() {
   modal.querySelector('#cal2-btn').addEventListener('click', () => { closeSettings(); showCalendarModal('secondary'); });
   modal.querySelector('#lang-current-btn').addEventListener('click', () => { closeSettings(); showLanguageModal('primary'); });
   modal.querySelector('#lang2-current-btn').addEventListener('click', () => { closeSettings(); showLanguageModal('secondary'); });
+  modal.querySelector('#hol-pack1-btn').addEventListener('click', () => { closeSettings(); showHolidayPackModal('primary'); });
+  modal.querySelector('#hol-pack2-btn').addEventListener('click', () => { closeSettings(); showHolidayPackModal('secondary'); });
   const _applyLocation = () => {
     const lat = parseFloat(document.getElementById('settings-lat').value);
     const lon = parseFloat(document.getElementById('settings-lon').value);
@@ -587,6 +598,13 @@ function showSettings() {
   const c2Btn = document.getElementById('cal2-btn');
   c2Btn.textContent = state.calendarType2 ? (_calNames[state.calendarType2] || state.calendarType2) : '—';
   c2Btn.classList.toggle('active', !!state.calendarType2);
+  const _packLabel = key => (typeof HOLIDAY_PACKS !== 'undefined' && key && HOLIDAY_PACKS[key]) ? HOLIDAY_PACKS[key].label : '—';
+  const hp1Btn = document.getElementById('hol-pack1-btn');
+  hp1Btn.textContent = _packLabel(state.holidayPack1);
+  hp1Btn.classList.toggle('active', !!state.holidayPack1);
+  const hp2Btn = document.getElementById('hol-pack2-btn');
+  hp2Btn.textContent = state.holidayPack2 ? _packLabel(state.holidayPack2) : '—';
+  hp2Btn.classList.toggle('active', !!state.holidayPack2);
   document.getElementById('label-lang').textContent = t('language') || 'Language';
   document.getElementById('label-cal').textContent = 'Calendar';
   document.getElementById('settings-loc-head').textContent = t('location');
@@ -879,6 +897,77 @@ function closeCalendarModal() {
   document.getElementById('calendar-modal').setAttribute('hidden', '');
 }
 
+// ─── Holiday Pack Picker Modal ─────────────────────────────────────────────
+
+let _holPackSlot = 'primary'; // 'primary' | 'secondary'
+
+function initHolidayPackModal() {
+  const modal = document.createElement('div');
+  modal.id = 'holpack-modal';
+  modal.setAttribute('hidden', '');
+  const packBtns = (typeof HOLIDAY_PACK_LIST !== 'undefined' ? HOLIDAY_PACK_LIST : [])
+    .map(key => {
+      const p = (typeof HOLIDAY_PACKS !== 'undefined') ? HOLIDAY_PACKS[key] : null;
+      if (!p) return '';
+      return `<button class="lang-grid-btn" data-pack="${key}">` +
+               `<span class="lang-native">${p.label}</span>` +
+               `<span class="lang-english">${p.desc}</span>` +
+             `</button>`;
+    }).join('');
+  modal.innerHTML =
+    `<div id="holpack-modal-backdrop"></div>` +
+    `<div id="holpack-modal-box">` +
+      `<div id="holpack-modal-header">` +
+        `<h2 id="holpack-modal-title">Holiday Pack</h2>` +
+        `<button id="holpack-modal-close" aria-label="Close">✕</button>` +
+      `</div>` +
+      `<div id="holpack-modal-body">` +
+        `<div class="lang-grid">` +
+          `<button id="holpack-none-btn" class="lang-grid-btn">` +
+            `<span class="lang-native">—</span>` +
+            `<span class="lang-english">None</span>` +
+          `</button>` +
+          packBtns +
+        `</div>` +
+      `</div>` +
+    `</div>`;
+  document.body.appendChild(modal);
+  const _close = () => { closeHolidayPackModal(); showSettings(); };
+  modal.querySelector('#holpack-modal-backdrop').addEventListener('click', _close);
+  modal.querySelector('#holpack-modal-close').addEventListener('click', _close);
+  const _apply = key => {
+    if (_holPackSlot === 'secondary') state.holidayPack2 = key;
+    else state.holidayPack1 = key;
+    _saveState();
+    yearCache.clear();
+    closeHolidayPackModal();
+    refresh();
+    showSettings();
+  };
+  modal.querySelector('#holpack-none-btn').addEventListener('click', () => {
+    if (_holPackSlot === 'secondary') _apply(null);
+    else _apply(null);
+  });
+  modal.querySelectorAll('.lang-grid-btn[data-pack]').forEach(btn => {
+    btn.addEventListener('click', () => _apply(btn.dataset.pack));
+  });
+}
+
+function showHolidayPackModal(slot = 'primary') {
+  _holPackSlot = slot;
+  const active = slot === 'secondary' ? state.holidayPack2 : state.holidayPack1;
+  document.querySelectorAll('#holpack-modal .lang-grid-btn[data-pack]').forEach(btn =>
+    btn.classList.toggle('is-active', btn.dataset.pack === active));
+  document.getElementById('holpack-none-btn').classList.toggle('is-active', !active);
+  document.getElementById('holpack-modal-title').textContent =
+    slot === 'secondary' ? 'Holiday Pack 2' : 'Holiday Pack 1';
+  document.getElementById('holpack-modal').removeAttribute('hidden');
+}
+
+function closeHolidayPackModal() {
+  document.getElementById('holpack-modal').setAttribute('hidden', '');
+}
+
 
 function _formatEvent(ev) {
   if (ev.kind === 'phase')         { const p=PHASE_LABELS[ev.phase];  return {icon:p.icon, text:tPhase(ev.phase)}; }
@@ -888,6 +977,7 @@ function _formatEvent(ev) {
   if (ev.kind === 'lunarEclipse')  return {icon:'🌑✕', text:`Lunar Eclipse (${ev.subtype})`};
   if (ev.kind === 'solarEclipse')  return {icon:'☀✕', text:`Solar Eclipse (${ev.subtype})`};
   if (ev.kind === 'birthday')      return {icon:'🎂', text:`${ev.names.join(', ')}'s Birthday`};
+  if (ev.kind === 'holiday')       return {icon:'🗓', text:ev.name};
   if (ev.kind==='opposition')    return {icon:PLANET_SYMBOLS[ev.planet], text:`${ev.planet} at Opposition — up all night`};
   if (ev.kind==='greatElongation') return {icon:PLANET_SYMBOLS[ev.planet], text:`${ev.planet} — Greatest Elongation (${ev.isEvening?'Evening':'Morning'} Star, ${ev.elong}°)`};
   if (ev.kind==='moonConj')      return {icon:`${PLANET_SYMBOLS[ev.planet]}🌙`, text:`Moon near ${ev.planet} (${ev.sep}°)`};
@@ -2014,6 +2104,7 @@ initHelpModal();
 initSettingsModal();
 initLanguageModal();
 initCalendarModal();
+initHolidayPackModal();
 initBirthdayDialog();
 document.getElementById('help-btn').addEventListener('click', showHelp);
 document.getElementById('settings-btn').addEventListener('click', showSettings);

@@ -98,14 +98,30 @@ function _buildFairyYear(holYear) {
 
   // Holidays — keyed by "YYYY-MM-DD"
   const holidayMap = new Map();
-  if (typeof US_HOLIDAYS !== 'undefined') {
-    for (const h of US_HOLIDAYS) {
-      const ds = h.day
-        ? `${gregYear}-${String(h.month).padStart(2,'0')}-${String(h.day).padStart(2,'0')}`
-        : utcDateStr(_resolveHolidayRule(h.rule, gregYear));
-      if (!holidayMap.has(ds)) holidayMap.set(ds, []);
-      holidayMap.get(ds).push(h);
+  const _addHolEntry = (h, year) => {
+    const ds = h.day
+      ? `${year}-${String(h.month).padStart(2,'0')}-${String(h.day).padStart(2,'0')}`
+      : utcDateStr(_resolveHolidayRule(h.rule, year));
+    if (!holidayMap.has(ds)) holidayMap.set(ds, []);
+    holidayMap.get(ds).push(h);
+  };
+  if (typeof HOLIDAY_PACKS !== 'undefined') {
+    for (const packKey of [state.holidayPack1, state.holidayPack2]) {
+      if (!packKey) continue;
+      const pack = HOLIDAY_PACKS[packKey];
+      if (!pack) continue;
+      if (pack.computeMap) {
+        for (const [ds, holidays] of pack.computeMap(gregYear)) {
+          if (!holidayMap.has(ds)) holidayMap.set(ds, []);
+          holidayMap.get(ds).push(...holidays);
+        }
+      } else if (pack.entries) {
+        for (const h of pack.entries) _addHolEntry(h, gregYear);
+      }
     }
+  } else if (typeof US_HOLIDAYS !== 'undefined') {
+    // Fallback if holiday-packs.js not loaded
+    for (const h of US_HOLIDAYS) _addHolEntry(h, gregYear);
   }
 
   // Perigee / Apogee
@@ -233,6 +249,9 @@ function _buildFairyYear(holYear) {
     if (ds === utcDateStr(new Date(new Date(list[0].start).getTime()))) { // first day only
       for (const c of list) eventTimeline.push({dateStr:ds, kind:'cometStart', name:c.name, note:c.note||''});
     }
+  }
+  for (const [ds, hols] of holidayMap) {
+    for (const h of hols) eventTimeline.push({dateStr:ds, kind:'holiday', name:h.name});
   }
   eventTimeline.sort((a,b) => a.dateStr.localeCompare(b.dateStr));
 

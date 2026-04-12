@@ -861,30 +861,30 @@ body.sky-playing .sky-view-constellations { display: none; }
 .help-table th { color: var(--color-accent); font-weight: bold; text-align: left; }
 .help-table tr:last-child td { border-bottom: none; }
 
-/* ─── Language Modal + Calendar Picker Modal ──────────── */
-#language-modal, #calendar-modal {
+/* ─── Language Modal + Calendar Picker Modal + Holiday Pack Modal ─ */
+#language-modal, #calendar-modal, #holpack-modal {
   position: fixed; inset: 0; z-index: 1050;
   display: flex; align-items: center; justify-content: center;
 }
-#language-modal[hidden], #calendar-modal[hidden] { display: none; }
-#lang-modal-backdrop, #cal-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
-#lang-modal-box, #cal-modal-box {
+#language-modal[hidden], #calendar-modal[hidden], #holpack-modal[hidden] { display: none; }
+#lang-modal-backdrop, #cal-modal-backdrop, #holpack-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+#lang-modal-box, #cal-modal-box, #holpack-modal-box {
   position: relative; z-index: 1;
   background: var(--color-bg); border: 1px solid var(--color-border);
   border-radius: 10px; padding: 1.2rem 1.4rem;
   width: min(480px, 96vw); max-height: 90vh; overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0,0,0,0.35);
 }
-#lang-modal-header, #cal-modal-header {
+#lang-modal-header, #cal-modal-header, #holpack-modal-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 1rem;
 }
-#lang-modal-title, #cal-modal-title { margin: 0; font-size: 1.1rem; color: var(--color-text-primary); }
-#lang-modal-close, #cal-modal-close {
+#lang-modal-title, #cal-modal-title, #holpack-modal-title { margin: 0; font-size: 1.1rem; color: var(--color-text-primary); }
+#lang-modal-close, #cal-modal-close, #holpack-modal-close {
   background: none; border: none; cursor: pointer;
   font-size: 1rem; color: var(--color-text-secondary); padding: 0.2rem 0.4rem;
 }
-#lang-modal-close:hover, #cal-modal-close:hover { color: var(--color-accent); }
+#lang-modal-close:hover, #cal-modal-close:hover, #holpack-modal-close:hover { color: var(--color-accent); }
 .lang-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;
 }

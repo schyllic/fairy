@@ -14,7 +14,9 @@
       "Bash(grep:*)",
       "Bash(ls -lh /c/Users/schyl/repos/fairy/*.js)",
       "Bash(python3 /tmp/write_wiki.py)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(ls -la /c/Users/schyl/repos/fairy/*.js)",
+      "Bash(find .:*)"
     ]
   }
 }
