@@ -17,7 +17,8 @@
       "WebFetch(domain:github.com)",
       "Bash(ls -la /c/Users/schyl/repos/fairy/*.js)",
       "Bash(find .:*)",
-      "Bash(node -c i18n.js)"
+      "Bash(node -c i18n.js)",
+      "WebFetch(domain:en.wikipedia.org)"
     ]
   }
 }

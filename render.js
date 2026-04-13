@@ -62,7 +62,7 @@ function moonIcons(fd) {
   if (state.showMeteors && fd.meteor) { for (const m of fd.meteor) { if (m.isNearPeak) h+=`<span class="icon meteor-icon" title="${t('evt_meteor_peak_short', m.name, m.zhr)}">🌠</span>`; } }
   if (state.showComets  && fd.comet)  { for (const c of fd.comet) h+=`<span class="icon comet-icon" title="${c.name}${c.note?' — '+c.note:''}">☄</span>`; }
   if (state.showBirthdays && fd.birthday) { for (const b of fd.birthday) h+=`<span class="birthday-label" data-bday-name="${b.name}" data-bday-month="${b.month}" data-bday-day="${b.day}">🎂 ${b.name}</span>`; }
-  if (state.showHolidays && fd.holiday) { for (const hol of fd.holiday) h+=`<span class="holiday-label">${tHoliday(hol)}</span>`; }
+  if (state.showHolidays && fd.holiday) { for (const hol of fd.holiday) { const n=tHoliday(hol); h+=hol.url?`<a class="holiday-label" href="${tWikiUrl(hol.url)}" target="_blank" rel="noopener">${n}</a>`:`<span class="holiday-label">${n}</span>`; } }
   return h;
 }
 

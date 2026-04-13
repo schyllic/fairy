@@ -661,6 +661,11 @@ body {
   font-weight: bold;
   line-height: 1.0;
 }
+a.holiday-label { text-decoration: none; }
+a.holiday-label:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  a.holiday-label { pointer-events: none; }
+}
 
 .solar-cell {
   outline: 2px solid #c8960a;

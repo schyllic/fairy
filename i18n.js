@@ -45,6 +45,7 @@ const I18N = {
     moon_label: 'Moon', sky_labels: 'Labels',
     today_marker: '\u2014 Today \u2014',
     no_events: 'No events in next 60 days.',
+    click_again_info: 'Click again for more info',
     no_birthdays_share: 'No birthdays to share',
     link_copied: 'Link copied! Send it to family.',
     copy_failed: 'Could not copy \u2014 try again',
@@ -91,6 +92,27 @@ const I18N = {
     evt_comet: '{0} (visible now)',
     eclipse_umbral: 'umbral', eclipse_penumbral: 'penumbral',
     eclipse_central: 'central', eclipse_partial: 'partial',
+    label_calendar: 'Calendar', label_holidays: 'Holidays',
+    search_city_ph: 'Search city / state / country \u2026',
+    btn_detect: 'Detect',
+    hemisphere_north: 'Northern Hemisphere', hemisphere_south: 'Southern Hemisphere',
+    longitude_east: 'Eastern Longitude', longitude_west: 'Western Longitude',
+    loc_near: 'near:', lat_error: 'Latitude must be \u221290 to 90.', lon_error: 'Longitude must be \u2212180 to 180.',
+    save_to_file: 'Save to file\u2026', load_from_file: 'Load from file\u2026',
+    cal_fairy: 'Fairy', cal_greg: 'Greg', cal_hebrew: 'Hebrew',
+    cal_cherokee: 'Cherokee', cal_iroquois: 'Iroquois', cal_hindu: 'Hindu',
+    pack_us: 'US', pack_wheel: 'Wheel', pack_hebrew: 'Hebrew',
+    pack_hindu: 'Hindu', pack_liturgical: 'Liturgical', pack_cherokee: 'Cherokee', pack_iroquois: 'Iroquois',
+    pack_desc_us: 'US federal holidays', pack_desc_wheel: 'Celtic/Pagan Wheel of the Year',
+    pack_desc_hebrew: 'Jewish holidays', pack_desc_hindu: 'Hindu festival calendar',
+    pack_desc_liturgical: 'Christian liturgical calendar', pack_desc_cherokee: 'Cherokee ceremonies',
+    pack_desc_iroquois: 'Haudenosaunee ceremonies',
+    holpack_title: 'Holiday Pack', other_date: 'Other Date', none_option: 'None',
+    greg_months_short: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    loc_ip_warning: '\u26a0 Location may be IP-based',
+    tip_primary_lang: 'Primary language', tip_tooltip_lang: 'Tooltip language',
+    tip_primary_cal: 'Primary calendar', tip_other_cal: 'Other date calendar',
+    tip_primary_hol: 'Primary holiday pack', tip_secondary_hol: 'Secondary holiday pack',
   },
 
   de: {
@@ -170,6 +192,27 @@ const I18N = {
     evt_comet: '{0} (jetzt sichtbar)',
     eclipse_umbral: 'total', eclipse_penumbral: 'Halbschatten',
     eclipse_central: 'zentral', eclipse_partial: 'partiell',
+    label_calendar: 'Kalender', label_holidays: 'Feiertage',
+    search_city_ph: 'Stadt / Bundesland / Land suchen \u2026',
+    btn_detect: 'Erkennen',
+    hemisphere_north: 'Nordhalbkugel', hemisphere_south: 'S\u00fcdhalbkugel',
+    longitude_east: '\u00d6stliche L\u00e4nge', longitude_west: 'Westliche L\u00e4nge',
+    loc_near: 'nahe:', lat_error: 'Breitengrad muss \u221290 bis 90 sein.', lon_error: 'L\u00e4ngengrad muss \u2212180 bis 180 sein.',
+    save_to_file: 'In Datei speichern\u2026', load_from_file: 'Aus Datei laden\u2026',
+    cal_fairy: 'Mondkal.', cal_greg: 'Greg.', cal_hebrew: 'Hebr\u00e4isch',
+    cal_cherokee: 'Cherokee', cal_iroquois: 'Irokesen', cal_hindu: 'Hindu',
+    pack_us: 'US', pack_wheel: 'Jahreskreis', pack_hebrew: 'J\u00fcdisch',
+    pack_hindu: 'Hindu', pack_liturgical: 'Liturgisch', pack_cherokee: 'Cherokee', pack_iroquois: 'Irokesen',
+    pack_desc_us: 'US-Bundesfeiertage', pack_desc_wheel: 'Keltisch/Heidn. Jahreskreis',
+    pack_desc_hebrew: 'J\u00fcdische Feiertage', pack_desc_hindu: 'Hinduistischer Festkalender',
+    pack_desc_liturgical: 'Christlicher Liturgiekalender', pack_desc_cherokee: 'Cherokee-Zeremonien',
+    pack_desc_iroquois: 'Haudenosaunee-Zeremonien',
+    holpack_title: 'Feiertagspaket', other_date: 'Anderes Datum', none_option: 'Keines',
+    greg_months_short: ['Jan','Feb','M\u00e4r','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'],
+    loc_ip_warning: '\u26a0 Standort m\u00f6glicherweise IP-basiert',
+    tip_primary_lang: 'Prim\u00e4rsprache', tip_tooltip_lang: 'Tooltip-Sprache',
+    tip_primary_cal: 'Prim\u00e4rkalender', tip_other_cal: 'Kalender f\u00fcr anderes Datum',
+    tip_primary_hol: 'Prim\u00e4res Feiertagspaket', tip_secondary_hol: 'Sekund\u00e4res Feiertagspaket',
   },
 
   fr: {
@@ -249,6 +292,27 @@ const I18N = {
     evt_comet: '{0} (visible maintenant)',
     eclipse_umbral: 'totale', eclipse_penumbral: 'pénombrale',
     eclipse_central: 'centrale', eclipse_partial: 'partielle',
+    label_calendar: 'Calendrier', label_holidays: 'Jours f\u00e9ri\u00e9s',
+    search_city_ph: 'Rechercher ville / r\u00e9gion / pays \u2026',
+    btn_detect: 'D\u00e9tecter',
+    hemisphere_north: 'H\u00e9misph\u00e8re Nord', hemisphere_south: 'H\u00e9misph\u00e8re Sud',
+    longitude_east: 'Longitude Est', longitude_west: 'Longitude Ouest',
+    loc_near: 'pr\u00e8s\u00a0:', lat_error: 'La latitude doit \u00eatre de \u221290 \u00e0 90.', lon_error: 'La longitude doit \u00eatre de \u2212180 \u00e0 180.',
+    save_to_file: 'Enregistrer\u2026', load_from_file: 'Charger\u2026',
+    cal_fairy: 'Lunaire', cal_greg: 'Gr\u00e9gorien', cal_hebrew: 'H\u00e9breu',
+    cal_cherokee: 'Cherokee', cal_iroquois: 'Iroquois', cal_hindu: 'Hindou',
+    pack_us: '\u00c9tats-Unis', pack_wheel: 'Roue', pack_hebrew: 'Juif',
+    pack_hindu: 'Hindou', pack_liturgical: 'Liturgique', pack_cherokee: 'Cherokee', pack_iroquois: 'Iroquois',
+    pack_desc_us: 'F\u00eates f\u00e9d\u00e9rales am\u00e9ricaines', pack_desc_wheel: 'Roue de l\u2019Ann\u00e9e celtique',
+    pack_desc_hebrew: 'F\u00eates juives', pack_desc_hindu: 'Calendrier de f\u00eates hindoues',
+    pack_desc_liturgical: 'Calendrier liturgique chr\u00e9tien', pack_desc_cherokee: 'C\u00e9r\u00e9monies cherokees',
+    pack_desc_iroquois: 'C\u00e9r\u00e9monies haudenosaunees',
+    holpack_title: 'Pack de f\u00eates', other_date: 'Autre Date', none_option: 'Aucun',
+    greg_months_short: ['Jan','F\u00e9v','Mar','Avr','Mai','Jun','Jul','Ao\u00fb','Sep','Oct','Nov','D\u00e9c'],
+    loc_ip_warning: '\u26a0 La position est peut-\u00eatre bas\u00e9e sur l\u2019IP',
+    tip_primary_lang: 'Langue principale', tip_tooltip_lang: 'Langue des infobulles',
+    tip_primary_cal: 'Calendrier principal', tip_other_cal: 'Calendrier de l\u2019autre date',
+    tip_primary_hol: 'Pack de f\u00eates principal', tip_secondary_hol: 'Pack de f\u00eates secondaire',
   },
 
   it: {
@@ -328,6 +392,27 @@ const I18N = {
     evt_comet: '{0} (visibile ora)',
     eclipse_umbral: 'totale', eclipse_penumbral: 'penombrale',
     eclipse_central: 'centrale', eclipse_partial: 'parziale',
+    label_calendar: 'Calendario', label_holidays: 'Festivit\u00e0',
+    search_city_ph: 'Cerca citt\u00e0 / regione / paese \u2026',
+    btn_detect: 'Rileva',
+    hemisphere_north: 'Emisfero Nord', hemisphere_south: 'Emisfero Sud',
+    longitude_east: 'Longitudine Est', longitude_west: 'Longitudine Ovest',
+    loc_near: 'vicino:', lat_error: 'La latitudine deve essere da \u221290 a 90.', lon_error: 'La longitudine deve essere da \u2212180 a 180.',
+    save_to_file: 'Salva su file\u2026', load_from_file: 'Carica da file\u2026',
+    cal_fairy: 'Lunare', cal_greg: 'Gregoriano', cal_hebrew: 'Ebraico',
+    cal_cherokee: 'Cherokee', cal_iroquois: 'Irochesi', cal_hindu: 'Ind\u00f9',
+    pack_us: 'USA', pack_wheel: 'Ruota', pack_hebrew: 'Ebraico',
+    pack_hindu: 'Ind\u00f9', pack_liturgical: 'Liturgico', pack_cherokee: 'Cherokee', pack_iroquois: 'Irochesi',
+    pack_desc_us: 'Feste federali USA', pack_desc_wheel: 'Ruota dell\u2019Anno celtica',
+    pack_desc_hebrew: 'Feste ebraiche', pack_desc_hindu: 'Calendario festivo ind\u00f9',
+    pack_desc_liturgical: 'Calendario liturgico cristiano', pack_desc_cherokee: 'Cerimonie cherokee',
+    pack_desc_iroquois: 'Cerimonie haudenosaunee',
+    holpack_title: 'Pacchetto festivit\u00e0', other_date: 'Altra Data', none_option: 'Nessuno',
+    greg_months_short: ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'],
+    loc_ip_warning: '\u26a0 La posizione potrebbe essere basata su IP',
+    tip_primary_lang: 'Lingua principale', tip_tooltip_lang: 'Lingua dei suggerimenti',
+    tip_primary_cal: 'Calendario principale', tip_other_cal: 'Calendario altra data',
+    tip_primary_hol: 'Pacchetto festivit\u00e0 principale', tip_secondary_hol: 'Pacchetto festivit\u00e0 secondario',
   },
 
   es: {
@@ -407,6 +492,27 @@ const I18N = {
     evt_comet: '{0} (visible ahora)',
     eclipse_umbral: 'total', eclipse_penumbral: 'penumbral',
     eclipse_central: 'central', eclipse_partial: 'parcial',
+    label_calendar: 'Calendario', label_holidays: 'Festivos',
+    search_city_ph: 'Buscar ciudad / estado / pa\u00eds \u2026',
+    btn_detect: 'Detectar',
+    hemisphere_north: 'Hemisferio Norte', hemisphere_south: 'Hemisferio Sur',
+    longitude_east: 'Longitud Este', longitude_west: 'Longitud Oeste',
+    loc_near: 'cerca:', lat_error: 'La latitud debe ser de \u221290 a 90.', lon_error: 'La longitud debe ser de \u2212180 a 180.',
+    save_to_file: 'Guardar en archivo\u2026', load_from_file: 'Cargar de archivo\u2026',
+    cal_fairy: 'Lunar', cal_greg: 'Gregoriano', cal_hebrew: 'Hebreo',
+    cal_cherokee: 'Cherokee', cal_iroquois: 'Iroqueses', cal_hindu: 'Hind\u00fa',
+    pack_us: 'EE.UU.', pack_wheel: 'Rueda', pack_hebrew: 'Jud\u00edo',
+    pack_hindu: 'Hind\u00fa', pack_liturgical: 'Lit\u00fargico', pack_cherokee: 'Cherokee', pack_iroquois: 'Iroqueses',
+    pack_desc_us: 'Feriados federales de EE.UU.', pack_desc_wheel: 'Rueda del A\u00f1o celta',
+    pack_desc_hebrew: 'Fiestas jud\u00edas', pack_desc_hindu: 'Calendario de festivales hind\u00faes',
+    pack_desc_liturgical: 'Calendario lit\u00fargico cristiano', pack_desc_cherokee: 'Ceremonias cherokees',
+    pack_desc_iroquois: 'Ceremonias haudenosaunee',
+    holpack_title: 'Paquete de festivos', other_date: 'Otra Fecha', none_option: 'Ninguno',
+    greg_months_short: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    loc_ip_warning: '\u26a0 La ubicaci\u00f3n puede estar basada en IP',
+    tip_primary_lang: 'Idioma principal', tip_tooltip_lang: 'Idioma de informaci\u00f3n',
+    tip_primary_cal: 'Calendario principal', tip_other_cal: 'Calendario de otra fecha',
+    tip_primary_hol: 'Paquete de festivos principal', tip_secondary_hol: 'Paquete de festivos secundario',
   },
 
   sw: {
@@ -486,6 +592,27 @@ const I18N = {
     evt_comet: '{0} (inaonekana sasa)',
     eclipse_umbral: 'kamili', eclipse_penumbral: 'nusu-kivuli',
     eclipse_central: 'kati', eclipse_partial: 'sehemu',
+    label_calendar: 'Kalenda', label_holidays: 'Likizo',
+    search_city_ph: 'Tafuta mji / mkoa / nchi \u2026',
+    btn_detect: 'Gundua',
+    hemisphere_north: 'Ulimwengu wa Kaskazini', hemisphere_south: 'Ulimwengu wa Kusini',
+    longitude_east: 'Longitudo Mashariki', longitude_west: 'Longitudo Magharibi',
+    loc_near: 'karibu:', lat_error: 'Latitudo lazima iwe \u221290 hadi 90.', lon_error: 'Longitudo lazima iwe \u2212180 hadi 180.',
+    save_to_file: 'Hifadhi kwenye faili\u2026', load_from_file: 'Pakia kutoka faili\u2026',
+    cal_fairy: 'Mwezi', cal_greg: 'Greg.', cal_hebrew: 'Kiebrania',
+    cal_cherokee: 'Cherokee', cal_iroquois: 'Iroquois', cal_hindu: 'Kihindi',
+    pack_us: 'Marekani', pack_wheel: 'Gurudumu', pack_hebrew: 'Kiyahudi',
+    pack_hindu: 'Kihindi', pack_liturgical: 'Liturujia', pack_cherokee: 'Cherokee', pack_iroquois: 'Haudenosaunee',
+    pack_desc_us: 'Sikukuu za Marekani', pack_desc_wheel: 'Gurudumu la Mwaka la Kiselti',
+    pack_desc_hebrew: 'Sikukuu za Kiyahudi', pack_desc_hindu: 'Kalenda ya sherehe za Kihindi',
+    pack_desc_liturgical: 'Kalenda ya liturujia ya Kikristo', pack_desc_cherokee: 'Sherehe za Cherokee',
+    pack_desc_iroquois: 'Sherehe za Haudenosaunee',
+    holpack_title: 'Pakiti ya Likizo', other_date: 'Tarehe Nyingine', none_option: 'Hakuna',
+    greg_months_short: ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ago','Sep','Okt','Nov','Des'],
+    loc_ip_warning: '\u26a0 Mahali panaweza kuwa kwa IP',
+    tip_primary_lang: 'Lugha kuu', tip_tooltip_lang: 'Lugha ya vidokezo',
+    tip_primary_cal: 'Kalenda kuu', tip_other_cal: 'Kalenda ya tarehe nyingine',
+    tip_primary_hol: 'Pakiti kuu ya likizo', tip_secondary_hol: 'Pakiti ya pili ya likizo',
   },
 
   la: {
@@ -565,6 +692,27 @@ const I18N = {
     evt_comet: '{0} (nunc visibilis)',
     eclipse_umbral: 'totalis', eclipse_penumbral: 'penumbralis',
     eclipse_central: 'centralis', eclipse_partial: 'partialis',
+    label_calendar: 'Calendarium', label_holidays: 'Feriae',
+    search_city_ph: 'Quaere urbem / provinciam / terram \u2026',
+    btn_detect: 'Detege',
+    hemisphere_north: 'Hemisphaerium Boreale', hemisphere_south: 'Hemisphaerium Australe',
+    longitude_east: 'Longitudo Orientalis', longitude_west: 'Longitudo Occidentalis',
+    loc_near: 'prope:', lat_error: 'Latitudo inter \u221290 et 90 sit.', lon_error: 'Longitudo inter \u2212180 et 180 sit.',
+    save_to_file: 'In tabulam serva\u2026', load_from_file: 'Ex tabula lege\u2026',
+    cal_fairy: 'Lunaris', cal_greg: 'Gregorianus', cal_hebrew: 'Hebraicus',
+    cal_cherokee: 'Cherokee', cal_iroquois: 'Iroquoiensis', cal_hindu: 'Indicus',
+    pack_us: 'Amer.', pack_wheel: 'Rota', pack_hebrew: 'Hebraicus',
+    pack_hindu: 'Indicus', pack_liturgical: 'Liturgicus', pack_cherokee: 'Cherokee', pack_iroquois: 'Iroquoiensis',
+    pack_desc_us: 'Feriae foederales Americanae', pack_desc_wheel: 'Rota Anni Celtica',
+    pack_desc_hebrew: 'Feriae Iudaicae', pack_desc_hindu: 'Calendarium festorum Indicorum',
+    pack_desc_liturgical: 'Calendarium liturgicum Christianum', pack_desc_cherokee: 'Caerimoniae Cherokee',
+    pack_desc_iroquois: 'Caerimoniae Haudenosaunee',
+    holpack_title: 'Fasciculus Feriarum', other_date: 'Dies Alter', none_option: 'Nullus',
+    greg_months_short: ['Ian','Feb','Mar','Apr','Mai','Iun','Iul','Aug','Sep','Oct','Nov','Dec'],
+    loc_ip_warning: '\u26a0 Locus fortasse ex IP pendet',
+    tip_primary_lang: 'Lingua primaria', tip_tooltip_lang: 'Lingua indicationum',
+    tip_primary_cal: 'Calendarium primarium', tip_other_cal: 'Calendarium diei alterius',
+    tip_primary_hol: 'Fasciculus feriarum primarius', tip_secondary_hol: 'Fasciculus feriarum secundarius',
   },
 
   // Sanskrit — Devanagari script, classical terms where possible
@@ -645,6 +793,27 @@ const I18N = {
     evt_comet: '{0} (अधुना दृश्यम्)',
     eclipse_umbral: 'पूर्णम्', eclipse_penumbral: 'उपच्छायम्',
     eclipse_central: 'केन्द्रीयम्', eclipse_partial: 'आंशिकम्',
+    label_calendar: 'पञ्चाङ्गम्', label_holidays: 'उत्सवाः',
+    search_city_ph: 'नगरं / प्रदेशं / देशं अन्विष्यतु \u2026',
+    btn_detect: 'ज्ञातव्यम्',
+    hemisphere_north: 'उत्तरगोलार्धः', hemisphere_south: 'दक्षिणगोलार्धः',
+    longitude_east: 'पूर्वदेशान्तरः', longitude_west: 'पश्चिमदेशान्तरः',
+    loc_near: 'समीपे:', lat_error: 'अक्षांशः \u221290 तः 90 भवेत्।', lon_error: 'देशान्तरः \u2212180 तः 180 भवेत्।',
+    save_to_file: 'सञ्चिकायां संरक्ष\u2026', load_from_file: 'सञ्चिकातः आनय\u2026',
+    cal_fairy: 'चान्द्रः', cal_greg: 'ग्रेग.', cal_hebrew: 'हिब्रू',
+    cal_cherokee: 'चेरोकी', cal_iroquois: 'इरोक्वॉइ', cal_hindu: 'हिन्दू',
+    pack_us: 'अमेरिका', pack_wheel: 'चक्रम्', pack_hebrew: 'यहूदी',
+    pack_hindu: 'हिन्दू', pack_liturgical: 'पूजाविधिः', pack_cherokee: 'चेरोकी', pack_iroquois: 'इरोक्वॉइ',
+    pack_desc_us: 'अमेरिका-सङ्घीय-उत्सवाः', pack_desc_wheel: 'केल्टिक-वर्षचक्रम्',
+    pack_desc_hebrew: 'यहूदी-उत्सवाः', pack_desc_hindu: 'हिन्दू-उत्सव-पञ्चाङ्गम्',
+    pack_desc_liturgical: 'क्रैस्त-पूजाविधि-पञ्चाङ्गम्', pack_desc_cherokee: 'चेरोकी-अनुष्ठानानि',
+    pack_desc_iroquois: 'हौडेनोसौनी-अनुष्ठानानि',
+    holpack_title: 'उत्सव-सङ्कलनम्', other_date: 'अन्यतिथिः', none_option: 'किमपि न',
+    greg_months_short: null,
+    loc_ip_warning: '\u26a0 स्थानं IP-आधारितं स्यात्',
+    tip_primary_lang: 'प्रधानभाषा', tip_tooltip_lang: 'सूचनाभाषा',
+    tip_primary_cal: 'प्रधानपञ्चाङ्गम्', tip_other_cal: 'अन्यतिथि-पञ्चाङ्गम्',
+    tip_primary_hol: 'प्रधान-उत्सव-सङ्कलनम्', tip_secondary_hol: 'गौण-उत्सव-सङ्कलनम्',
   },
 };
 
@@ -790,12 +959,29 @@ function tWeekday2(idx) {
   return (arr && arr[idx]) || null;
 }
 
+/** Translated short Gregorian month names (for birthday selector etc.). */
+function getGregMonthsShort() {
+  const lang = _lang();
+  const tr = I18N[lang];
+  if (tr && Array.isArray(tr.greg_months_short)) return tr.greg_months_short;
+  if (I18N.en.greg_months_short) return I18N.en.greg_months_short;
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+}
+
 /** Translate a holiday name. Holiday objects may carry an i18n map: { de:'...', fr:'...' }.
  *  Falls back to hol.name (English). */
 function tHoliday(hol) {
   if (!hol) return '';
   const lang = _lang();
   return (lang !== 'en' && hol.i18n && hol.i18n[lang]) || hol.name;
+}
+
+/** Rewrite an en.wikipedia.org URL to the current primary language's Wikipedia. */
+function tWikiUrl(url) {
+  if (!url) return url;
+  const lang = _lang();
+  if (lang === 'en') return url;
+  return url.replace('en.wikipedia.org', lang + '.wikipedia.org');
 }
 
 /** Translate a holiday name using the secondary language. Returns null if no secondary set. */

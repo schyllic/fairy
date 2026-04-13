@@ -299,13 +299,13 @@ function initSettingsModal() {
     lonEl.classList.toggle('input-error', !!lonEl.value && !lonOk);
     if (!latOk || !lonOk) {
       const msgs = [];
-      if (latEl.value && !latOk) msgs.push('Latitude must be −90 to 90.');
-      if (lonEl.value && !lonOk) msgs.push('Longitude must be −180 to 180.');
+      if (latEl.value && !latOk) msgs.push(t('lat_error'));
+      if (lonEl.value && !lonOk) msgs.push(t('lon_error'));
       hint.textContent = msgs.join(' ');
       return;
     }
-    const ns = lat >= 0 ? 'Northern Hemisphere' : 'Southern Hemisphere';
-    const ew = lon >= 0 ? 'Eastern Longitude' : 'Western Longitude';
+    const ns = lat >= 0 ? t('hemisphere_north') : t('hemisphere_south');
+    const ew = lon >= 0 ? t('longitude_east') : t('longitude_west');
     let cityPart = '';
     if (typeof CITIES !== 'undefined' && CITIES.length) {
       let best = CITIES[0], bestD = Infinity;
@@ -314,7 +314,7 @@ function initSettingsModal() {
         if (d < bestD) { bestD = d; best = c; }
       }
       const dKm = Math.round(111 * Math.sqrt((best[1] - lat) ** 2 + (best[2] - lon) ** 2));
-      cityPart = ` · near: ${_cityLabel(best)} (${dKm} km)`;
+      cityPart = ` \u00b7 ${t('loc_near')} ${_cityLabel(best)} (${dKm} km)`;
     }
     hint.textContent = `${ns}, ${ew}${cityPart}`;
   };
@@ -378,14 +378,14 @@ function initSettingsModal() {
             if (d < bestD) { bestD = d; best = c; }
           }
           const dKm = Math.round(111 * Math.sqrt((best[1] - lat) ** 2 + (best[2] - lon) ** 2));
-          if (dKm > 400) showToast('⚠ Location may be IP-based');
+          if (dKm > 400) showToast(t('loc_ip_warning'));
         }
         btn.disabled = false;
-        btn.textContent = 'Detect';
+        btn.textContent = t('btn_detect');
       },
       () => {
         btn.disabled = false;
-        btn.textContent = 'Detect';
+        btn.textContent = t('btn_detect');
       }
     );
   });
@@ -591,14 +591,14 @@ function showSettings() {
   const lang2Btn = document.getElementById('lang2-current-btn');
   lang2Btn.textContent = lang2Meta ? lang2Meta.native : '+ tips';
   lang2Btn.classList.toggle('active', !!state.language2);
-  const _calNames = { fairy: 'Fairy', greg: 'Greg', hebrew: 'Hebrew', cherokee: 'Cherokee', iroquois: 'Iroquois', hindu: 'Hindu' };
+  const _calNames = { fairy: t('cal_fairy'), greg: t('cal_greg'), hebrew: t('cal_hebrew'), cherokee: t('cal_cherokee'), iroquois: t('cal_iroquois'), hindu: t('cal_hindu') };
   const cpBtn = document.getElementById('cal-primary-btn');
   cpBtn.textContent = _calNames[state.calendarType] || state.calendarType;
   cpBtn.classList.add('active');
   const c2Btn = document.getElementById('cal2-btn');
   c2Btn.textContent = state.calendarType2 ? (_calNames[state.calendarType2] || state.calendarType2) : '—';
   c2Btn.classList.toggle('active', !!state.calendarType2);
-  const _packLabel = key => (typeof HOLIDAY_PACKS !== 'undefined' && key && HOLIDAY_PACKS[key]) ? HOLIDAY_PACKS[key].label : '—';
+  const _packLabel = key => (typeof HOLIDAY_PACKS !== 'undefined' && key && HOLIDAY_PACKS[key]) ? t('pack_' + key) : '\u2014';
   const hp1Btn = document.getElementById('hol-pack1-btn');
   hp1Btn.textContent = _packLabel(state.holidayPack1);
   hp1Btn.classList.toggle('active', !!state.holidayPack1);
@@ -606,12 +606,32 @@ function showSettings() {
   hp2Btn.textContent = state.holidayPack2 ? _packLabel(state.holidayPack2) : '—';
   hp2Btn.classList.toggle('active', !!state.holidayPack2);
   document.getElementById('label-lang').textContent = t('language') || 'Language';
-  document.getElementById('label-cal').textContent = 'Calendar';
+  document.getElementById('label-cal').textContent = t('label_calendar');
+  document.getElementById('label-holpacks').textContent = t('label_holidays');
   document.getElementById('settings-loc-head').textContent = t('location');
   document.getElementById('settings-bday-head').textContent = t('birthdays');
   document.getElementById('bday-add-btn').textContent = t('add');
   document.getElementById('bday-share-btn').textContent = t('share_link');
+  document.getElementById('bday-export-btn').textContent = t('save_to_file');
+  document.getElementById('bday-import-file-btn').textContent = t('load_from_file');
   document.querySelector('#settings-modal #modal-title').textContent = t('settings_title');
+  document.getElementById('settings-city-search').placeholder = t('search_city_ph');
+  document.getElementById('settings-loc-detect').textContent = t('btn_detect');
+  document.getElementById('settings-lat-lbl').textContent = t('lat');
+  document.getElementById('settings-lon-lbl').textContent = t('lon');
+  // Tooltips
+  document.getElementById('lang-current-btn').title = t('tip_primary_lang');
+  document.getElementById('lang2-current-btn').title = t('tip_tooltip_lang');
+  document.getElementById('cal-primary-btn').title = t('tip_primary_cal');
+  document.getElementById('cal2-btn').title = t('tip_other_cal');
+  document.getElementById('hol-pack1-btn').title = t('tip_primary_hol');
+  document.getElementById('hol-pack2-btn').title = t('tip_secondary_hol');
+  // Month abbreviations in birthday selector
+  const _monthShort = getGregMonthsShort();
+  document.querySelectorAll('#bday-month option').forEach(opt => {
+    const idx = parseInt(opt.value, 10) - 1;
+    if (idx >= 0 && idx < _monthShort.length) opt.textContent = _monthShort[idx];
+  });
   if (_updateLocHint) _updateLocHint();
   document.getElementById('bday-name').placeholder = t('name_ph');
   document.getElementById('bday-day').placeholder  = t('day_ph');
@@ -889,7 +909,15 @@ function showCalendarModal(slot = 'primary') {
   nb.style.display = slot === 'secondary' ? '' : 'none';
   nb.classList.toggle('is-active', slot === 'secondary' && !state.calendarType2);
   document.getElementById('cal-modal-title').textContent =
-    slot === 'secondary' ? 'Other Date' : 'Calendar';
+    slot === 'secondary' ? t('other_date') : t('label_calendar');
+  // Update button labels with translated calendar names
+  document.querySelectorAll('#calendar-modal .lang-grid-btn[data-cal]').forEach(btn => {
+    const span = btn.querySelector('.lang-native');
+    if (span) span.textContent = t('cal_' + btn.dataset.cal);
+  });
+  const cnb = document.getElementById('cal-none-btn');
+  const cnbSpan = cnb && cnb.querySelector('.lang-english');
+  if (cnbSpan) cnbSpan.textContent = t('none_option');
   document.getElementById('calendar-modal').removeAttribute('hidden');
 }
 
@@ -960,7 +988,17 @@ function showHolidayPackModal(slot = 'primary') {
     btn.classList.toggle('is-active', btn.dataset.pack === active));
   document.getElementById('holpack-none-btn').classList.toggle('is-active', !active);
   document.getElementById('holpack-modal-title').textContent =
-    slot === 'secondary' ? 'Holiday Pack 2' : 'Holiday Pack 1';
+    t('holpack_title') + (slot === 'secondary' ? ' 2' : ' 1');
+  // Update button labels with translated pack names + descriptions
+  document.querySelectorAll('#holpack-modal .lang-grid-btn[data-pack]').forEach(btn => {
+    const nameSpan = btn.querySelector('.lang-native');
+    const descSpan = btn.querySelector('.lang-english');
+    if (nameSpan) nameSpan.textContent = t('pack_' + btn.dataset.pack);
+    if (descSpan) descSpan.textContent = t('pack_desc_' + btn.dataset.pack);
+  });
+  const hnb = document.getElementById('holpack-none-btn');
+  const hnbSpan = hnb && hnb.querySelector('.lang-english');
+  if (hnbSpan) hnbSpan.textContent = t('none_option');
   document.getElementById('holpack-modal').removeAttribute('hidden');
 }
 
@@ -977,7 +1015,7 @@ function _formatEvent(ev) {
   if (ev.kind === 'lunarEclipse')  return {icon:'🌑✕', text:t('evt_lunar_eclipse', t('eclipse_'+ev.subtype))};
   if (ev.kind === 'solarEclipse')  return {icon:'☀✕', text:t('evt_solar_eclipse', t('eclipse_'+ev.subtype))};
   if (ev.kind === 'birthday')      return {icon:'🎂', text:t('evt_birthday', ev.names.join(', '))};
-  if (ev.kind === 'holiday')       { const n = tHoliday(ev); return {icon:'🗓', text: ev.url ? `<a href="${ev.url}" target="_blank" rel="noopener">${n}</a>` : n}; }
+  if (ev.kind === 'holiday')       { const n = tHoliday(ev); return {icon:'🗓', text: ev.url ? `<a href="${tWikiUrl(ev.url)}" target="_blank" rel="noopener">${n}</a>` : n}; }
   if (ev.kind==='opposition')    return {icon:PLANET_SYMBOLS[ev.planet], text:t('evt_opposition', ev.planet)};
   if (ev.kind==='greatElongation') return {icon:PLANET_SYMBOLS[ev.planet], text:t(ev.isEvening?'evt_elongation_evening':'evt_elongation_morning', ev.planet, ev.elong)};
   if (ev.kind==='moonConj')      return {icon:`${PLANET_SYMBOLS[ev.planet]}🌙`, text:t('evt_moon_conj', ev.planet, ev.sep)};
@@ -2079,6 +2117,7 @@ function _openBirthdayDialog(name, month, day) {
 }
 
 document.body.addEventListener('click', e => {
+  if (e.target.closest('a.holiday-label')) return; // let link navigate without selecting cell
   const btn = e.target.closest('.info-btn');
   if (btn && btn.dataset.from && currentFY) { showModal(btn.dataset.from, btn.dataset.label, currentFY); return; }
 
@@ -2093,8 +2132,14 @@ document.body.addEventListener('click', e => {
   if (cell) {
     const ds = cell.dataset.date;
     if (selectedDate === ds) {
-      selectedDate = null;
-      document.querySelectorAll('[data-date].is-selected').forEach(c => c.classList.remove('is-selected'));
+      if (currentFY) {
+        const fd = currentFY.dayMap.get(ds);
+        const gd = fd?.gregDate || new Date(ds + 'T00:00:00Z');
+        const label = fd
+          ? `${tMoonShort(fd.fairyMonth)} ${fd.fairyDay} · ${getGregMonths()[gd.getUTCMonth()].slice(0,3)} ${gd.getUTCDate()}`
+          : `${getGregMonths()[gd.getUTCMonth()].slice(0,3)} ${gd.getUTCDate()}`;
+        showModal(ds, label, currentFY);
+      }
     } else {
       selectedDate = ds;
       _skyViewDate = ds;
@@ -2105,6 +2150,7 @@ document.body.addEventListener('click', e => {
       const moonDate = new Date(ds + 'T00:00:00Z');
       const phase = moonPhaseInfo(moonDate);
       document.getElementById('toolbar-moon').innerHTML = getMoonPhaseSVG(phase.illum, phase.waxing);
+      showToast(t('click_again_info'));
     }
   }
 });
