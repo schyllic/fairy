@@ -120,12 +120,12 @@ This project was created with the assistance of an A.I. coding agent. My complem
 - Gregorian
 
 **Languages**
-- Display the calendar in 8 languages: English, Deutsch, Français, Italiano, Español, Kiswahili, Latina, संस्कृतम्
+- Display the calendar in 8 languages: English, German, French, Italian, Spanish, Kiswahili, Latin, Sanskrit
 - Optional secondary language overlay — appears in tooltips
 
 **Location**
 - Browser geolocation ("find my city") for sky calculations
-- Searchable city database (10,000+ cities with timezone support)
+- Searchable city database (270 major cities with timezone support)
 
 **Themes & Appearance**
 - 5 themes: Fairy, Wizard, Celtic, Animal, Flower
