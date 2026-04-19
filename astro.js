@@ -152,9 +152,24 @@ function utcDateStr(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
 }
 
+function _localOffsetHours(date) {
+  const tz = OBSERVER.tz;
+  if (!tz) return -date.getTimezoneOffset() / 60;
+  try {
+    const opt = { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+                  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const parts = new Intl.DateTimeFormat('en-US', opt).formatToParts(date);
+    const get = type => parseInt(parts.find(p => p.type === type).value);
+    const local = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
+    return (local - date.getTime()) / 3600000;
+  } catch(_) {
+    return -date.getTimezoneOffset() / 60;
+  }
+}
+
 // Convert a UTC instant to a local (observer timezone) date string
 function localDateStr(date) {
-  const offset = _easternOffsetHours(date);
+  const offset = _localOffsetHours(date);
   const local = new Date(date.getTime() + offset * 3600000);
   return utcDateStr(local);
 }
@@ -1029,13 +1044,6 @@ function _resolveHolidayRule({month, weekday, n}, year) {
   return _nthWeekday(year, month, weekday, n);
 }
 
-function _easternOffsetHours(date) {
-  // US Eastern: DST starts 2nd Sunday March, ends 1st Sunday November
-  const yr = date.getUTCFullYear();
-  const dstStart = _nthWeekday(yr, 3, 0, 2);  // 2nd Sun March
-  const dstEnd   = _nthWeekday(yr, 11, 0, 1); // 1st Sun November
-  return (date >= dstStart && date < dstEnd) ? -4 : -5;
-}
 
 function _sunEventTime(date, altitude, isRise) {
   // Returns local time string for sun crossing given altitude on date.
@@ -1053,7 +1061,7 @@ function _sunEventTime(date, altitude, isRise) {
   const H = Math.acos(cosH) * R2D / 15;
   const utH = isRise ? (12 - lon / 15 - H + 24) % 24
                      : (12 - lon / 15 + H) % 24;
-  const offset = _easternOffsetHours(date);
+  const offset = _localOffsetHours(date);
   let local = (utH + offset + 24) % 24;
   const h = Math.floor(local);
   let m = Math.round((local - h) * 60);
@@ -1071,15 +1079,16 @@ function sunriseTime(date)       { return _sunEventTime(date, -0.833, true);  }
 function _moonEventTime(date, isRise) {
   const lat = OBSERVER.lat, lon = OBSERVER.lon;
   const latR = lat * DEG;
-  const offset = _easternOffsetHours(date);
+  const offset = _localOffsetHours(date);
   // Scan from noon UTC on date to noon+24h in 10-minute steps
   const Y = date.getUTCFullYear(), M = date.getUTCMonth()+1, D = date.getUTCDate();
   const jdNoon = _julianDate(Y, M, D, 12);
 
   function moonAlt(jd) {
-    const T = (jd - J2000) / JC;
-    const UT = (jd - Math.floor(jd) - 0.5) * 24 + 12;
-    const LST = norm24(_gmst(T, (UT + 24) % 24) + lon / 15);
+    const T   = (jd - J2000) / JC;
+    const UT  = ((jd - jdNoon) * 24 + 12) % 24;
+    const T0  = (Math.floor(jd + 0.5) - 0.5 - J2000) / JC;
+    const LST = norm24(_gmst(T0, UT) + lon / 15);
     const moon = _moonRADecT(T);
     const pos = _altAz(norm24(moon.ra * R2H), moon.dec * R2D, LST, latR);
     return pos ? pos.alt : -90;
