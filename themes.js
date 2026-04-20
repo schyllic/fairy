@@ -203,7 +203,8 @@ function _plantHollyBranch(p) {
 }
 
 function _plantBudBranch(p) {
-  return `<path d="M10 44 Q18 36 24 28 Q28 20 30 12" stroke="#6b3a1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  return `<circle cx="24" cy="24" r="21" fill="#c4d4e8" stroke="#8aaac8" stroke-width="1"/>
+<path d="M13 41 Q18 36 24 28 Q28 20 30 12" stroke="#6b3a1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
 <path d="M24 28 Q30 26 36 22" stroke="#6b3a1f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
 <path d="M28 20 Q32 20 36 18" stroke="#6b3a1f" stroke-width="1.3" fill="none" stroke-linecap="round"/>
 <path d="M18 36 Q14 32 12 28" stroke="#6b3a1f" stroke-width="1.3" fill="none" stroke-linecap="round"/>
