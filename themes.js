@@ -176,6 +176,44 @@ function _plantCrocus(p) {
 <line x1="26" y1="18" x2="26" y2="12" stroke="#e8a020" stroke-width="1.2" opacity="0.85"/>`;
 }
 
+function _plantSnowflake(p) {
+  const arm = `<line x1="24" y1="24" x2="24" y2="4" stroke="#a8d8f0" stroke-width="2" stroke-linecap="round"/>
+<line x1="24" y1="17" x2="18.8" y2="14" stroke="#a8d8f0" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="24" y1="17" x2="29.2" y2="14" stroke="#a8d8f0" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="24" y1="11" x2="20" y2="8.8" stroke="#a8d8f0" stroke-width="1.1" stroke-linecap="round"/>
+<line x1="24" y1="11" x2="28" y2="8.8" stroke="#a8d8f0" stroke-width="1.1" stroke-linecap="round"/>
+<circle cx="24" cy="4" r="1.8" fill="#e0f4ff" stroke="#70b8e0" stroke-width="0.8"/>`;
+  let out = '';
+  for (let i = 0; i < 6; i++) out += `<g transform="rotate(${i*60} 24 24)">${arm}</g>`;
+  out += `<circle cx="24" cy="24" r="3" fill="#e0f4ff" stroke="#70b8e0" stroke-width="1"/>`;
+  return out;
+}
+
+function _plantHollyBranch(p) {
+  return `<path d="M8 42 Q18 32 28 20 Q32 14 36 10" stroke="#5a3010" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M20 30 Q14 26 12 20 Q16 16 20 22 Q22 16 27 18 Q26 24 20 30Z" fill="${p.accent}" stroke="#186040" stroke-width="0.9"/>
+<path d="M28 20 Q22 16 21 10 Q25 8 28 14 Q31 8 36 10 Q34 16 28 20Z" fill="${p.accent}" stroke="#186040" stroke-width="0.9"/>
+<path d="M32 34 Q26 30 25 24 Q29 22 32 28 Q35 22 40 24 Q38 30 32 34Z" fill="${p.accent}" stroke="#186040" stroke-width="0.9" opacity="0.85"/>
+<circle cx="18" cy="36" r="3" fill="#e82020" stroke="#b01010" stroke-width="0.8"/>
+<circle cx="24" cy="38" r="3" fill="#e82020" stroke="#b01010" stroke-width="0.8"/>
+<circle cx="30" cy="36" r="3" fill="#e82020" stroke="#b01010" stroke-width="0.8"/>
+<circle cx="18.5" cy="35.5" r="1" fill="#ff6060" opacity="0.5"/>
+<circle cx="24.5" cy="37.5" r="1" fill="#ff6060" opacity="0.5"/>
+<circle cx="30.5" cy="35.5" r="1" fill="#ff6060" opacity="0.5"/>`;
+}
+
+function _plantBudBranch(p) {
+  return `<path d="M10 44 Q18 36 24 28 Q28 20 30 12" stroke="#6b3a1f" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<path d="M24 28 Q30 26 36 22" stroke="#6b3a1f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+<path d="M28 20 Q32 20 36 18" stroke="#6b3a1f" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+<path d="M18 36 Q14 32 12 28" stroke="#6b3a1f" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+<ellipse cx="30" cy="12" rx="2.5" ry="4" fill="#8b3520" stroke="#6b2a10" stroke-width="0.8" transform="rotate(-10 30 12)"/>
+<ellipse cx="36" cy="22" rx="2.5" ry="4" fill="#8b3520" stroke="#6b2a10" stroke-width="0.8" transform="rotate(20 36 22)"/>
+<ellipse cx="36" cy="18" rx="2" ry="3.2" fill="#8b3520" stroke="#6b2a10" stroke-width="0.7" transform="rotate(10 36 18)"/>
+<ellipse cx="12" cy="28" rx="2.2" ry="3.5" fill="#8b3520" stroke="#6b2a10" stroke-width="0.7" transform="rotate(-30 12 28)"/>
+<ellipse cx="30" cy="11" rx="1.5" ry="2" fill="#c8e0b0" opacity="0.7" transform="rotate(-10 30 11)"/>`;
+}
+
 function _plantDaffodil(p) {
   return `<line x1="24" y1="46" x2="24" y2="28" stroke="${p.accent}" stroke-width="1.5"/>
 <ellipse cx="16" cy="38" rx="3" ry="9" fill="${p.accent}" opacity="0.8" transform="rotate(-30 16 38)"/>
@@ -233,17 +271,15 @@ function _plantStrawberry(p) {
 }
 
 function _plantSunflower(p) {
-  const rays = [];
-  for (let i = 0; i < 13; i++) {
-    const a = (i * (360/13)) * Math.PI / 180;
-    const ex = 24 + Math.cos(a) * 14, ey = 24 + Math.sin(a) * 14;
-    rays.push(`<ellipse cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" rx="3" ry="6" fill="#ffe060" stroke="#c89020" stroke-width="0.6" transform="rotate(${(i*(360/13)).toFixed(0)} ${ex.toFixed(1)} ${ey.toFixed(1)})"/>`);
-  }
+  const petal = `<path d="M24 16 C21 14 20 9 24 4 C28 9 27 14 24 16 Z" fill="#ffe060" stroke="#c89020" stroke-width="0.7"/>`;
+  let petals = '';
+  for (let i = 0; i < 12; i++) petals += `<g transform="rotate(${i * 30} 24 24)">${petal}</g>`;
   return `<line x1="24" y1="46" x2="24" y2="32" stroke="${p.accent}" stroke-width="2"/>
 <path d="M24 38 Q16 36 13 40 Q15 44 24 44Z" fill="${p.accent}" opacity="0.8"/>
-${rays.join('')}
-<circle cx="24" cy="24" r="8" fill="#8a4010" stroke="#6a3008" stroke-width="1"/>
-<circle cx="24" cy="24" r="6" fill="#7a3808" opacity="0.6"/>`;
+${petals}
+<circle cx="24" cy="24" r="9" fill="#8a4010" stroke="#6a3008" stroke-width="1"/>
+<circle cx="24" cy="24" r="7" fill="#7a3808" opacity="0.6"/>
+<circle cx="21" cy="21" r="2" fill="#a06020" opacity="0.35"/>`;
 }
 
 function _plantWheat(p) {
@@ -266,6 +302,17 @@ function _plantApple(p) {
 <circle cx="24" cy="28" r="13" fill="#e84020" stroke="#c03010" stroke-width="1"/>
 <ellipse cx="20" cy="23" rx="3" ry="5" fill="#ff6040" opacity="0.35"/>
 <path d="M24 16 Q20 18 18 22" stroke="#c03010" stroke-width="0.8" fill="none" opacity="0.4"/>`;
+}
+
+function _plantJackOLantern(p) {
+  return `<path d="M24 17 Q26 13 28 11" stroke="#5a3010" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<ellipse cx="24" cy="30" rx="14" ry="13" fill="#e86010" stroke="#b84000" stroke-width="1.2"/>
+<ellipse cx="17" cy="30" rx="7.5" ry="12" fill="none" stroke="#c05000" stroke-width="1.2" opacity="0.45"/>
+<ellipse cx="31" cy="30" rx="7.5" ry="12" fill="none" stroke="#c05000" stroke-width="1.2" opacity="0.45"/>
+<ellipse cx="21" cy="24" rx="2" ry="1.5" fill="#ff9040" opacity="0.35"/>
+<polygon points="15,23 21,23 18,28.5" fill="#1a0a00"/>
+<polygon points="27,23 33,23 30,28.5" fill="#1a0a00"/>
+<path d="M14 35 C14 41,34 41,34 35 L32 33 L30 36 L27 33 L24 36 L21 33 L18 36 L16 33 Z" fill="#1a0a00"/>`;
 }
 
 function _plantMapleLeaf(p) {
@@ -328,17 +375,17 @@ function _plantIris(p) {
 }
 
 const MOON_PLANTS = {
-  'Snowmoon':    _plantSnowdrop,
-  'Wakingmoon':  _plantCrocus,
+  'Snowmoon':    _plantSnowflake,
+  'Wakingmoon':  _plantBudBranch,
   'Seedmoon':    _plantDaffodil,
   'Bloommoon':   _plantCherryBlossom,
   'Flowermoon':  _plantRose,
   'Berrymoon':   _plantStrawberry,
   'Summermoon':  _plantSunflower,
   'Harvestmoon': _plantWheat,
-  'Gathermoon':  _plantApple,
+  'Gathermoon':  _plantJackOLantern,
   'Leafmoon':    _plantMapleLeaf,
-  'Frostmoon':   _plantHolly,
+  'Frostmoon':   _plantHollyBranch,
   'Darkmoon':    _plantPine,
   'Bluemoon':    _plantIris,
 };
